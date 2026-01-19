@@ -1,20 +1,20 @@
+/**
+ * App.js
+ * 
+ * Main application entry point
+ * Wire up all providers and navigation
+ */
+
+import React from 'react';
 import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View } from 'react-native';
+import { RootProvider } from './src/context/RootProvider';
+import { RootNavigator } from './src/navigation/RootNavigator';
 
 export default function App() {
   return (
-    <View style={styles.container}>
-      <Text>Open up App.js to start working on your app!</Text>
+    <RootProvider>
+      <RootNavigator />
       <StatusBar style="auto" />
-    </View>
+    </RootProvider>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});
