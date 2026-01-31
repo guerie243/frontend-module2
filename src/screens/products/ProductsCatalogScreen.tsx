@@ -34,7 +34,7 @@ import { StateMessage } from '../../components/StateMessage';
 import { useAuth } from '../../hooks/useAuth';
 import { useProductsByVitrine } from '../../hooks/useProducts'; // Use products by vitrine
 import { ProductCard } from '../../components/ProductCard';
-import { ENV } from '../../config/env';
+import { ENV } from '../../config/config';
 import { ImagePreviewModal } from '../../components/ImagePreviewModal';
 import { DEFAULT_IMAGES } from '../../constants/images';
 import { useAlertService } from '../../utils/alertService';
