@@ -1,49 +1,57 @@
-/**
- * Login Screen
- * 
- * User authentication screen with login logic
- * Pattern from Module 1 LoginScreen
- */
-
-import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
+import React, { useState, useMemo } from 'react';
+import {
+    View,
+    Text,
+    StyleSheet,
+    TouchableOpacity,
+    KeyboardAvoidingView,
+    Platform,
+    ScrollView,
+} from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useAuth } from '../../hooks/useAuth';
 import { useAlertService } from '../../utils/alertService';
 import { useTheme } from '../../context/ThemeContext';
+import { CustomInput } from '../../components/CustomInput';
+import { CustomButton } from '../../components/CustomButton';
+import { ScreenWrapper } from '../../components/ScreenWrapper';
+import { Ionicons } from '@expo/vector-icons';
 
 export const LoginScreen = () => {
     const navigation = useNavigation<any>();
     const { login } = useAuth();
     const { showError, showSuccess } = useAlertService();
     const { theme } = useTheme();
+    const styles = useMemo(() => createStyles(theme), [theme]);
 
-    const [email, setEmail] = useState('');
+    const [identifier, setIdentifier] = useState('');
     const [password, setPassword] = useState('');
     const [isLoading, setIsLoading] = useState(false);
+    const [isPasswordVisible, setIsPasswordVisible] = useState(false);
+
+    // 0: Email, 1: Phone Number
+    const [loginMode, setLoginMode] = useState(0);
+
+    const getPlaceholder = () => {
+        return loginMode === 0 ? "Adresse E-mail" : "Numéro de Téléphone";
+    };
+
+    const toggleLoginMode = () => {
+        setIdentifier('');
+        setLoginMode((prevMode) => (prevMode === 0 ? 1 : 0));
+    };
 
     const handleLogin = async () => {
-        // Validation
-        if (!email || !password) {
+        if (!identifier || !password) {
             showError('Veuillez remplir tous les champs');
             return;
         }
 
-        if (!email.includes('@')) {
-            showError('Email invalide');
-            return;
-        }
-
         setIsLoading(true);
-        console.log('Login attempt:', email);
-
         try {
-            await login(email, password);
+            await login(identifier, password);
             showSuccess('Connexion réussie');
-            console.log('Login successful, navigating to MainTabs');
-            // Navigation handled by RootNavigator
         } catch (error: any) {
-            console.error('Login failed:', error.message);
             showError(error.message || 'Échec de la connexion');
         } finally {
             setIsLoading(false);
@@ -51,117 +59,130 @@ export const LoginScreen = () => {
     };
 
     const handleNavigateToRegister = () => {
-        console.log('Navigating to Register');
         navigation.navigate('Register');
     };
 
     return (
-        <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
-            <View style={styles.formContainer}>
+        <ScreenWrapper
+            scrollable
+            contentContainerStyle={styles.scrollContent}
+        >
+            <View style={styles.content}>
                 <Text style={[styles.title, { color: theme.colors.text }]}>Connexion</Text>
                 <Text style={[styles.subtitle, { color: theme.colors.textSecondary }]}>
                     Connectez-vous pour gérer vos commandes
                 </Text>
 
-                <TextInput
-                    style={[styles.input, {
-                        backgroundColor: theme.colors.surface,
-                        borderColor: theme.colors.border,
-                        color: theme.colors.text
-                    }]}
-                    placeholder="Email"
-                    placeholderTextColor={theme.colors.textTertiary}
-                    value={email}
-                    onChangeText={setEmail}
-                    autoCapitalize="none"
-                    keyboardType="email-address"
-                    editable={!isLoading}
-                />
+                <View style={styles.form}>
+                    <CustomInput
+                        placeholder={getPlaceholder()}
+                        value={identifier}
+                        onChangeText={setIdentifier}
+                        keyboardType={loginMode === 0 ? 'email-address' : 'phone-pad'}
+                        autoCapitalize="none"
+                    />
 
-                <TextInput
-                    style={[styles.input, {
-                        backgroundColor: theme.colors.surface,
-                        borderColor: theme.colors.border,
-                        color: theme.colors.text
-                    }]}
-                    placeholder="Mot de passe"
-                    placeholderTextColor={theme.colors.textTertiary}
-                    value={password}
-                    onChangeText={setPassword}
-                    secureTextEntry
-                    editable={!isLoading}
-                />
+                    <CustomInput
+                        placeholder="Mot de Passe"
+                        value={password}
+                        onChangeText={setPassword}
+                        secureTextEntry={!isPasswordVisible}
+                        RightComponent={
+                            <TouchableOpacity
+                                onPress={() => setIsPasswordVisible(!isPasswordVisible)}
+                                style={{ padding: 8 }}
+                            >
+                                <Ionicons
+                                    name={isPasswordVisible ? 'eye-off' : 'eye'}
+                                    size={20}
+                                    color={theme.colors.textSecondary}
+                                />
+                            </TouchableOpacity>
+                        }
+                    />
 
-                <TouchableOpacity
-                    style={[styles.button, { backgroundColor: theme.colors.primary }]}
-                    onPress={handleLogin}
-                    disabled={isLoading}
-                >
-                    {isLoading ? (
-                        <ActivityIndicator color={theme.colors.white} />
-                    ) : (
-                        <Text style={styles.buttonText}>Se connecter</Text>
-                    )}
-                </TouchableOpacity>
+                    <TouchableOpacity
+                        onPress={toggleLoginMode}
+                        style={styles.toggleContainer}
+                    >
+                        <Text style={[styles.toggleText, { color: theme.colors.primary }]}>
+                            Utiliser {loginMode === 0 ? 'le téléphone' : "l'e-mail"}
+                        </Text>
+                    </TouchableOpacity>
 
-                <TouchableOpacity
-                    style={styles.linkButton}
-                    onPress={handleNavigateToRegister}
-                    disabled={isLoading}
-                >
-                    <Text style={[styles.linkText, { color: theme.colors.primary }]}>
-                        Pas encore de compte ? S'inscrire
-                    </Text>
-                </TouchableOpacity>
+                    <CustomButton
+                        title="Se Connecter"
+                        onPress={handleLogin}
+                        isLoading={isLoading}
+                        style={styles.loginButton}
+                    />
+
+                    <View style={styles.footer}>
+                        <Text style={[styles.footerText, { color: theme.colors.textSecondary }]}>
+                            Pas encore de compte ?{' '}
+                        </Text>
+                        <TouchableOpacity onPress={handleNavigateToRegister}>
+                            <Text style={[styles.link, { color: theme.colors.primary }]}>
+                                S'inscrire
+                            </Text>
+                        </TouchableOpacity>
+                    </View>
+                </View>
             </View>
-        </View>
+        </ScreenWrapper>
     );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (theme: any) => StyleSheet.create({
     container: {
         flex: 1,
-        justifyContent: 'center',
-        padding: 20,
     },
-    formContainer: {
-        width: '100%',
+    scrollContent: {
+        flexGrow: 1,
+        justifyContent: 'center',
+        paddingHorizontal: 30, // Tightened from 20
+    },
+    content: {
+        justifyContent: 'center',
+        paddingVertical: 20,
     },
     title: {
         fontSize: 28,
         fontWeight: 'bold',
         marginBottom: 8,
+        textAlign: 'center',
     },
     subtitle: {
         fontSize: 14,
         marginBottom: 32,
+        textAlign: 'center',
     },
-    input: {
-        height: 50,
-        borderWidth: 1,
-        borderRadius: 8,
-        paddingHorizontal: 16,
+    form: {
+        width: '100%',
+    },
+    toggleContainer: {
+        alignSelf: 'flex-start',
+        marginTop: 4,
         marginBottom: 16,
-        fontSize: 16,
+        paddingVertical: 4,
     },
-    button: {
-        height: 50,
-        borderRadius: 8,
-        justifyContent: 'center',
-        alignItems: 'center',
-        marginTop: 8,
-    },
-    buttonText: {
-        color: '#FFFFFF',
-        fontSize: 16,
-        fontWeight: '600',
-    },
-    linkButton: {
-        marginTop: 16,
-        alignItems: 'center',
-    },
-    linkText: {
+    toggleText: {
         fontSize: 14,
         fontWeight: '500',
+    },
+    loginButton: {
+        marginTop: 8,
+    },
+    footer: {
+        flexDirection: 'row',
+        justifyContent: 'center',
+        marginTop: 24,
+    },
+    footerText: {
+        fontSize: 14,
+    },
+    link: {
+        fontSize: 14,
+        fontWeight: '600',
     },
 });

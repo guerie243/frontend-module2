@@ -4,11 +4,12 @@
  * List of owner's products with management actions
  */
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, FlatList, ActivityIndicator } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import { Image } from 'expo-image';
 import { useTheme } from '../../context/ThemeContext';
-import { useProducts } from '../../hooks/useProducts';
+import { useProductsByVitrine } from '../../hooks/useProducts';
 import { useMyVitrines } from '../../hooks/useVitrines';
 import { Product } from '../../types';
 
@@ -18,13 +19,18 @@ export const ProductManagementScreen = () => {
 
     // Get user's vitrine
     const { data: myVitrines = [] } = useMyVitrines();
-    const vitrineId = myVitrines?.[0]?.id || myVitrines?.[0]?._id || '';
+    const vitrineId = myVitrines?.[0]?.vitrineId || myVitrines?.[0]?.id || myVitrines?.[0]?._id || '';
 
     // Get products for this vitrine
-    const { data: productsData, isLoading } = useProducts('', '', !!vitrineId);
+    const { data: productsData, isLoading } = useProductsByVitrine(vitrineId, !!vitrineId);
 
-    const products = productsData?.pages.flatMap(page => page.data || []) || [];
-    const myProducts = products.filter(p => p.vitrineId === vitrineId);
+    const myProducts = useMemo(() => {
+        return productsData?.pages.flatMap(page => {
+            if (!page) return [];
+            if (Array.isArray(page)) return page;
+            return (page as any).data || [];
+        }) || [];
+    }, [productsData]);
 
     const handleCreateProduct = () => {
         console.log('Navigating to CreateProduct');
@@ -41,8 +47,17 @@ export const ProductManagementScreen = () => {
             style={[styles.productCard, { backgroundColor: theme.colors.surface }]}
             onPress={() => handleEditProduct(item)}
         >
-            <View style={[styles.imagePlaceholder, { backgroundColor: theme.colors.surfaceLight }]}>
-                <Text style={styles.imagePlaceholderText}>📦</Text>
+            <View style={[styles.imageContainer, { backgroundColor: theme.colors.surfaceLight }]}>
+                {item.images && item.images.length > 0 ? (
+                    <Image
+                        source={{ uri: item.images[0] }}
+                        style={styles.image}
+                        contentFit="cover"
+                        cachePolicy="memory-disk"
+                    />
+                ) : (
+                    <Text style={styles.imagePlaceholderText}>📦</Text>
+                )}
             </View>
 
             <View style={styles.productInfo}>
@@ -50,7 +65,7 @@ export const ProductManagementScreen = () => {
                     {item.name}
                 </Text>
                 <Text style={[styles.productPrice, { color: theme.colors.primary }]}>
-                    {item.price.toFixed(2)} DA
+                    {item.price.toFixed(2)} {item.currency || 'USD'}
                 </Text>
                 {item.stock !== undefined && (
                     <Text style={[styles.stock, { color: theme.colors.textSecondary }]}>
@@ -146,12 +161,17 @@ const styles = StyleSheet.create({
         marginBottom: 12,
         alignItems: 'center',
     },
-    imagePlaceholder: {
+    imageContainer: {
         width: 60,
         height: 60,
         borderRadius: 8,
+        overflow: 'hidden',
         justifyContent: 'center',
         alignItems: 'center',
+    },
+    image: {
+        width: '100%',
+        height: '100%',
     },
     imagePlaceholderText: {
         fontSize: 24,

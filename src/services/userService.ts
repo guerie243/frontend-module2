@@ -8,15 +8,16 @@
 
 import { module1Api } from './api';
 import { User } from '../types';
+import { toFormData, hasFiles } from '../utils/formDataHelper';
 
 export const userService = {
     /**
      * Login user
      */
-    login: async (email: string, password: string) => {
+    login: async (identifier: string, password: string) => {
         const response = await module1Api.post<{ success: boolean; token: string; user: User }>(
-            '/auth/login',
-            { email, password }
+            '/users/login',
+            { identifier, password }
         );
         return response.data;
     },
@@ -24,9 +25,9 @@ export const userService = {
     /**
      * Register new user
      */
-    register: async (data: { name: string; email: string; password: string; phone?: string }) => {
+    register: async (data: { profileName: string; email?: string; phoneNumber?: string; password: string }) => {
         const response = await module1Api.post<{ success: boolean; token: string; user: User }>(
-            '/auth/register',
+            '/users',
             data
         );
         return response.data;
@@ -44,9 +45,11 @@ export const userService = {
      * Update user profile
      */
     updateProfile: async (data: Partial<User>) => {
+        const payload = hasFiles(data) ? await toFormData(data) : data;
+
         const response = await module1Api.patch<{ success: boolean; user: User }>(
-            '/users/profile',
-            data
+            '/users', // Backend uses Router.patch('/', ...) mounted on /api/users
+            payload
         );
         return response.data.user;
     },

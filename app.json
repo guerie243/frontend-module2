@@ -2,6 +2,7 @@
   "expo": {
     "name": "frontend",
     "slug": "frontend",
+    "scheme": "andybusiness",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -24,6 +25,22 @@
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "plugins": [
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Autoriser Andy Business à accéder à votre position pour afficher les produits à proximité."
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "L'application a besoin d'accéder à vos photos pour vous permettre d'ajouter des images de produits.",
+          "cameraPermission": "L'application a besoin d'accéder à votre caméra pour vous permettre de prendre des photos de produits."
+        }
+      ],
+      "expo-notifications"
+    ]
   }
 }

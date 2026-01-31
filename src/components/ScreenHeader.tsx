@@ -1,0 +1,112 @@
+import React from 'react';
+import {
+    View,
+    Text,
+    StyleSheet,
+    TouchableOpacity,
+    Platform,
+    StatusBar,
+} from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { useNavigation } from '@react-navigation/native';
+import { useTheme } from '../context/ThemeContext';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
+interface ScreenHeaderProps {
+    title: string;
+    onShare?: () => void;
+    showBack?: boolean;
+    transparent?: boolean;
+    rightElement?: React.ReactNode;
+}
+
+export const ScreenHeader: React.FC<ScreenHeaderProps> = ({
+    title,
+    onShare,
+    showBack = true,
+    transparent = false,
+    rightElement,
+}) => {
+    const { theme } = useTheme();
+    const navigation = useNavigation();
+    const insets = useSafeAreaInsets();
+
+    return (
+        <View style={[
+            styles.container,
+            {
+                paddingTop: Platform.OS === 'ios' ? insets.top : 10,
+                backgroundColor: transparent ? 'transparent' : theme.colors.surface,
+                borderBottomWidth: transparent ? 0 : 1,
+                borderBottomColor: theme.colors.border + '20'
+            }
+        ]}>
+            <View style={styles.content}>
+                <View style={styles.left}>
+                    {showBack && (
+                        <TouchableOpacity
+                            style={[styles.iconButton, !transparent && { backgroundColor: theme.colors.background }]}
+                            onPress={() => navigation.goBack()}
+                        >
+                            <Ionicons name="arrow-back" size={24} color={theme.colors.text} />
+                        </TouchableOpacity>
+                    )}
+                </View>
+
+                <Text
+                    style={[styles.title, { color: theme.colors.text }]}
+                    numberOfLines={1}
+                >
+                    {title}
+                </Text>
+
+                <View style={styles.right}>
+                    {onShare && (
+                        <TouchableOpacity
+                            style={[styles.iconButton, !transparent && { backgroundColor: theme.colors.background }]}
+                            onPress={onShare}
+                        >
+                            <Ionicons name="share-social-outline" size={22} color={theme.colors.primary} />
+                        </TouchableOpacity>
+                    )}
+                    {rightElement}
+                </View>
+            </View>
+        </View>
+    );
+};
+
+const styles = StyleSheet.create({
+    container: {
+        width: '100%',
+        zIndex: 100,
+    },
+    content: {
+        height: 56,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        paddingHorizontal: 16,
+    },
+    left: {
+        width: 44,
+        alignItems: 'flex-start',
+    },
+    right: {
+        width: 44,
+        alignItems: 'flex-end',
+    },
+    iconButton: {
+        width: 40,
+        height: 40,
+        borderRadius: 20,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    title: {
+        flex: 1,
+        textAlign: 'center',
+        fontSize: 18,
+        fontWeight: '700',
+    },
+});

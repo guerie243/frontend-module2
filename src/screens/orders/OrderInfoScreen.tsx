@@ -11,6 +11,7 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import { useTheme } from '../../context/ThemeContext';
 import { useAlertService } from '../../utils/alertService';
 import { CartItem, OrderProduct } from '../../types';
+import { ScreenWrapper } from '../../components/ScreenWrapper';
 
 export const OrderInfoScreen = () => {
     const navigation = useNavigation<any>();
@@ -37,8 +38,15 @@ export const OrderInfoScreen = () => {
             return;
         }
 
+        // Phone validation (exactly 9 digits after +243)
+        const phoneRegex = /^\d{9}$/;
         if (!clientPhone.trim()) {
             showError('Veuillez entrer votre numéro de téléphone');
+            return;
+        }
+
+        if (!phoneRegex.test(clientPhone)) {
+            showError('Le numéro doit contenir exactement 9 chiffres après le préfixe');
             return;
         }
 
@@ -61,6 +69,8 @@ export const OrderInfoScreen = () => {
             productImage: item.product.images?.[0],
             quantity: item.quantity,
             price: item.product.price,
+            currency: item.product.currency || 'USD',
+            locations: item.product.locations,
         }));
 
         // Navigate to delivery location screen
@@ -68,7 +78,7 @@ export const OrderInfoScreen = () => {
             orderData: {
                 products: orderProducts,
                 clientName,
-                clientPhone,
+                clientPhone: `+243${clientPhone}`,
                 totalPrice,
                 notes,
                 vitrineId,
@@ -77,10 +87,7 @@ export const OrderInfoScreen = () => {
     };
 
     return (
-        <ScrollView
-            style={[styles.container, { backgroundColor: theme.colors.background }]}
-            contentContainerStyle={styles.contentContainer}
-        >
+        <ScreenWrapper scrollable contentContainerStyle={styles.contentContainer}>
             <Text style={[styles.title, { color: theme.colors.text }]}>
                 Informations de commande
             </Text>
@@ -96,7 +103,7 @@ export const OrderInfoScreen = () => {
                             {item.product.name} x {item.quantity}
                         </Text>
                         <Text style={[styles.cartItemPrice, { color: theme.colors.textSecondary }]}>
-                            {(item.product.price * item.quantity).toFixed(2)} DA
+                            {(item.product.price * item.quantity).toFixed(2)} {item.product.currency || 'USD'}
                         </Text>
                     </View>
                 ))}
@@ -104,7 +111,7 @@ export const OrderInfoScreen = () => {
                 <View style={styles.totalRow}>
                     <Text style={[styles.totalLabel, { color: theme.colors.text }]}>Total</Text>
                     <Text style={[styles.totalPrice, { color: theme.colors.primary }]}>
-                        {totalPrice.toFixed(2)} DA
+                        {totalPrice.toFixed(2)} {cart[0]?.product?.currency || 'USD'}
                     </Text>
                 </View>
             </View>
@@ -127,31 +134,36 @@ export const OrderInfoScreen = () => {
                     onChangeText={setClientName}
                 />
 
-                <TextInput
-                    style={[styles.input, {
-                        backgroundColor: theme.colors.background,
-                        borderColor: theme.colors.border,
-                        color: theme.colors.text
-                    }]}
-                    placeholder="Numéro de téléphone"
-                    placeholderTextColor={theme.colors.textTertiary}
-                    value={clientPhone}
-                    onChangeText={setClientPhone}
-                    keyboardType="phone-pad"
-                />
+                <View style={[styles.phoneInputContainer, {
+                    backgroundColor: theme.colors.background,
+                    borderColor: theme.colors.border
+                }]}>
+                    <Text style={[styles.phonePrefix, { color: theme.colors.text }]}>+243</Text>
+                    <View style={[styles.phoneSeparator, { backgroundColor: theme.colors.border }]} />
+                    <TextInput
+                        style={[styles.phoneInput, { color: theme.colors.text }]}
+                        placeholder="9770*******"
+                        placeholderTextColor={theme.colors.textTertiary}
+                        value={clientPhone}
+                        onChangeText={setClientPhone}
+                        keyboardType="phone-pad"
+                        maxLength={9}
+                    />
+                </View>
 
                 <TextInput
                     style={[styles.textArea, {
                         backgroundColor: theme.colors.background,
                         borderColor: theme.colors.border,
-                        color: theme.colors.text
+                        color: theme.colors.text,
+                        minHeight: 120
                     }]}
                     placeholder="Notes (optionnel)"
                     placeholderTextColor={theme.colors.textTertiary}
                     value={notes}
                     onChangeText={setNotes}
                     multiline
-                    numberOfLines={4}
+                    numberOfLines={8}
                 />
             </View>
 
@@ -161,7 +173,7 @@ export const OrderInfoScreen = () => {
             >
                 <Text style={styles.buttonText}>Continuer vers la livraison</Text>
             </TouchableOpacity>
-        </ScrollView>
+        </ScreenWrapper>
     );
 };
 
@@ -223,6 +235,29 @@ const styles = StyleSheet.create({
         borderRadius: 8,
         paddingHorizontal: 16,
         marginBottom: 12,
+        fontSize: 16,
+    },
+    phoneInputContainer: {
+        height: 50,
+        borderWidth: 1,
+        borderRadius: 8,
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: 12,
+        paddingHorizontal: 12,
+    },
+    phonePrefix: {
+        fontSize: 16,
+        fontWeight: '600',
+    },
+    phoneSeparator: {
+        width: 1,
+        height: '60%',
+        marginHorizontal: 12,
+    },
+    phoneInput: {
+        flex: 1,
+        height: '100%',
         fontSize: 16,
     },
     textArea: {

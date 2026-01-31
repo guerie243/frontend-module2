@@ -12,8 +12,36 @@ import { AuthStack } from './AuthStack';
 import { AppStack } from './AppStack';
 import { View, ActivityIndicator, StyleSheet } from 'react-native';
 
+import * as Linking from 'expo-linking';
+
+const prefix = Linking.createURL('/');
+
 export const RootNavigator = () => {
     const { isAuthenticated, isLoading } = useAuth();
+    console.log('[RootNavigator] Render. isAuthenticated:', isAuthenticated, 'isLoading:', isLoading);
+
+    const linking = {
+        prefixes: [prefix, 'andybusiness://'],
+        config: {
+            screens: {
+                Auth: {
+                    screens: {
+                        Login: 'login',
+                        Register: 'register',
+                    },
+                },
+                MainTabs: {
+                    screens: {
+                        HomeTab: 'vitrine/:slug',
+                        AddProductTab: 'add-product',
+                        OrdersTab: 'orders',
+                    },
+                },
+                ProductDetail: 'product/:slug',
+                OrderClientDetail: 'order/:orderId',
+            },
+        },
+    };
 
     if (isLoading) {
         return (
@@ -24,8 +52,12 @@ export const RootNavigator = () => {
     }
 
     return (
-        <NavigationContainer>
-            {isAuthenticated ? <AppStack /> : <AuthStack />}
+        <NavigationContainer linking={linking}>
+            {isAuthenticated ? (
+                <AppStack key="authenticated" />
+            ) : (
+                <AuthStack key="unauthenticated" />
+            )}
         </NavigationContainer>
     );
 };

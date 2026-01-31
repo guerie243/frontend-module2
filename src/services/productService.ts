@@ -27,44 +27,53 @@ export const productService = {
      * Get products by vitrine ID
      */
     getProductsByVitrine: async (vitrineId: string, page = 1, limit = 20) => {
-        const response = await api.get<{ success: boolean; products: Product[] }>(
+        const response = await api.get<{ success: boolean; data: Product[] }>(
             `/products/vitrine/${vitrineId}?page=${page}&limit=${limit}`
         );
-        return response.data.products;
+        return response.data.data;
     },
 
     /**
      * Get single product by slug
      */
     getProductBySlug: async (slug: string) => {
-        const response = await api.get<{ success: boolean; product: Product }>(`/products/${slug}`);
-        return response.data.product;
+        const response = await api.get<{ success: boolean; data: Product }>(`/products/${slug}`);
+        return response.data.data;
     },
 
     /**
      * Create new product
      */
     createProduct: async (data: Partial<Product>) => {
-        const payload = hasFiles(data) ? await toFormData(data) : data;
-        const config = hasFiles(data) ? { headers: { 'Content-Type': 'multipart/form-data' } } : {};
+        console.log('[productService] createProduct called with data keys:', Object.keys(data));
+        const hasImages = hasFiles(data);
+        console.log('[productService] hasFiles(data) result:', hasImages);
 
-        const response = await api.post<{ success: boolean; product: Product }>('/products', payload, config);
-        return response.data.product;
+        const payload = hasImages ? await toFormData(data) : data;
+        console.log('[productService] Payload type:', payload instanceof FormData ? 'FormData' : 'JSON');
+
+        const config = hasImages ? { headers: { 'Content-Type': 'multipart/form-data' } } : {};
+        console.log('[productService] Request config:', JSON.stringify(config));
+
+        const response = await api.post<{ success: boolean; data: Product }>('/products', payload, config);
+        console.log('[productService] Response received:', response.data.success ? 'Success' : 'Failure');
+        return response.data.data;
     },
 
     /**
      * Update existing product
      */
     updateProduct: async (id: string, data: Partial<Product>) => {
-        const payload = hasFiles(data) ? await toFormData(data) : data;
-        const config = hasFiles(data) ? { headers: { 'Content-Type': 'multipart/form-data' } } : {};
+        const hasImages = hasFiles(data);
+        const payload = hasImages ? await toFormData(data) : data;
+        const config = hasImages ? { headers: { 'Content-Type': 'multipart/form-data' } } : {};
 
-        const response = await api.patch<{ success: boolean; product: Product }>(
+        const response = await api.patch<{ success: boolean; data: Product }>(
             `/products/${id}`,
             payload,
             config
         );
-        return response.data.product;
+        return response.data.data;
     },
 
     /**

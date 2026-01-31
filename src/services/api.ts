@@ -13,7 +13,7 @@
 import axios from 'axios';
 import { DeviceEventEmitter, Platform } from 'react-native';
 import { storage } from '../utils/storage';
-import { ENV } from '../config/env';
+import { ENV } from '../config/config';
 
 /**
  * Module 2 API Instance (Products & Orders)

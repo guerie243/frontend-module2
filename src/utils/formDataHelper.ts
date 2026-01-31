@@ -1,80 +1,105 @@
-/**
- * FormData Helper Utility
- * 
- * Converts objects to FormData for multipart/form-data uploads
- * Pattern from Module 1
- */
+import { Platform } from 'react-native';
 
 /**
- * Convert an object to FormData for file uploads
- * Handles images, arrays, and nested objects
+ * Converts a flat object into FormData, handling files (local URIs).
+ * Supports arrays of files (e.g., images).
+ * ASYNC to support fetching Blobs on Web.
  */
-export const toFormData = async (data: any): Promise<FormData> => {
+export const toFormData = async (data: Record<string, any>): Promise<FormData> => {
+    console.log('[formDataHelper] toFormData: Starting conversion with keys:', Object.keys(data));
     const formData = new FormData();
 
-    for (const key in data) {
-        if (data.hasOwnProperty(key)) {
-            const value = data[key];
+    for (const key of Object.keys(data)) {
+        const value = data[key];
 
-            // Skip undefined or null values
-            if (value === undefined || value === null) {
-                continue;
-            }
+        if (value === undefined || value === null) continue;
 
-            // Handle arrays (e.g., images)
-            if (Array.isArray(value)) {
-                value.forEach((item, index) => {
-                    if (typeof item === 'string' && (item.startsWith('file://') || item.startsWith('content://') || item.startsWith('blob:'))) {
-                        // File URI
-                        const filename = item.split('/').pop() || `file_${index}`;
-                        formData.append(key, {
-                            uri: item,
-                            type: 'image/jpeg', // Default type
-                            name: filename,
-                        } as any);
-                    } else if (item && typeof item === 'object' && item.uri) {
-                        // File object with uri
-                        const filename = item.name || item.uri.split('/').pop() || `file_${index}`;
-                        formData.append(key, {
-                            uri: item.uri,
-                            type: item.type || 'image/jpeg',
-                            name: filename,
-                        } as any);
+        // Case for arrays (often for images, but also for locations, etc.)
+        if (Array.isArray(value)) {
+            // Check if this is an array of file URIs or an array of simple values
+            const hasFileUris = value.some(item => {
+                const itemUri = (typeof item === 'string') ? item : (item && typeof item === 'object' ? (item as any).uri : null);
+                return itemUri && typeof itemUri === 'string' && (itemUri.startsWith('file://') || itemUri.startsWith('content://') || itemUri.startsWith('blob:') || itemUri.startsWith('data:'));
+            });
+
+            if (hasFileUris) {
+                // Process as file array
+                for (let i = 0; i < value.length; i++) {
+                    const item = value[i];
+                    const itemUri = (typeof item === 'string') ? item : (item && typeof item === 'object' ? (item as any).uri : null);
+
+                    if (itemUri && typeof itemUri === 'string' && (itemUri.startsWith('file://') || itemUri.startsWith('content://') || itemUri.startsWith('blob:') || itemUri.startsWith('data:'))) {
+                        // It's a local file
+                        console.log(`[toFormData] Processing file array item ${i}:`, itemUri);
+                        if (Platform.OS === 'web') {
+                            // On Web, convert URI to Blob
+                            try {
+                                const response = await fetch(itemUri);
+                                const blob = await response.blob();
+                                formData.append(key, blob, `image_${Date.now()}_${i}.jpg`);
+                                console.log(`[toFormData] Appended blob for item ${i}, size: ${blob.size}`);
+                            } catch (e) {
+                                console.error("Error converting Web Blob:", e);
+                            }
+                        } else {
+                            // Native
+                            console.log(`[toFormData] Appending native file for item ${i}`);
+                            formData.append(key, {
+                                uri: (Platform.OS === 'ios') ? itemUri.replace('file://', '') : itemUri,
+                                type: 'image/jpeg',
+                                name: `${key}_${i}.jpg`,
+                            } as any);
+                        }
                     } else {
-                        // Regular array item
-                        formData.append(key, JSON.stringify(item));
+                        // Non-file: append directly
+                        console.log(`[toFormData] Appending non-file item ${i}:`, item);
+                        formData.append(key, item);
                     }
-                });
-            }
-            // Handle single file
-            else if (typeof value === 'string' && (value.startsWith('file://') || value.startsWith('content://') || value.startsWith('blob:'))) {
-                const filename = value.split('/').pop() || 'file';
-                formData.append(key, {
-                    uri: value,
-                    type: 'image/jpeg',
-                    name: filename,
-                } as any);
-            }
-            // Handle file object
-            else if (value && typeof value === 'object' && value.uri) {
-                const filename = value.name || value.uri.split('/').pop() || 'file';
-                formData.append(key, {
-                    uri: value.uri,
-                    type: value.type || 'image/jpeg',
-                    name: filename,
-                } as any);
-            }
-            // Handle objects
-            else if (typeof value === 'object' && !Array.isArray(value)) {
+                }
+            } else {
+                // Array of simple values (e.g., locations: ['Alger', 'Oran'])
+                // Stringify the entire array so backend can parse it
+                console.log(`[toFormData] Stringifying non-file array for key '${key}':`, value);
                 formData.append(key, JSON.stringify(value));
             }
-            // Handle primitives
-            else {
-                formData.append(key, String(value));
+        }
+        // Case for single file (uri string or object with uri)
+        else if (
+            (typeof value === 'string' && (value.startsWith('file://') || value.startsWith('content://') || value.startsWith('blob:') || value.startsWith('data:'))) ||
+            (typeof value === 'object' && value !== null && typeof (value as any).uri === 'string' && ((value as any).uri.startsWith('file://') || (value as any).uri.startsWith('content://') || (value as any).uri.startsWith('blob:') || (value as any).uri.startsWith('data:')))
+        ) {
+            const uri = typeof value === 'string' ? value : (value as any).uri;
+
+            if (Platform.OS === 'web') {
+                try {
+                    console.log(`[toFormData] Processing single file (Web):`, uri);
+                    const response = await fetch(uri);
+                    const blob = await response.blob();
+                    formData.append(key, blob, `image_${Date.now()}.jpg`);
+                    console.log(`[toFormData] Appended blob, size: ${blob.size}`);
+                } catch (e) {
+                    console.error("Error converting Web Blob (Single):", e);
+                }
+            } else {
+                console.log(`[toFormData] Processing single file (Native):`, uri);
+                formData.append(key, {
+                    uri: (Platform.OS === 'ios') ? uri.replace('file://', '') : uri,
+                    type: 'image/jpeg',
+                    name: `${key}.jpg`,
+                } as any);
             }
+        }
+        // Case for objects (not a file)
+        else if (typeof value === 'object' && value !== null) {
+            formData.append(key, JSON.stringify(value));
+        }
+        // Simple value
+        else {
+            formData.append(key, value);
         }
     }
 
+    console.log('[formDataHelper] toFormData: Conversion complete');
     return formData;
 };
 
@@ -84,21 +109,21 @@ export const toFormData = async (data: any): Promise<FormData> => {
 export const hasFiles = (data: any): boolean => {
     return Object.values(data).some(value => {
         // String URI
-        if (typeof value === 'string' && (value.startsWith('file://') || value.startsWith('content://') || value.startsWith('blob:'))) {
+        if (typeof value === 'string' && (value.startsWith('file://') || value.startsWith('content://') || value.startsWith('blob:') || value.startsWith('data:'))) {
             return true;
         }
         // Object with uri property
         if (value && typeof value === 'object' && !Array.isArray(value)) {
             const v = value as any;
-            if (typeof v.uri === 'string' && (v.uri.startsWith('file://') || v.uri.startsWith('content://') || v.uri.startsWith('blob:'))) {
+            if (typeof v.uri === 'string' && (v.uri.startsWith('file://') || v.uri.startsWith('content://') || v.uri.startsWith('blob:') || v.uri.startsWith('data:'))) {
                 return true;
             }
         }
         // Array containing URIs
         if (Array.isArray(value)) {
             return value.some(v => {
-                const uri = (typeof v === 'string') ? v : (v && typeof v === 'object' ? v.uri : null);
-                return typeof uri === 'string' && (uri.startsWith('file://') || uri.startsWith('content://') || uri.startsWith('blob:'));
+                const uri = (typeof v === 'string') ? v : (v && typeof v === 'object' ? (v as any).uri : null);
+                return typeof uri === 'string' && (uri.startsWith('file://') || uri.startsWith('content://') || uri.startsWith('blob:') || uri.startsWith('data:'));
             });
         }
         return false;

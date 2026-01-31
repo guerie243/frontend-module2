@@ -94,7 +94,7 @@ export default function ImagePictureUploader({
                     source={item.uri}
                     style={styles.image}
                     contentFit="cover"
-                    cachePolicy="memory-disk"
+                    contentFit="cover"
                 />
                 <TouchableOpacity
                     style={styles.removeBtn}

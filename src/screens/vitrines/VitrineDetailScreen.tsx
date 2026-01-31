@@ -12,6 +12,7 @@ import { useTheme } from '../../context/ThemeContext';
 import { useVitrineDetail, useMyVitrines } from '../../hooks/useVitrines';
 import { useProductsByVitrine } from '../../hooks/useProducts';
 import { useAuth } from '../../hooks/useAuth';
+import { Product } from '../../types';
 
 export const VitrineDetailScreen = () => {
     const navigation = useNavigation<any>();
@@ -26,11 +27,15 @@ export const VitrineDetailScreen = () => {
     const { data: myVitrines, isLoading: myVitrinesLoading } = useMyVitrines({ enabled: !slug });
 
     const displayedVitrine = slug ? vitrine : myVitrines?.[0];
-    const vitrineId = displayedVitrine?.id || displayedVitrine?._id || '';
+    const vitrineId = displayedVitrine?.vitrineId || displayedVitrine?.id || displayedVitrine?._id || '';
 
     // Get products from Module 2
     const { data: productsData, isLoading: productsLoading } = useProductsByVitrine(vitrineId, !!vitrineId);
-    const products = productsData?.pages.flatMap(page => page || []) || [];
+    const products: Product[] = productsData?.pages.flatMap(page => {
+        if (!page) return [];
+        if (Array.isArray(page)) return page;
+        return (page as any).data || [];
+    }) || [];
 
     const isOwner = isAuthenticated && user && displayedVitrine && (
         user.id === displayedVitrine.ownerId ||
@@ -113,7 +118,7 @@ export const VitrineDetailScreen = () => {
                                 {product.name}
                             </Text>
                             <Text style={[styles.productPrice, { color: theme.colors.primary }]}>
-                                {product.price.toFixed(2)} DA
+                                {product.price.toFixed(2)} {product.currency || 'USD'}
                             </Text>
                         </TouchableOpacity>
                     ))

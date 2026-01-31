@@ -5,13 +5,18 @@
  */
 
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator, FlatList, Dimensions } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
+import { Image } from 'expo-image';
+import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../context/ThemeContext';
 import { useProductDetail, useDeleteProduct } from '../../hooks/useProducts';
 import { useAuth } from '../../hooks/useAuth';
 import { useAlertService } from '../../utils/alertService';
 import { CartItem } from '../../types';
+import { getProductUrl } from '../../utils/sharingUtils';
+import { ScreenHeader } from '../../components/ScreenHeader';
+import { ShareMenuModal } from '../../components/ShareMenuModal';
 
 export const ProductDetailScreen = () => {
     const navigation = useNavigation<any>();
@@ -25,6 +30,7 @@ export const ProductDetailScreen = () => {
     const deleteProductMutation = useDeleteProduct();
 
     const [quantity, setQuantity] = useState(1);
+    const [isShareModalVisible, setIsShareModalVisible] = useState(false);
 
     const isOwner = isAuthenticated && product && (
         user?.id === product.vitrineId ||
@@ -81,101 +87,139 @@ export const ProductDetailScreen = () => {
     }
 
     return (
-        <ScrollView style={[styles.container, { backgroundColor: theme.colors.background }]}>
-            {/* Product Image */}
-            <View style={[styles.imageContainer, { backgroundColor: theme.colors.surfaceLight }]}>
-                <Text style={styles.imagePlaceholder}>📦</Text>
-            </View>
+        <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
+            <ScreenHeader
+                title={product.name}
+                onShare={() => setIsShareModalVisible(true)}
+            />
 
-            {/* Product Info */}
-            <View style={[styles.section, { backgroundColor: theme.colors.surface }]}>
-                <Text style={[styles.productName, { color: theme.colors.text }]}>
-                    {product.name}
-                </Text>
-                <Text style={[styles.productPrice, { color: theme.colors.primary }]}>
-                    {product.price.toFixed(2)} DA
-                </Text>
+            <ScrollView style={styles.container}>
+                {/* Product Image Gallery */}
+                <View style={[styles.imageContainer, { backgroundColor: theme.colors.surfaceLight }]}>
+                    {product.images && product.images.length > 0 ? (
+                        <FlatList
+                            data={product.images}
+                            keyExtractor={(item, index) => `${item}-${index}`}
+                            horizontal
+                            pagingEnabled
+                            showsHorizontalScrollIndicator={false}
+                            renderItem={({ item }) => (
+                                <Image
+                                    source={{ uri: item }}
+                                    style={styles.image}
+                                    contentFit="cover"
+                                    transition={200}
+                                />
+                            )}
+                        />
+                    ) : (
+                        <View style={styles.placeholderContainer}>
+                            <Ionicons name="image-outline" size={80} color={theme.colors.textTertiary} />
+                            <Text style={[styles.imagePlaceholderText, { color: theme.colors.textTertiary }]}>
+                                Pas d'image
+                            </Text>
+                        </View>
+                    )}
+                </View>
 
-                {product.category && (
-                    <View style={[styles.categoryBadge, { backgroundColor: theme.colors.primary + '20' }]}>
-                        <Text style={[styles.categoryText, { color: theme.colors.primary }]}>
-                            {product.category}
-                        </Text>
-                    </View>
-                )}
-
-                {product.description && (
-                    <View style={styles.descriptionContainer}>
-                        <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>
-                            Description
-                        </Text>
-                        <Text style={[styles.description, { color: theme.colors.textSecondary }]}>
-                            {product.description}
-                        </Text>
-                    </View>
-                )}
-
-                {product.stock !== undefined && (
-                    <Text style={[styles.stock, { color: theme.colors.textSecondary }]}>
-                        Stock: {product.stock} disponible(s)
+                {/* Product Info */}
+                <View style={[styles.section, { backgroundColor: theme.colors.surface }]}>
+                    <Text style={[styles.productName, { color: theme.colors.text }]}>
+                        {product.name}
                     </Text>
-                )}
-            </View>
+                    <Text style={[styles.productPrice, { color: theme.colors.primary }]}>
+                        {product.price.toFixed(2)} {product.currency || 'USD'}
+                    </Text>
 
-            {/* Owner Actions */}
-            {isOwner && (
-                <View style={[styles.section, { backgroundColor: theme.colors.surface }]}>
-                    <TouchableOpacity
-                        style={[styles.button, { backgroundColor: theme.colors.primary }]}
-                        onPress={handleEdit}
-                    >
-                        <Text style={styles.buttonText}>Modifier le produit</Text>
-                    </TouchableOpacity>
+                    {product.category && (
+                        <View style={[styles.categoryBadge, { backgroundColor: theme.colors.primary + '20' }]}>
+                            <Text style={[styles.categoryText, { color: theme.colors.primary }]}>
+                                {product.category}
+                            </Text>
+                        </View>
+                    )}
 
-                    <TouchableOpacity
-                        style={[styles.button, { backgroundColor: theme.colors.error }]}
-                        onPress={handleDelete}
-                        disabled={deleteProductMutation.isPending}
-                    >
-                        {deleteProductMutation.isPending ? (
-                            <ActivityIndicator color={theme.colors.white} />
-                        ) : (
-                            <Text style={styles.buttonText}>Supprimer</Text>
-                        )}
-                    </TouchableOpacity>
+                    {product.description && (
+                        <View style={styles.descriptionContainer}>
+                            <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>
+                                Description
+                            </Text>
+                            <Text style={[styles.description, { color: theme.colors.textSecondary }]}>
+                                {product.description}
+                            </Text>
+                        </View>
+                    )}
+
+                    {product.stock !== undefined && (
+                        <Text style={[styles.stock, { color: theme.colors.textSecondary }]}>
+                            Stock: {product.stock} disponible(s)
+                        </Text>
+                    )}
                 </View>
-            )}
 
-            {/* Add to Cart - For non-owners */}
-            {!isOwner && (
-                <View style={[styles.section, { backgroundColor: theme.colors.surface }]}>
-                    <View style={styles.quantityContainer}>
+                {/* Owner Actions */}
+                {isOwner && (
+                    <View style={[styles.section, { backgroundColor: theme.colors.surface }]}>
                         <TouchableOpacity
-                            style={[styles.quantityButton, { backgroundColor: theme.colors.background }]}
-                            onPress={() => setQuantity(Math.max(1, quantity - 1))}
+                            style={[styles.button, { backgroundColor: theme.colors.primary }]}
+                            onPress={handleEdit}
                         >
-                            <Text style={[styles.quantityButtonText, { color: theme.colors.text }]}>-</Text>
+                            <Text style={styles.buttonText}>Modifier le produit</Text>
                         </TouchableOpacity>
-                        <Text style={[styles.quantityText, { color: theme.colors.text }]}>{quantity}</Text>
+
                         <TouchableOpacity
-                            style={[styles.quantityButton, { backgroundColor: theme.colors.background }]}
-                            onPress={() => setQuantity(quantity + 1)}
+                            style={[styles.button, { backgroundColor: theme.colors.error }]}
+                            onPress={handleDelete}
+                            disabled={deleteProductMutation.isPending}
                         >
-                            <Text style={[styles.quantityButtonText, { color: theme.colors.text }]}>+</Text>
+                            {deleteProductMutation.isPending ? (
+                                <ActivityIndicator color={theme.colors.white} />
+                            ) : (
+                                <Text style={styles.buttonText}>Supprimer</Text>
+                            )}
                         </TouchableOpacity>
                     </View>
+                )}
 
-                    <TouchableOpacity
-                        style={[styles.button, { backgroundColor: theme.colors.primary }]}
-                        onPress={handleAddToCart}
-                    >
-                        <Text style={styles.buttonText}>
-                            Ajouter au panier • {(product.price * quantity).toFixed(2)} DA
-                        </Text>
-                    </TouchableOpacity>
-                </View>
-            )}
-        </ScrollView>
+                {/* Add to Cart - For non-owners */}
+                {!isOwner && (
+                    <View style={[styles.section, { backgroundColor: theme.colors.surface }]}>
+                        <View style={styles.quantityContainer}>
+                            <TouchableOpacity
+                                style={[styles.quantityButton, { backgroundColor: theme.colors.background }]}
+                                onPress={() => setQuantity(Math.max(1, quantity - 1))}
+                            >
+                                <Text style={[styles.quantityButtonText, { color: theme.colors.text }]}>-</Text>
+                            </TouchableOpacity>
+                            <Text style={[styles.quantityText, { color: theme.colors.text }]}>{quantity}</Text>
+                            <TouchableOpacity
+                                style={[styles.quantityButton, { backgroundColor: theme.colors.background }]}
+                                onPress={() => setQuantity(quantity + 1)}
+                            >
+                                <Text style={[styles.quantityButtonText, { color: theme.colors.text }]}>+</Text>
+                            </TouchableOpacity>
+                        </View>
+
+                        <TouchableOpacity
+                            style={[styles.button, { backgroundColor: theme.colors.primary }]}
+                            onPress={handleAddToCart}
+                        >
+                            <Text style={styles.buttonText}>
+                                Ajouter au panier • {(product.price * quantity).toFixed(2)} {product.currency || 'USD'}
+                            </Text>
+                        </TouchableOpacity>
+                    </View>
+                )}
+            </ScrollView>
+
+            <ShareMenuModal
+                isVisible={isShareModalVisible}
+                onClose={() => setIsShareModalVisible(false)}
+                url={getProductUrl(product.slug)}
+                title={`Partager ${product.name}`}
+                message={`Découvrez ${product.name} sur Andy Business !`}
+            />
+        </View>
     );
 };
 
@@ -193,12 +237,34 @@ const styles = StyleSheet.create({
     },
     imageContainer: {
         width: '100%',
-        height: 300,
+        height: 350,
         justifyContent: 'center',
         alignItems: 'center',
     },
-    imagePlaceholder: {
-        fontSize: 80,
+    image: {
+        width: Dimensions.get('window').width,
+        height: 350,
+    },
+    floatingShareButton: {
+        position: 'absolute',
+        top: 20,
+        right: 20,
+        backgroundColor: 'rgba(0,0,0,0.5)',
+        width: 44,
+        height: 44,
+        borderRadius: 22,
+        justifyContent: 'center',
+        alignItems: 'center',
+        zIndex: 30,
+    },
+    placeholderContainer: {
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    imagePlaceholderText: {
+        marginTop: 10,
+        fontSize: 14,
+        fontWeight: '500',
     },
     section: {
         padding: 16,

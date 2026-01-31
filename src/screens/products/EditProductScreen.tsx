@@ -5,12 +5,20 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { useTheme } from '../../context/ThemeContext';
 import { useAlertService } from '../../utils/alertService';
 import { useProductDetail, useUpdateProduct, useDeleteProduct } from '../../hooks/useProducts';
+import { useMyVitrines } from '../../hooks/useVitrines';
 import ImagePictureUploader from '../../components/ImagePictureUploader';
+import { CustomInput } from '../../components/CustomInput';
+import { CustomButton } from '../../components/CustomButton';
+import { ScreenWrapper } from '../../components/ScreenWrapper';
+import { AnimatedSelect } from '../../components/AnimatedSelect';
+import { PRODUCT_CATEGORIES } from '../../constants/productCategories';
+import { CURRENCY_OPTIONS } from '../../constants/currencies';
+import { LOCATION_OPTIONS } from '../../constants/locations';
 
 interface ImageItem {
     uri: string;
@@ -22,18 +30,26 @@ export const EditProductScreen = () => {
     const route = useRoute<any>();
     const { theme } = useTheme();
     const { showSuccess, showError, showConfirm } = useAlertService();
+    const updateProductMutation = useUpdateProduct();
+    const deleteProductMutation = useDeleteProduct();
+
+    // Get user's vitrine to display name
+    const { data: myVitrines = [] } = useMyVitrines();
 
     const { productId } = route.params || {};
     const { data: product, isLoading } = useProductDetail(productId);
-    const updateProductMutation = useUpdateProduct();
-    const deleteProductMutation = useDeleteProduct();
+
+    // Find the vitrine associated with this product
+    const activeVitrine = myVitrines.find(v => v.id === product?.vitrineId || v._id === product?.vitrineId || v.vitrineId === product?.vitrineId);
 
     const [name, setName] = useState('');
     const [description, setDescription] = useState('');
     const [price, setPrice] = useState('');
+    const [currency, setCurrency] = useState('DZD');
     const [category, setCategory] = useState('');
-    const [stock, setStock] = useState('');
-    const [locations, setLocations] = useState('');
+    const [locations, setLocations] = useState<string[]>([]);
+    const [isDeliveryPaid, setIsDeliveryPaid] = useState(false);
+    const [deliveryFee, setDeliveryFee] = useState('');
     const [images, setImages] = useState<ImageItem[]>([]);
 
     // Prefill form when product loads
@@ -42,9 +58,12 @@ export const EditProductScreen = () => {
             setName(product.name || '');
             setDescription(product.description || '');
             setPrice(product.price?.toString() || '');
+            setCurrency(product.currency || 'DZD');
             setCategory(product.category || '');
-            setStock(product.stock?.toString() || '');
-            setLocations(product.locations?.join(', ') || '');
+            setLocations(product.locations || []);
+            const hasDeliveryFee = !!product.deliveryFee && product.deliveryFee > 0;
+            setIsDeliveryPaid(hasDeliveryFee);
+            setDeliveryFee(product.deliveryFee?.toString() || '');
             if (product.images) {
                 setImages(product.images.map((url: string) => ({
                     uri: url,
@@ -66,6 +85,11 @@ export const EditProductScreen = () => {
             return;
         }
 
+        if (!category) {
+            showError('Veuillez sélectionner une catégorie');
+            return;
+        }
+
         console.log('Updating product:', name);
 
         try {
@@ -73,9 +97,10 @@ export const EditProductScreen = () => {
                 name: name.trim(),
                 description: description.trim() || undefined,
                 price: parseFloat(price),
-                category: category.trim() || undefined,
-                stock: stock ? parseInt(stock) : undefined,
-                locations: locations ? locations.split(',').map((l: string) => l.trim()) : undefined,
+                currency,
+                category,
+                locations: locations.length > 0 ? locations : undefined,
+                deliveryFee: (isDeliveryPaid && deliveryFee) ? parseFloat(deliveryFee) : undefined,
                 images: images.map((img: ImageItem) => img.uri),
             };
 
@@ -123,141 +148,132 @@ export const EditProductScreen = () => {
     }
 
     return (
-        <ScrollView
-            style={[styles.container, { backgroundColor: theme.colors.background }]}
-            contentContainerStyle={styles.contentContainer}
-        >
-            <Text style={[styles.title, { color: theme.colors.text }]}>
-                Modifier le produit
-            </Text>
-
-            <View style={[styles.section, { backgroundColor: theme.colors.surface }]}>
-                <Text style={[styles.label, { color: theme.colors.textSecondary }]}>
-                    Nom du produit *
+        <ScreenWrapper scrollable contentContainerStyle={styles.contentContainer}>
+            <View style={styles.container}>
+                <Text style={[styles.title, { color: theme.colors.text }]}>
+                    Modifier le produit
                 </Text>
-                <TextInput
-                    style={[styles.input, {
-                        backgroundColor: theme.colors.background,
-                        borderColor: theme.colors.border,
-                        color: theme.colors.text
-                    }]}
-                    placeholder="Nom du produit"
-                    placeholderTextColor={theme.colors.textTertiary}
-                    value={name}
-                    onChangeText={setName}
-                />
 
-                <Text style={[styles.label, { color: theme.colors.textSecondary }]}>
-                    Description
-                </Text>
-                <TextInput
-                    style={[styles.textArea, {
-                        backgroundColor: theme.colors.background,
-                        borderColor: theme.colors.border,
-                        color: theme.colors.text
-                    }]}
-                    placeholder="Description du produit"
-                    placeholderTextColor={theme.colors.textTertiary}
-                    value={description}
-                    onChangeText={setDescription}
-                    multiline
-                    numberOfLines={4}
-                />
-
-                <Text style={[styles.label, { color: theme.colors.textSecondary }]}>
-                    Prix (DA) *
-                </Text>
-                <TextInput
-                    style={[styles.input, {
-                        backgroundColor: theme.colors.background,
-                        borderColor: theme.colors.border,
-                        color: theme.colors.text
-                    }]}
-                    placeholder="0.00"
-                    placeholderTextColor={theme.colors.textTertiary}
-                    value={price}
-                    onChangeText={setPrice}
-                    keyboardType="decimal-pad"
-                />
-
-                <Text style={[styles.label, { color: theme.colors.textSecondary }]}>
-                    Catégorie
-                </Text>
-                <TextInput
-                    style={[styles.input, {
-                        backgroundColor: theme.colors.background,
-                        borderColor: theme.colors.border,
-                        color: theme.colors.text
-                    }]}
-                    placeholder="Catégorie"
-                    placeholderTextColor={theme.colors.textTertiary}
-                    value={category}
-                    onChangeText={setCategory}
-                />
-
-                <Text style={[styles.label, { color: theme.colors.textSecondary }]}>
-                    Stock disponible
-                </Text>
-                <TextInput
-                    style={[styles.input, {
-                        backgroundColor: theme.colors.background,
-                        borderColor: theme.colors.border,
-                        color: theme.colors.text
-                    }]}
-                    placeholder="0"
-                    placeholderTextColor={theme.colors.textTertiary}
-                    value={stock}
-                    onChangeText={setStock}
-                    keyboardType="number-pad"
-                />
-
-                <Text style={[styles.label, { color: theme.colors.textSecondary }]}>
-                    Emplacements (séparés par des virgules)
-                </Text>
-                <TextInput
-                    style={[styles.input, {
-                        backgroundColor: theme.colors.background,
-                        borderColor: theme.colors.border,
-                        color: theme.colors.text
-                    }]}
-                    placeholder="Ex: Alger, Oran"
-                    placeholderTextColor={theme.colors.textTertiary}
-                    value={locations}
-                    onChangeText={setLocations}
-                />
-
-                <Text style={[styles.label, { color: theme.colors.textSecondary }]}>
-                    Images du produit (Max 5)
-                </Text>
-                <ImagePictureUploader images={images} setImages={setImages} />
-            </View>
-
-            <TouchableOpacity
-                style={[styles.button, { backgroundColor: theme.colors.primary }]}
-                onPress={handleUpdateProduct}
-                disabled={updateProductMutation.isPending || deleteProductMutation.isPending}
-            >
-                {updateProductMutation.isPending ? (
-                    <ActivityIndicator color={theme.colors.white} />
-                ) : (
-                    <Text style={styles.buttonText}>Enregistrer les modifications</Text>
-                )}
-            </TouchableOpacity>
-
-            <TouchableOpacity
-                style={[styles.deleteButton, { borderColor: theme.colors.error }]}
-                onPress={handleDeleteProduct}
-                disabled={updateProductMutation.isPending || deleteProductMutation.isPending}
-            >
-                {deleteProductMutation.isPending ? (
-                    <ActivityIndicator color={theme.colors.error} />
-                ) : (
-                    <Text style={[styles.deleteButtonText, { color: theme.colors.error }]}>
-                        Supprimer le produit
+                {activeVitrine && (
+                    <Text style={[styles.subtitle, { color: theme.colors.textSecondary }]}>
+                        Vitrine : {activeVitrine.name}
                     </Text>
                 )}
-            </TouchableOpacity>
-        </ScrollView>
+
+                <View style={[styles.section, { backgroundColor: theme.colors.surface, borderRadius: theme.borderRadius.m }]}>
+                    <CustomInput
+                        label="Nom du produit *"
+                        value={name}
+                        onChangeText={setName}
+                        placeholder="Ex: T-shirt rouge"
+                    />
+
+                    <CustomInput
+                        label="Description"
+                        value={description}
+                        onChangeText={setDescription}
+                        placeholder="Description détaillée du produit"
+                        multiline
+                        numberOfLines={4}
+                        style={{ minHeight: 100, textAlignVertical: 'top' }}
+                    />
+
+                    <AnimatedSelect
+                        label="Catégorie *"
+                        value={category}
+                        onChange={setCategory}
+                        options={PRODUCT_CATEGORIES.filter(c => c.id !== '').map(c => ({ label: c.label, value: c.id }))}
+                        placeholder="Sélectionner une catégorie"
+                    />
+
+                    <View style={styles.row}>
+                        <View style={{ flex: 2, marginRight: 8 }}>
+                            <CustomInput
+                                label="Prix *"
+                                value={price}
+                                onChangeText={setPrice}
+                                placeholder="0.00"
+                                keyboardType="decimal-pad"
+                            />
+                        </View>
+                        <View style={{ flex: 1 }}>
+                            <AnimatedSelect
+                                label="Devise"
+                                value={currency}
+                                onChange={setCurrency}
+                                options={CURRENCY_OPTIONS.map(c => ({ label: c.label, value: c.value }))}
+                            />
+                        </View>
+                    </View>
+
+                    <AnimatedSelect
+                        label="Lieu de disponibilité"
+                        value={locations[0] || ''}
+                        onChange={(val) => setLocations([val])}
+                        options={LOCATION_OPTIONS.map(l => ({ label: l.label, value: l.value }))}
+                        placeholder="Sélectionner une ville"
+                    />
+
+                    <View style={styles.toggleContainer}>
+                        <Text style={[styles.toggleLabel, { color: theme.colors.textSecondary }]}>
+                            La livraison est payante ?
+                        </Text>
+                        <TouchableOpacity
+                            onPress={() => setIsDeliveryPaid(!isDeliveryPaid)}
+                            style={[
+                                styles.toggle,
+                                {
+                                    backgroundColor: isDeliveryPaid ? theme.colors.primary : theme.colors.background,
+                                    borderColor: isDeliveryPaid ? theme.colors.primary : theme.colors.border
+                                }
+                            ]}
+                        >
+                            <View style={[
+                                styles.toggleCircle,
+                                {
+                                    backgroundColor: '#FFFFFF',
+                                    transform: [{ translateX: isDeliveryPaid ? 20 : 0 }]
+                                }
+                            ]} />
+                        </TouchableOpacity>
+                    </View>
+
+                    {isDeliveryPaid && (
+                        <CustomInput
+                            label="Frais de livraison"
+                            value={deliveryFee}
+                            onChangeText={setDeliveryFee}
+                            placeholder="0.00"
+                            keyboardType="decimal-pad"
+                            icon="car-outline"
+                        />
+                    )}
+
+                    <Text style={[styles.imageLabel, { color: theme.colors.textSecondary }]}>
+                        Images du produit (Max 5)
+                    </Text>
+                    <ImagePictureUploader images={images} setImages={setImages} />
+                </View>
+
+                <View style={styles.footer}>
+                    <CustomButton
+                        title="Enregistrer les modifications"
+                        onPress={handleUpdateProduct}
+                        isLoading={updateProductMutation.isPending}
+                        style={{ marginBottom: 12 }}
+                    />
+
+                    <CustomButton
+                        title="Supprimer le produit"
+                        onPress={handleDeleteProduct}
+                        variant="secondary"
+                        style={{ borderColor: theme.colors.error }}
+                        textStyle={{ color: theme.colors.error }}
+                        disabled={deleteProductMutation.isPending}
+                    />
+                </View>
+            </View>
+        </ScreenWrapper>
     );
 };
 
@@ -279,7 +295,13 @@ const styles = StyleSheet.create({
     title: {
         fontSize: 24,
         fontWeight: 'bold',
-        marginBottom: 20,
+        marginBottom: 24,
+        textAlign: 'center',
+    },
+    subtitle: {
+        fontSize: 14,
+        marginBottom: 24,
+        textAlign: 'center',
     },
     section: {
         padding: 16,
@@ -292,43 +314,53 @@ const styles = StyleSheet.create({
         marginTop: 12,
         marginBottom: 6,
     },
-    input: {
-        height: 50,
-        borderWidth: 1,
-        borderRadius: 8,
-        paddingHorizontal: 16,
-        fontSize: 16,
+    imageLabel: {
+        fontSize: 14,
+        fontWeight: '500',
+        marginTop: 20,
+        marginBottom: 12,
     },
-    textArea: {
-        borderWidth: 1,
-        borderRadius: 8,
-        paddingHorizontal: 16,
+    toggleContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
         paddingVertical: 12,
+        marginBottom: 8,
+    },
+    toggleLabel: {
         fontSize: 16,
-        textAlignVertical: 'top',
-        minHeight: 100,
+        fontWeight: '500',
     },
-    button: {
-        height: 50,
-        borderRadius: 12,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    buttonText: {
-        color: '#FFFFFF',
-        fontSize: 16,
-        fontWeight: '600',
-    },
-    deleteButton: {
-        height: 50,
-        borderRadius: 12,
-        justifyContent: 'center',
-        alignItems: 'center',
-        marginTop: 12,
+    toggle: {
+        width: 50,
+        height: 30,
+        borderRadius: 15,
+        padding: 5,
         borderWidth: 1,
     },
-    deleteButtonText: {
-        fontSize: 16,
-        fontWeight: '600',
+    toggleCircle: {
+        width: 18,
+        height: 18,
+        borderRadius: 9,
+    },
+    sectionHeader: {
+        marginTop: 20,
+        marginBottom: 8,
+        paddingHorizontal: 4,
+    },
+    sectionTitle: {
+        fontSize: 13,
+        fontWeight: '700',
+        textTransform: 'uppercase',
+        letterSpacing: 0.5,
+    },
+    row: {
+        flexDirection: 'row',
+        alignItems: 'flex-start',
+        marginBottom: 16,
+    },
+    footer: {
+        marginTop: 32,
+        marginBottom: 40,
     },
 });

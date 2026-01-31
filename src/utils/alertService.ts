@@ -1,38 +1,35 @@
 /**
  * Alert Service Utility
  * 
- * Centralized alert/toast service for user feedback
- * Pattern from Module 1
+ * Centralized alert/toast service using AlertProvider and ToastProvider
+ * Adapted from Module 1
  */
 
-import { Alert, Platform } from 'react-native';
+import { useAlert } from '../components/AlertProvider';
+import { useToast } from '../components/ToastNotification';
 
 export const useAlertService = () => {
+    const { showAlert } = useAlert();
+    const { showToast } = useToast();
+
     const showSuccess = (message: string, title: string = 'Succès') => {
-        if (Platform.OS === 'web') {
-            alert(`${title}: ${message}`);
-        } else {
-            Alert.alert(title, message, [{ text: 'OK' }]);
-        }
+        showToast(message, 'success');
         console.log(`✅ ${title}: ${message}`);
     };
 
     const showError = (message: string, title: string = 'Erreur') => {
-        if (Platform.OS === 'web') {
-            alert(`${title}: ${message}`);
-        } else {
-            Alert.alert(title, message, [{ text: 'OK' }]);
-        }
+        showToast(message, 'error');
         console.error(`❌ ${title}: ${message}`);
     };
 
     const showInfo = (message: string, title: string = 'Information') => {
-        if (Platform.OS === 'web') {
-            alert(`${title}: ${message}`);
-        } else {
-            Alert.alert(title, message, [{ text: 'OK' }]);
-        }
+        showToast(message, 'info');
         console.log(`ℹ️ ${title}: ${message}`);
+    };
+
+    const showWarning = (message: string, title: string = 'Attention') => {
+        showToast(message, 'warning');
+        console.warn(`⚠️ ${title}: ${message}`);
     };
 
     const showConfirm = (
@@ -41,35 +38,40 @@ export const useAlertService = () => {
         onCancel?: () => void,
         title: string = 'Confirmation'
     ) => {
-        if (Platform.OS === 'web') {
-            if (window.confirm(`${title}: ${message}`)) {
-                onConfirm();
-            } else if (onCancel) {
-                onCancel();
-            }
-        } else {
-            Alert.alert(
-                title,
-                message,
-                [
-                    {
-                        text: 'Annuler',
-                        onPress: onCancel,
-                        style: 'cancel'
-                    },
-                    {
-                        text: 'Confirmer',
-                        onPress: onConfirm
-                    }
-                ]
-            );
-        }
+        showAlert(
+            title,
+            message,
+            'confirm',
+            [
+                {
+                    text: 'Annuler',
+                    onPress: onCancel,
+                    style: 'cancel'
+                },
+                {
+                    text: 'Confirmer',
+                    onPress: onConfirm,
+                    style: 'default'
+                }
+            ]
+        );
+    };
+
+    const showAlertDialog = (
+        message: string,
+        title: string = 'Information',
+        type: 'success' | 'error' | 'warning' | 'info' = 'info'
+    ) => {
+        showAlert(title, message, type);
     };
 
     return {
         showSuccess,
         showError,
         showInfo,
-        showConfirm
+        showWarning,
+        showConfirm,
+        showAlertDialog,
+        showToast, // Expose toast directly for custom durations
     };
 };

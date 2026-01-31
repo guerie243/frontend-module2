@@ -9,6 +9,14 @@ import { View, Text, StyleSheet, ScrollView, ActivityIndicator } from 'react-nat
 import { useRoute } from '@react-navigation/native';
 import { useTheme } from '../../context/ThemeContext';
 import { useOrderDetail } from '../../hooks/useCommandes';
+import { Image } from 'expo-image';
+import { MapWebView } from '../../components/MapWebView';
+import { Ionicons } from '@expo/vector-icons';
+import { getOrderUrl } from '../../utils/sharingUtils';
+import { TouchableOpacity } from 'react-native-gesture-handler';
+import { ScreenHeader } from '../../components/ScreenHeader';
+import { ShareMenuModal } from '../../components/ShareMenuModal';
+import { useState } from 'react';
 
 export const OrderClientDetailScreen = () => {
     const route = useRoute<any>();
@@ -16,6 +24,7 @@ export const OrderClientDetailScreen = () => {
 
     const { orderId } = route.params || {};
     const { data: order, isLoading } = useOrderDetail(orderId);
+    const [isShareModalVisible, setIsShareModalVisible] = useState(false);
 
     if (isLoading) {
         return (
@@ -60,70 +69,96 @@ export const OrderClientDetailScreen = () => {
     };
 
     return (
-        <ScrollView style={[styles.container, { backgroundColor: theme.colors.background }]}>
-            <View style={[styles.section, { backgroundColor: theme.colors.surface }]}>
-                <Text style={[styles.title, { color: theme.colors.text }]}>
-                    Commande #{order.id?.slice(-6) || order._id?.slice(-6)}
-                </Text>
-                <View style={[styles.statusBadge, { backgroundColor: getStatusColor(order.status) + '20' }]}>
-                    <Text style={[styles.statusText, { color: getStatusColor(order.status) }]}>
-                        {getStatusLabel(order.status)}
-                    </Text>
-                </View>
-            </View>
-
-            {/* Products */}
-            <View style={[styles.section, { backgroundColor: theme.colors.surface }]}>
-                <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>
-                    Vos produits
-                </Text>
-                {order.products.map((product, index) => (
-                    <View key={index} style={styles.productRow}>
-                        <Text style={[styles.productName, { color: theme.colors.text }]}>
-                            {product.productName} x {product.quantity}
-                        </Text>
-                        <Text style={[styles.productPrice, { color: theme.colors.textSecondary }]}>
-                            {(product.price * product.quantity).toFixed(2)} DA
+        <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
+            <ScreenHeader
+                title={`Commande #${order.id?.slice(-6) || order._id?.slice(-6)}`}
+                onShare={() => setIsShareModalVisible(true)}
+            />
+            <ScrollView style={styles.container}>
+                <View style={[styles.section, { backgroundColor: theme.colors.surface }]}>
+                    <View style={[styles.statusBadge, { backgroundColor: getStatusColor(order.status) + '20' }]}>
+                        <Text style={[styles.statusText, { color: getStatusColor(order.status) }]}>
+                            {getStatusLabel(order.status)}
                         </Text>
                     </View>
-                ))}
-                <View style={[styles.divider, { backgroundColor: theme.colors.border }]} />
-                <View style={styles.totalRow}>
-                    <Text style={[styles.totalLabel, { color: theme.colors.text }]}>Total</Text>
-                    <Text style={[styles.totalPrice, { color: theme.colors.primary }]}>
-                        {order.totalPrice.toFixed(2)} DA
-                    </Text>
                 </View>
-            </View>
 
-            {/* Delivery Info */}
-            <View style={[styles.section, { backgroundColor: theme.colors.surface }]}>
-                <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>
-                    Informations de livraison
-                </Text>
-                <Text style={[styles.label, { color: theme.colors.textSecondary }]}>Adresse</Text>
-                <Text style={[styles.value, { color: theme.colors.text }]}>{order.deliveryAddress}</Text>
+                {/* Products */}
+                <View style={[styles.section, { backgroundColor: theme.colors.surface }]}>
+                    <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>
+                        Vos produits
+                    </Text>
+                    {order.products.map((product, index) => (
+                        <View key={index} style={styles.productRow}>
+                            <Text style={[styles.productName, { color: theme.colors.text }]}>
+                                {product.productName} x {product.quantity}
+                            </Text>
+                            <Text style={[styles.productPrice, { color: theme.colors.textSecondary }]}>
+                                {(product.price * product.quantity).toFixed(2)} {product.currency || 'USD'}
+                            </Text>
+                        </View>
+                    ))}
+                    <View style={[styles.divider, { backgroundColor: theme.colors.border }]} />
+                    <View style={styles.totalRow}>
+                        <Text style={[styles.totalLabel, { color: theme.colors.text }]}>Total</Text>
+                        <Text style={[styles.totalPrice, { color: theme.colors.primary }]}>
+                            {order.totalPrice.toFixed(2)} {order.products?.[0]?.currency || 'USD'}
+                        </Text>
+                    </View>
+                </View>
 
-                {order.notes && (
-                    <>
-                        <Text style={[styles.label, { color: theme.colors.textSecondary }]}>Notes</Text>
-                        <Text style={[styles.value, { color: theme.colors.text }]}>{order.notes}</Text>
-                    </>
-                )}
-            </View>
+                {/* Delivery Info */}
+                <View style={[styles.section, { backgroundColor: theme.colors.surface }]}>
+                    <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>
+                        Informations de livraison
+                    </Text>
+                    <Text style={[styles.label, { color: theme.colors.textSecondary }]}>Adresse</Text>
+                    <Text style={[styles.value, { color: theme.colors.text }]}>
+                        {order.city}, {order.commune}{'\n'}
+                        {order.deliveryAddress}
+                    </Text>
 
-            {/* Contact Info */}
-            <View style={[styles.section, { backgroundColor: theme.colors.surface }]}>
-                <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>
-                    Vos coordonnées
-                </Text>
-                <Text style={[styles.label, { color: theme.colors.textSecondary }]}>Nom</Text>
-                <Text style={[styles.value, { color: theme.colors.text }]}>{order.clientName}</Text>
+                    {(order.gpsCoords || order.deliveryLocation) && (
+                        <View style={styles.mapContainer}>
+                            <MapWebView
+                                height={250}
+                                lat={Number(order.gpsCoords?.latitude || order.deliveryLocation?.latitude)}
+                                lon={Number(order.gpsCoords?.longitude || order.deliveryLocation?.longitude)}
+                                zoom={15}
+                                label={order.clientName}
+                            />
+                        </View>
+                    )}
 
-                <Text style={[styles.label, { color: theme.colors.textSecondary }]}>Téléphone</Text>
-                <Text style={[styles.value, { color: theme.colors.text }]}>{order.clientPhone}</Text>
-            </View>
-        </ScrollView>
+                    {order.notes && (
+                        <>
+                            <Text style={[styles.label, { color: theme.colors.textSecondary }]}>Notes</Text>
+                            <Text style={[styles.value, { color: theme.colors.text }]}>{order.notes}</Text>
+                        </>
+                    )}
+                </View>
+
+                {/* Contact Info */}
+                <View style={[styles.section, { backgroundColor: theme.colors.surface }]}>
+                    <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>
+                        Vos coordonnées
+                    </Text>
+                    <Text style={[styles.label, { color: theme.colors.textSecondary }]}>Nom</Text>
+                    <Text style={[styles.value, { color: theme.colors.text }]}>{order.clientName}</Text>
+
+                    <Text style={[styles.label, { color: theme.colors.textSecondary }]}>Téléphone</Text>
+                    <Text style={[styles.value, { color: theme.colors.text }]}>{order.clientPhone}</Text>
+                </View>
+            </ScrollView>
+
+            <ShareMenuModal
+                isVisible={isShareModalVisible}
+                onClose={() => setIsShareModalVisible(false)}
+                url={getOrderUrl(order.id || order._id)}
+                title="Suivi de commande"
+                message={`Suivez l'état de votre commande #${order.id?.slice(-6) || order._id?.slice(-6)} sur Andy Business.`}
+            />
+        </View>
     );
 };
 
@@ -201,5 +236,16 @@ const styles = StyleSheet.create({
     },
     value: {
         fontSize: 16,
+    },
+    mapContainer: {
+        height: 180,
+        borderRadius: 8,
+        overflow: 'hidden',
+        marginTop: 12,
+        backgroundColor: '#f0f0f0',
+    },
+    mapImage: {
+        width: '100%',
+        height: '100%',
     },
 });

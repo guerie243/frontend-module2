@@ -11,6 +11,7 @@ import { useTheme } from '../../context/ThemeContext';
 import { useAlertService } from '../../utils/alertService';
 import { useVitrineDetail } from '../../hooks/useVitrines';
 import { vitrineService } from '../../services/vitrineService';
+import { ScreenWrapper } from '../../components/ScreenWrapper';
 
 export const VitrineEditScreen = () => {
     const navigation = useNavigation<any>();
@@ -89,10 +90,7 @@ export const VitrineEditScreen = () => {
     }
 
     return (
-        <ScrollView
-            style={[styles.container, { backgroundColor: theme.colors.background }]}
-            contentContainerStyle={styles.contentContainer}
-        >
+        <ScreenWrapper scrollable contentContainerStyle={styles.contentContainer}>
             <Text style={[styles.title, { color: theme.colors.text }]}>
                 Modifier la vitrine
             </Text>
@@ -190,7 +188,7 @@ export const VitrineEditScreen = () => {
                     <Text style={styles.buttonText}>Enregistrer les modifications</Text>
                 )}
             </TouchableOpacity>
-        </ScrollView>
+        </ScreenWrapper>
     );
 };
 

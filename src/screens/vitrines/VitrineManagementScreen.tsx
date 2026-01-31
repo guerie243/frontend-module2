@@ -27,8 +27,8 @@ export const VitrineManagementScreen = () => {
     };
 
     const handleEditVitrine = () => {
-        console.log('Navigating to VitrineEdit');
-        navigation.navigate('VitrineEdit', { slug: vitrine?.slug });
+        console.log('Navigating to VitrineModificationMain');
+        navigation.navigate('VitrineModificationMain');
     };
 
     return (

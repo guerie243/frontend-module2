@@ -16,8 +16,8 @@ interface AuthContextType {
     isAuthenticated: boolean;
     isGuest: boolean;
     isLoading: boolean;
-    login: (email: string, password: string) => Promise<void>;
-    register: (data: { name: string; email: string; password: string; phone?: string }) => Promise<void>;
+    login: (identifier: string, password: string) => Promise<void>;
+    register: (data: { profileName: string; email?: string; phoneNumber?: string; password: string }) => Promise<void>;
     logout: () => Promise<void>;
     updateUser: (data: Partial<User>) => Promise<void>;
 }
@@ -79,32 +79,39 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         }
     };
 
-    const login = async (email: string, password: string) => {
+    const login = async (identifier: string, password: string) => {
         try {
-            console.log('Attempting login for:', email);
-            const response = await userService.login(email, password);
+            console.log('[AuthContext] Attempting login for:', identifier);
+            const response = await userService.login(identifier, password);
+            console.log('[AuthContext] API Response received:', JSON.stringify(response, null, 2));
+
+            if (!response.user) {
+                console.error('[AuthContext] CRITICAL: User object is missing in response!');
+                throw new Error('Données utilisateur manquantes');
+            }
 
             await storage.setItem('userToken', response.token);
             await storage.setItem('userData', JSON.stringify(response.user));
 
+            console.log('[AuthContext] Setting user state...');
             setUser(response.user);
-            console.log('Login successful:', response.user.email);
+            console.log('[AuthContext] User state set. Authenticated should be true.');
         } catch (error: any) {
-            console.error('Login error:', error.response?.data || error.message);
+            console.error('[AuthContext] Login error:', error);
             throw new Error(error.response?.data?.message || 'Échec de la connexion');
         }
     };
 
-    const register = async (data: { name: string; email: string; password: string; phone?: string }) => {
+    const register = async (data: { profileName: string; email?: string; phoneNumber?: string; password: string }) => {
         try {
-            console.log('Attempting registration for:', data.email);
+            console.log('Attempting registration for:', data.email || data.phoneNumber);
             const response = await userService.register(data);
 
             await storage.setItem('userToken', response.token);
             await storage.setItem('userData', JSON.stringify(response.user));
 
             setUser(response.user);
-            console.log('Registration successful:', response.user.email);
+            console.log('Registration successful:', response.user.email || response.user.phoneNumber);
         } catch (error: any) {
             console.error('Registration error:', error.response?.data || error.message);
             throw new Error(error.response?.data?.message || 'Échec de l\'inscription');

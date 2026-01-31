@@ -9,10 +9,6 @@ import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { AppTabs } from './AppTabs';
 
-// Auth Screens
-import { LoginScreen } from '../screens/auth/LoginScreen';
-import { RegisterScreen } from '../screens/auth/RegisterScreen';
-
 // Order Screens
 import { OrderInfoScreen } from '../screens/orders/OrderInfoScreen';
 import { DeliveryLocationScreen } from '../screens/orders/DeliveryLocationScreen';
@@ -29,6 +25,9 @@ import { EditProductScreen } from '../screens/products/EditProductScreen';
 // Vitrine Screens
 import { VitrineManagementScreen } from '../screens/vitrines/VitrineManagementScreen';
 import { VitrineEditScreen } from '../screens/vitrines/VitrineEditScreen';
+import { VitrineModificationMain } from '../screens/vitrines/VitrineModificationMain';
+import { EditVitrineFieldScreen } from '../screens/vitrines/EditVitrineFieldScreen';
+import { SettingsScreen } from '../screens/settings/SettingsScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -42,10 +41,6 @@ export const AppStack = () => {
         >
             {/* Main Tabs */}
             <Stack.Screen name="MainTabs" component={AppTabs} />
-
-            {/* Auth Routes - Accessible for guest mode */}
-            <Stack.Screen name="Login" component={LoginScreen} />
-            <Stack.Screen name="Register" component={RegisterScreen} />
 
             {/* Order Routes */}
             <Stack.Screen name="OrderInfo" component={OrderInfoScreen} />
@@ -63,6 +58,9 @@ export const AppStack = () => {
             {/* Vitrine Routes */}
             <Stack.Screen name="VitrineManagement" component={VitrineManagementScreen} />
             <Stack.Screen name="VitrineEdit" component={VitrineEditScreen} />
+            <Stack.Screen name="VitrineModificationMain" component={VitrineModificationMain} />
+            <Stack.Screen name="EditVitrineField" component={EditVitrineFieldScreen} />
+            <Stack.Screen name="Settings" component={SettingsScreen} />
         </Stack.Navigator>
     );
 };

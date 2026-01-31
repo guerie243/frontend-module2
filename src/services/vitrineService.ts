@@ -8,6 +8,7 @@
 
 import { module1Api } from './api';
 import { Vitrine } from '../types';
+import { toFormData, hasFiles } from '../utils/formDataHelper';
 
 export const vitrineService = {
     /**
@@ -40,9 +41,11 @@ export const vitrineService = {
      * Update vitrine (calls Module 1)
      */
     updateVitrine: async (slug: string, data: Partial<Vitrine>) => {
+        const payload = hasFiles(data) ? await toFormData(data) : data;
+
         const response = await module1Api.patch<{ success: boolean; vitrine: Vitrine }>(
             `/vitrines/myvitrine/${slug}`,
-            data
+            payload
         );
         return response.data.vitrine;
     },

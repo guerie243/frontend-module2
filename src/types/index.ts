@@ -8,12 +8,15 @@ export interface User {
     id?: string;
     _id?: string;
     userId?: string;
-    email: string;
-    name: string;
+    email?: string;
+    name?: string;
+    profileName?: string;
+    phoneNumber?: string;
     phone?: string;
     firebaseToken?: string;
     webPushToken?: string;
     avatar?: string;
+    profilePhoto?: string;
     createdAt?: string;
 }
 
@@ -30,6 +33,8 @@ export interface Product {
     vitrineId: string;
     locations?: string[];
     stock?: number;
+    currency?: string;
+    deliveryFee?: number;
     isActive?: boolean;
     createdAt?: string;
     updatedAt?: string;
@@ -41,6 +46,8 @@ export interface OrderProduct {
     productImage?: string;
     quantity: number;
     price: number;
+    currency?: string;
+    locations?: string[];
 }
 
 export interface Order {
@@ -51,7 +58,13 @@ export interface Order {
     clientName: string;
     clientPhone: string;
     deliveryAddress: string;
+    city?: string;
+    commune?: string;
     deliveryLocation?: {
+        latitude: number;
+        longitude: number;
+    };
+    gpsCoords?: {
         latitude: number;
         longitude: number;
     };

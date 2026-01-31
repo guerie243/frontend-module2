@@ -10,11 +10,15 @@ import { StatusBar } from 'expo-status-bar';
 import { RootProvider } from './src/context/RootProvider';
 import { RootNavigator } from './src/navigation/RootNavigator';
 
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
+
 export default function App() {
   return (
-    <RootProvider>
-      <RootNavigator />
-      <StatusBar style="auto" />
-    </RootProvider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <RootProvider>
+        <RootNavigator />
+        <StatusBar style="auto" />
+      </RootProvider>
+    </GestureHandlerRootView>
   );
 }

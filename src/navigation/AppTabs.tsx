@@ -10,8 +10,8 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
 import { ProductsCatalogScreen } from '../screens/products/ProductsCatalogScreen';
 import { OrdersListScreen } from '../screens/orders/OrdersListScreen';
-import { VitrineDetailScreen } from '../screens/vitrines/VitrineDetailScreen';
-import { SettingsScreen } from '../screens/settings/SettingsScreen';
+import { CreateProductScreen } from '../screens/products/CreateProductScreen';
+
 
 const Tab = createBottomTabNavigator();
 
@@ -23,14 +23,13 @@ export const AppTabs = () => {
                 tabBarIcon: ({ focused, color, size }) => {
                     let iconName: any;
 
-                    if (route.name === 'ProductsTab') {
-                        iconName = focused ? 'grid' : 'grid-outline';
+                    if (route.name === 'HomeTab') {
+                        iconName = focused ? 'storefront' : 'storefront-outline';
+                    } else if (route.name === 'AddProductTab') {
+                        iconName = focused ? 'add-circle' : 'add-circle-outline';
                     } else if (route.name === 'OrdersTab') {
                         iconName = focused ? 'receipt' : 'receipt-outline';
-                    } else if (route.name === 'VitrineTab') {
-                        iconName = focused ? 'storefront' : 'storefront-outline';
-                    } else if (route.name === 'SettingsTab') {
-                        iconName = focused ? 'settings' : 'settings-outline';
+
                     }
 
                     return <Ionicons name={iconName} size={size} color={color} />;
@@ -39,26 +38,22 @@ export const AppTabs = () => {
                 tabBarInactiveTintColor: '#8E8E93',
             })}
         >
-            <Tab.Screen 
-                name="ProductsTab" 
+            <Tab.Screen
+                name="HomeTab"
                 component={ProductsCatalogScreen}
-                options={{ tabBarLabel: 'Produits' }}
+                options={{ tabBarLabel: 'Ma Vitrine' }}
             />
-            <Tab.Screen 
-                name="OrdersTab" 
+            <Tab.Screen
+                name="AddProductTab"
+                component={CreateProductScreen}
+                options={{ tabBarLabel: 'Ajouter' }}
+            />
+            <Tab.Screen
+                name="OrdersTab"
                 component={OrdersListScreen}
                 options={{ tabBarLabel: 'Commandes' }}
             />
-            <Tab.Screen 
-                name="VitrineTab" 
-                component={VitrineDetailScreen}
-                options={{ tabBarLabel: 'Vitrine' }}
-            />
-            <Tab.Screen 
-                name="SettingsTab" 
-                component={SettingsScreen}
-                options={{ tabBarLabel: 'Paramètres' }}
-            />
+
         </Tab.Navigator>
     );
 };

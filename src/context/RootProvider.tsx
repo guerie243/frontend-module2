@@ -9,6 +9,10 @@ import React, { ReactNode } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider } from './AuthContext';
 import { ThemeProvider } from './ThemeContext';
+import { AlertProvider } from '../components/AlertProvider';
+import { ToastProvider } from '../components/ToastNotification';
+import { AlertModal } from '../components/AlertModal';
+import { NotificationHandler } from '../components/NotificationHandler';
 
 // Create QueryClient instance
 const queryClient = new QueryClient({
@@ -16,7 +20,7 @@ const queryClient = new QueryClient({
         queries: {
             retry: 2,
             staleTime: 1000 * 60 * 5, // 5 minutes
-            cacheTime: 1000 * 60 * 10, // 10 minutes
+            gcTime: 1000 * 60 * 10, // 10 minutes
         },
     },
 });
@@ -25,9 +29,15 @@ export const RootProvider = ({ children }: { children: ReactNode }) => {
     return (
         <QueryClientProvider client={queryClient}>
             <ThemeProvider>
-                <AuthProvider>
-                    {children}
-                </AuthProvider>
+                <AlertProvider>
+                    <ToastProvider>
+                        <AuthProvider>
+                            <NotificationHandler />
+                            <AlertModal />
+                            {children}
+                        </AuthProvider>
+                    </ToastProvider>
+                </AlertProvider>
             </ThemeProvider>
         </QueryClientProvider>
     );

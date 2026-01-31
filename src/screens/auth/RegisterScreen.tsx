@@ -1,43 +1,76 @@
-/**
- * Register Screen
- * 
- * User registration screen with signup logic
- */
-
-import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, ScrollView } from 'react-native';
+import React, { useState, useMemo } from 'react';
+import {
+    View,
+    Text,
+    StyleSheet,
+    TouchableOpacity,
+    KeyboardAvoidingView,
+    Platform,
+    ScrollView,
+} from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useAuth } from '../../hooks/useAuth';
 import { useAlertService } from '../../utils/alertService';
 import { useTheme } from '../../context/ThemeContext';
+import { CustomInput } from '../../components/CustomInput';
+import { CustomButton } from '../../components/CustomButton';
+import { ScreenWrapper } from '../../components/ScreenWrapper';
+import { Ionicons } from '@expo/vector-icons';
 
 export const RegisterScreen = () => {
     const navigation = useNavigation<any>();
     const { register } = useAuth();
     const { showError, showSuccess } = useAlertService();
     const { theme } = useTheme();
+    const styles = useMemo(() => createStyles(theme), [theme]);
 
-    const [name, setName] = useState('');
-    const [email, setEmail] = useState('');
-    const [phone, setPhone] = useState('');
+    const [step, setStep] = useState(1);
+    const [loginMode, setLoginMode] = useState(0); // 0: Email, 1: Phone
+    const [profileName, setProfileName] = useState('');
+    const [identifier, setIdentifier] = useState('');
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
     const [isLoading, setIsLoading] = useState(false);
+    const [isPasswordVisible, setIsPasswordVisible] = useState(false);
+    const [isConfirmPasswordVisible, setIsConfirmPasswordVisible] = useState(false);
 
-    const handleRegister = async () => {
-        // Validation
-        if (!name || !email || !password || !confirmPassword) {
-            showError('Veuillez remplir tous les champs obligatoires');
+    const getPasswordError = useMemo(() => {
+        if (!password) return undefined;
+        if (password.length < 8) return '8 caractères minimum';
+        if (!/[A-Z]/.test(password)) return 'Une majuscule requise';
+        if (!/[a-z]/.test(password)) return 'Une minuscule requise';
+        if (!/\d/.test(password)) return 'Un chiffre requis';
+        return undefined;
+    }, [password]);
+
+    const isPasswordValid = !getPasswordError && password.length >= 8;
+    const confirmPasswordError = confirmPassword && password !== confirmPassword ? 'Les mots de passe ne correspondent pas' : undefined;
+
+    const toggleLoginMode = () => {
+        setIdentifier('');
+        setLoginMode((prev) => (prev === 0 ? 1 : 0));
+    };
+
+    const handleNext = () => {
+        if (!profileName || !identifier) {
+            showError('Veuillez remplir tous les champs');
             return;
         }
-
-        if (!email.includes('@')) {
+        if (loginMode === 0 && !identifier.includes('@')) {
             showError('Email invalide');
             return;
         }
+        setStep(2);
+    };
 
-        if (password.length < 6) {
-            showError('Le mot de passe doit contenir au moins 6 caractères');
+    const handleRegister = async () => {
+        if (!password || !confirmPassword) {
+            showError('Veuillez remplir les mots de passe');
+            return;
+        }
+
+        if (!isPasswordValid) {
+            showError('Le mot de passe ne respecte pas les règles de sécurité');
             return;
         }
 
@@ -47,180 +80,224 @@ export const RegisterScreen = () => {
         }
 
         setIsLoading(true);
-        console.log('Registration attempt:', email);
-
         try {
-            await register({ name, email, password, phone: phone || undefined });
+            await register({
+                profileName,
+                email: loginMode === 0 ? identifier : undefined,
+                phoneNumber: loginMode === 1 ? identifier : undefined,
+                password,
+            });
             showSuccess('Inscription réussie');
-            console.log('Registration successful, navigating to MainTabs');
-            // Navigation handled by RootNavigator
         } catch (error: any) {
-            console.error('Registration failed:', error.message);
             showError(error.message || 'Échec de l\'inscription');
         } finally {
             setIsLoading(false);
         }
     };
 
-    const handleNavigateToLogin = () => {
-        console.log('Navigating back to Login');
-        navigation.goBack();
-    };
+    const renderStepIndicators = () => (
+        <View style={styles.indicatorContainer}>
+            <View style={[styles.indicator, step >= 1 ? styles.indicatorActive : styles.indicatorInactive]} />
+            <View style={[styles.indicator, step >= 2 ? styles.indicatorActive : styles.indicatorInactive]} />
+        </View>
+    );
 
     return (
-        <ScrollView
-            style={[styles.container, { backgroundColor: theme.colors.background }]}
-            contentContainerStyle={styles.contentContainer}
+        <ScreenWrapper
+            scrollable
+            contentContainerStyle={styles.scrollContent}
         >
-            <View style={styles.formContainer}>
+            {step === 2 && (
+                <TouchableOpacity
+                    style={styles.backArrow}
+                    onPress={() => setStep(1)}
+                >
+                    <Ionicons name="arrow-back" size={24} color={theme.colors.primary} />
+                </TouchableOpacity>
+            )}
+            <View style={styles.content}>
                 <Text style={[styles.title, { color: theme.colors.text }]}>Inscription</Text>
                 <Text style={[styles.subtitle, { color: theme.colors.textSecondary }]}>
-                    Créez votre compte
+                    {step === 1 ? 'Vos informations de base' : 'Sécurisez votre compte'}
                 </Text>
 
-                <TextInput
-                    style={[styles.input, {
-                        backgroundColor: theme.colors.surface,
-                        borderColor: theme.colors.border,
-                        color: theme.colors.text
-                    }]}
-                    placeholder="Nom complet *"
-                    placeholderTextColor={theme.colors.textTertiary}
-                    value={name}
-                    onChangeText={setName}
-                    editable={!isLoading}
-                />
+                {renderStepIndicators()}
 
-                <TextInput
-                    style={[styles.input, {
-                        backgroundColor: theme.colors.surface,
-                        borderColor: theme.colors.border,
-                        color: theme.colors.text
-                    }]}
-                    placeholder="Email *"
-                    placeholderTextColor={theme.colors.textTertiary}
-                    value={email}
-                    onChangeText={setEmail}
-                    autoCapitalize="none"
-                    keyboardType="email-address"
-                    editable={!isLoading}
-                />
+                <View style={styles.form}>
+                    {step === 1 ? (
+                        <>
+                            <CustomInput
+                                placeholder="Nom complet *"
+                                value={profileName}
+                                onChangeText={setProfileName}
+                                autoCapitalize="words"
+                            />
 
-                <TextInput
-                    style={[styles.input, {
-                        backgroundColor: theme.colors.surface,
-                        borderColor: theme.colors.border,
-                        color: theme.colors.text
-                    }]}
-                    placeholder="Téléphone (optionnel)"
-                    placeholderTextColor={theme.colors.textTertiary}
-                    value={phone}
-                    onChangeText={setPhone}
-                    keyboardType="phone-pad"
-                    editable={!isLoading}
-                />
+                            <CustomInput
+                                placeholder={loginMode === 0 ? "E-mail *" : "Téléphone *"}
+                                value={identifier}
+                                onChangeText={setIdentifier}
+                                keyboardType={loginMode === 0 ? 'email-address' : 'phone-pad'}
+                                autoCapitalize="none"
+                            />
 
-                <TextInput
-                    style={[styles.input, {
-                        backgroundColor: theme.colors.surface,
-                        borderColor: theme.colors.border,
-                        color: theme.colors.text
-                    }]}
-                    placeholder="Mot de passe *"
-                    placeholderTextColor={theme.colors.textTertiary}
-                    value={password}
-                    onChangeText={setPassword}
-                    secureTextEntry
-                    editable={!isLoading}
-                />
+                            <TouchableOpacity
+                                onPress={toggleLoginMode}
+                                style={styles.toggleContainer}
+                            >
+                                <Text style={[styles.toggleText, { color: theme.colors.primary }]}>
+                                    Utiliser {loginMode === 0 ? 'le téléphone' : "l'e-mail"}
+                                </Text>
+                            </TouchableOpacity>
 
-                <TextInput
-                    style={[styles.input, {
-                        backgroundColor: theme.colors.surface,
-                        borderColor: theme.colors.border,
-                        color: theme.colors.text
-                    }]}
-                    placeholder="Confirmer le mot de passe *"
-                    placeholderTextColor={theme.colors.textTertiary}
-                    value={confirmPassword}
-                    onChangeText={setConfirmPassword}
-                    secureTextEntry
-                    editable={!isLoading}
-                />
-
-                <TouchableOpacity
-                    style={[styles.button, { backgroundColor: theme.colors.primary }]}
-                    onPress={handleRegister}
-                    disabled={isLoading}
-                >
-                    {isLoading ? (
-                        <ActivityIndicator color={theme.colors.white} />
+                            <CustomButton
+                                title="Suivant"
+                                onPress={handleNext}
+                                style={styles.button}
+                            />
+                        </>
                     ) : (
-                        <Text style={styles.buttonText}>S'inscrire</Text>
-                    )}
-                </TouchableOpacity>
+                        <>
+                            <CustomInput
+                                placeholder="Mot de passe *"
+                                value={password}
+                                onChangeText={setPassword}
+                                secureTextEntry={!isPasswordVisible}
+                                error={getPasswordError}
+                                RightComponent={
+                                    <TouchableOpacity
+                                        onPress={() => setIsPasswordVisible(!isPasswordVisible)}
+                                        style={{ padding: 8 }}
+                                    >
+                                        <Ionicons
+                                            name={isPasswordVisible ? 'eye-off' : 'eye'}
+                                            size={20}
+                                            color={theme.colors.textSecondary}
+                                        />
+                                    </TouchableOpacity>
+                                }
+                            />
 
-                <TouchableOpacity
-                    style={styles.linkButton}
-                    onPress={handleNavigateToLogin}
-                    disabled={isLoading}
-                >
-                    <Text style={[styles.linkText, { color: theme.colors.primary }]}>
-                        Déjà un compte ? Se connecter
-                    </Text>
-                </TouchableOpacity>
+                            <CustomInput
+                                placeholder="Confirmer le mot de passe *"
+                                value={confirmPassword}
+                                onChangeText={setConfirmPassword}
+                                secureTextEntry={!isConfirmPasswordVisible}
+                                error={confirmPasswordError}
+                                RightComponent={
+                                    <TouchableOpacity
+                                        onPress={() => setIsConfirmPasswordVisible(!isConfirmPasswordVisible)}
+                                        style={{ padding: 8 }}
+                                    >
+                                        <Ionicons
+                                            name={isConfirmPasswordVisible ? 'eye-off' : 'eye'}
+                                            size={20}
+                                            color={theme.colors.textSecondary}
+                                        />
+                                    </TouchableOpacity>
+                                }
+                            />
+
+                            <CustomButton
+                                title="S'inscrire"
+                                onPress={handleRegister}
+                                isLoading={isLoading}
+                                disabled={!isPasswordValid || password !== confirmPassword}
+                                style={styles.button}
+                            />
+                        </>
+                    )}
+
+                    <View style={styles.footer}>
+                        <Text style={[styles.footerText, { color: theme.colors.textSecondary }]}>
+                            Déjà un compte ?{' '}
+                        </Text>
+                        <TouchableOpacity onPress={() => navigation.goBack()}>
+                            <Text style={[styles.link, { color: theme.colors.primary }]}>
+                                Se connecter
+                            </Text>
+                        </TouchableOpacity>
+                    </View>
+                </View>
             </View>
-        </ScrollView>
+        </ScreenWrapper>
     );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (theme: any) => StyleSheet.create({
     container: {
         flex: 1,
     },
-    contentContainer: {
+    scrollContent: {
         flexGrow: 1,
         justifyContent: 'center',
-        padding: 20,
+        paddingHorizontal: 30, // Consistently 30 for all auth screens
     },
-    formContainer: {
-        width: '100%',
+    content: {
+        justifyContent: 'center',
+        paddingVertical: 20,
     },
     title: {
         fontSize: 28,
         fontWeight: 'bold',
         marginBottom: 8,
+        textAlign: 'center',
     },
     subtitle: {
         fontSize: 14,
-        marginBottom: 32,
+        marginBottom: 20, // Reduced from 24
+        textAlign: 'center',
     },
-    input: {
-        height: 50,
-        borderWidth: 1,
-        borderRadius: 8,
-        paddingHorizontal: 16,
-        marginBottom: 16,
-        fontSize: 16,
-    },
-    button: {
-        height: 50,
-        borderRadius: 8,
+    indicatorContainer: {
+        flexDirection: 'row',
         justifyContent: 'center',
-        alignItems: 'center',
-        marginTop: 8,
+        marginBottom: 24, // Reduced from 32
     },
-    buttonText: {
-        color: '#FFFFFF',
-        fontSize: 16,
-        fontWeight: '600',
+    indicator: {
+        height: 4,
+        width: 60,
+        borderRadius: 2,
+        marginHorizontal: 4,
     },
-    linkButton: {
-        marginTop: 16,
-        alignItems: 'center',
+    indicatorActive: {
+        backgroundColor: theme.colors.primary,
     },
-    linkText: {
+    indicatorInactive: {
+        backgroundColor: theme.colors.border,
+    },
+    form: {
+        width: '100%',
+    },
+    toggleContainer: {
+        alignSelf: 'flex-start',
+        marginTop: 4,
+        marginBottom: 16,
+        paddingVertical: 4,
+    },
+    toggleText: {
         fontSize: 14,
         fontWeight: '500',
+    },
+    backArrow: {
+        position: 'absolute',
+        top: Platform.OS === 'ios' ? 60 : 40,
+        left: 20,
+        zIndex: 10,
+        padding: 8,
+    },
+    button: {
+        marginTop: 8,
+    },
+    footer: {
+        flexDirection: 'row',
+        justifyContent: 'center',
+        marginTop: 24,
+    },
+    footerText: {
+        fontSize: 14,
+    },
+    link: {
+        fontSize: 14,
+        fontWeight: '600',
     },
 });

@@ -4,21 +4,45 @@
  * Display all orders for vitrine owner with filtering
  */
 
-import React, { useState, useMemo } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, FlatList, ActivityIndicator, RefreshControl } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import React, { useState, useMemo, useEffect } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, FlatList, ActivityIndicator, RefreshControl, ScrollView } from 'react-native';
+import { useNavigation, useRoute } from '@react-navigation/native';
+import { Ionicons } from '@expo/vector-icons';
+import { ScreenWrapper } from '../../components/ScreenWrapper';
 import { useTheme } from '../../context/ThemeContext';
 import { useOrdersByVitrine } from '../../hooks/useCommandes';
 import { useMyVitrines } from '../../hooks/useVitrines';
+import { useAuth } from '../../hooks/useAuth';
+import { getOrderUrl } from '../../utils/sharingUtils';
+import { ShareMenuModal } from '../../components/ShareMenuModal';
+import { GuestPrompt } from '../../components/GuestPrompt';
+import { LoadingComponent } from '../../components/LoadingComponent';
+import { CustomButton } from '../../components/CustomButton';
 import { Order } from '../../types';
+import { ScreenHeader } from '../../components/ScreenHeader';
 
 export const OrdersListScreen = () => {
     const navigation = useNavigation<any>();
+    const route = useRoute<any>();
     const { theme } = useTheme();
+    const { isAuthenticated, isGuest } = useAuth();
+
+    // Get specific vitrine from params if coming from a specific vitrine management
+    const requestedVitrineId = route.params?.vitrineId;
 
     // Get user's vitrine
-    const { data: myVitrines, isLoading: vitrinesLoading, refetch: refetchVitrines } = useMyVitrines();
-    const vitrineId = myVitrines?.[0]?.id || myVitrines?.[0]?._id || '';
+    const { data: myVitrines = [], isLoading: vitrinesLoading, refetch: refetchVitrines } = useMyVitrines({
+        enabled: isAuthenticated
+    });
+
+    // Determine active vitrine
+    const activeVitrine = requestedVitrineId
+        ? (myVitrines.find(v => v.id === requestedVitrineId || v._id === requestedVitrineId) || myVitrines[0])
+        : myVitrines[0];
+
+    const vitrineId = activeVitrine?.vitrineId || activeVitrine?.id || activeVitrine?._id || '';
+
+    console.log('[OrdersListScreen] Active Vitrine:', activeVitrine?.name, 'vitrineId:', vitrineId);
 
     // Get orders for this vitrine
     const {
@@ -27,12 +51,24 @@ export const OrdersListScreen = () => {
         refetch: refetchOrders
     } = useOrdersByVitrine(vitrineId, !!vitrineId);
 
-    const [statusFilter, setStatusFilter] = useState<Order['status'] | 'all'>('all');
+    console.log('[OrdersListScreen] Orders fetched count:', orders?.length);
 
-    // Filter orders by status
+    const [statusFilter, setStatusFilter] = useState<Order['status'] | 'all'>('all');
+    const [selectedOrderForShare, setSelectedOrderForShare] = useState<Order | null>(null);
+
+    // Filter and sort orders
     const filteredOrders = useMemo(() => {
-        if (statusFilter === 'all') return orders;
-        return orders.filter(order => order.status === statusFilter);
+        let result = orders;
+        if (statusFilter !== 'all') {
+            result = orders.filter(order => order.status === statusFilter);
+        }
+
+        // Sort by newest first
+        return [...result].sort((a, b) => {
+            const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+            const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+            return dateB - dateA;
+        });
     }, [orders, statusFilter]);
 
     const onRefresh = async () => {
@@ -83,6 +119,15 @@ export const OrdersListScreen = () => {
                         {getStatusLabel(item.status)}
                     </Text>
                 </View>
+                <TouchableOpacity
+                    onPress={(e) => {
+                        e.stopPropagation();
+                        setSelectedOrderForShare(item);
+                    }}
+                    style={styles.cardShareButton}
+                >
+                    <Ionicons name="share-social-outline" size={20} color={theme.colors.primary} />
+                </TouchableOpacity>
             </View>
 
             <Text style={[styles.clientName, { color: theme.colors.textSecondary }]}>
@@ -97,7 +142,7 @@ export const OrdersListScreen = () => {
                     {item.products.length} article(s)
                 </Text>
                 <Text style={[styles.totalPrice, { color: theme.colors.primary }]}>
-                    {item.totalPrice.toFixed(2)} DA
+                    {item.totalPrice.toFixed(2)} {item.products[0]?.currency || 'USD'}
                 </Text>
             </View>
         </TouchableOpacity>
@@ -124,35 +169,74 @@ export const OrdersListScreen = () => {
         </TouchableOpacity>
     );
 
-    if (vitrinesLoading || ordersLoading) {
+    // 1. Show guest prompt if not logged in
+    if (isGuest) {
         return (
-            <View style={[styles.centerContainer, { backgroundColor: theme.colors.background }]}>
-                <ActivityIndicator size="large" color={theme.colors.primary} />
-                <Text style={[styles.loadingText, { color: theme.colors.textSecondary }]}>
-                    Chargement des commandes...
-                </Text>
-            </View>
+            <ScreenWrapper>
+                <GuestPrompt
+                    message="Vous devez être connecté pour gérer vos commandes."
+                    onPress={() => navigation.navigate('Login')}
+                />
+            </ScreenWrapper>
         );
     }
 
-    if (!vitrineId) {
+    // 2. Show loading while fetching vitrines or orders (initial load)
+    if (vitrinesLoading || (ordersLoading && orders.length === 0)) {
+        return <LoadingComponent message="Chargement de vos commandes..." />;
+    }
+
+    // 3. Show message if no vitrines found
+    if (isAuthenticated && myVitrines.length === 0) {
         return (
-            <View style={[styles.centerContainer, { backgroundColor: theme.colors.background }]}>
-                <Text style={[styles.emptyText, { color: theme.colors.textSecondary }]}>
-                    Aucune vitrine trouvée
-                </Text>
-            </View>
+            <ScreenWrapper>
+                <View style={styles.centerContainer}>
+                    <Text style={[styles.title, { color: theme.colors.text, marginBottom: 12 }]}>
+                        Oups ! Aucune vitrine trouvée
+                    </Text>
+                    <Text style={{ textAlign: 'center', color: theme.colors.textSecondary, marginBottom: 24, paddingHorizontal: 40 }}>
+                        Vous devez posséder une vitrine pour recevoir et gérer des commandes.
+                    </Text>
+                    <CustomButton
+                        title="Créer ma Vitrine"
+                        onPress={() => navigation.navigate('CreateVitrine')}
+                        style={{ paddingHorizontal: 40 }}
+                    />
+                    <TouchableOpacity
+                        onPress={() => refetchVitrines()}
+                        style={{ marginTop: 20 }}
+                    >
+                        <Text style={{ color: theme.colors.primary }}>Actualiser</Text>
+                    </TouchableOpacity>
+                </View>
+            </ScreenWrapper>
         );
     }
 
     return (
-        <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
+        <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
+            <ScreenHeader
+                title="Mes Commandes"
+                showBack={false}
+            />
+
+            {activeVitrine && (
+                <Text style={[styles.subtitle, { color: theme.colors.textSecondary, marginTop: 8 }]}>
+                    Vitrine : {activeVitrine.name}
+                </Text>
+            )}
+
             {/* Filter Buttons */}
             <View style={styles.filterContainer}>
-                {renderFilterButton('all', 'Toutes')}
-                {renderFilterButton('pending', 'En attente')}
-                {renderFilterButton('confirmed', 'Confirmées')}
-                {renderFilterButton('completed', 'Livrées')}
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
+                    {renderFilterButton('all', 'Toutes')}
+                    {renderFilterButton('pending', 'En attente')}
+                    {renderFilterButton('confirmed', 'Confirmées')}
+                    {renderFilterButton('preparing', 'Préparation')}
+                    {renderFilterButton('delivering', 'Livraison')}
+                    {renderFilterButton('completed', 'Livrées')}
+                    {renderFilterButton('cancelled', 'Annulées')}
+                </ScrollView>
             </View>
 
             <FlatList
@@ -175,6 +259,16 @@ export const OrdersListScreen = () => {
                     </View>
                 }
             />
+
+            {selectedOrderForShare && (
+                <ShareMenuModal
+                    isVisible={!!selectedOrderForShare}
+                    onClose={() => setSelectedOrderForShare(null)}
+                    url={getOrderUrl(selectedOrderForShare.id || selectedOrderForShare._id)}
+                    title="Suivi de commande"
+                    message={`Lien de suivi pour la commande #${selectedOrderForShare.id?.slice(-6) || selectedOrderForShare._id?.slice(-6)} sur Andy Business.`}
+                />
+            )}
         </View>
     );
 };
@@ -205,6 +299,22 @@ const styles = StyleSheet.create({
     filterButtonText: {
         fontSize: 14,
         fontWeight: '500',
+    },
+    header: {
+        paddingTop: 20,
+        paddingBottom: 8,
+        paddingHorizontal: 16,
+    },
+    title: {
+        fontSize: 24,
+        fontWeight: 'bold',
+        textAlign: 'center',
+        marginBottom: 8,
+    },
+    subtitle: {
+        fontSize: 14,
+        textAlign: 'center',
+        marginBottom: 8,
     },
     listContainer: {
         padding: 16,
@@ -252,6 +362,10 @@ const styles = StyleSheet.create({
     totalPrice: {
         fontSize: 18,
         fontWeight: 'bold',
+    },
+    cardShareButton: {
+        padding: 4,
+        marginLeft: 8,
     },
     emptyContainer: {
         paddingVertical: 40,
