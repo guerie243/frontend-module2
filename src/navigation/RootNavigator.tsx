@@ -42,7 +42,6 @@ export const RootNavigator = () => {
                     },
                 },
                 ProductDetail: 'product-owner/:slug', // Alias for owner view if needed, though they usually navigate internally
-                OrderClientDetail: 'order/:orderId',
             },
         },
     };
