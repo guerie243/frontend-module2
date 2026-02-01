@@ -52,8 +52,12 @@ const SCREEN_WIDTH = Dimensions.get('window').width;
 export const ProductsCatalogScreen = () => {
     const navigation = useNavigation<any>();
     const route = useRoute<any>();
+    const { slug: routeSlug } = route.params || {};
+
+    // Debug Deep Link Params
+    console.log('[ProductsCatalogScreen] Route Params Slug:', routeSlug);
+
     // For Home Screen of Module 2, we assume we want to show "My Vitrine" by default if no slug is passed
-    // But this screen is the main entry point, so usually no slug passed.
     const { slug } = route.params || {};
     const { theme } = useTheme();
     // Assuming updateVitrine exists in useVitrines hook, checking imports...

@@ -1,20 +1,16 @@
 /**
  * Root Navigator
  * 
- * Main navigation entry point with authentication flow
- * Pattern from Module 1 RootNavigator
+ * Main navigation entry point with architecture from Module 1 (Guest-Usable)
  */
 
 import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { useAuth } from '../hooks/useAuth';
-import { AuthStack } from './AuthStack';
 import { AppStack } from './AppStack';
-import { View, ActivityIndicator, StyleSheet } from 'react-native';
-
+import { View, ActivityIndicator, StyleSheet, Platform } from 'react-native';
 import * as Linking from 'expo-linking';
 import { LinkingHandler } from './LinkingHandler';
-import { Platform } from 'react-native';
 
 const prefix = Linking.createURL('/');
 
@@ -31,11 +27,21 @@ export const RootNavigator = () => {
         ],
         config: {
             screens: {
-                // Common screens (Root level in both stacks)
+                // Common screens (Root level in AppStack)
                 Login: 'login',
                 Register: 'register',
-                VitrineDetail: 'vitrine/:slug',
-                ProductDetail: 'product/:slug',
+                VitrineDetail: {
+                    path: 'vitrine/:slug',
+                    parse: {
+                        slug: (slug: string) => decodeURIComponent(slug),
+                    },
+                },
+                ProductDetail: {
+                    path: 'product/:slug',
+                    parse: {
+                        slug: (slug: string) => decodeURIComponent(slug),
+                    },
+                },
                 OrderClientDetail: 'order/:orderId',
 
                 // Nested screens in AppStack
