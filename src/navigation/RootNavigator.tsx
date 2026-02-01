@@ -24,24 +24,21 @@ export const RootNavigator = () => {
         prefixes: [prefix, 'andybusiness://'],
         config: {
             screens: {
-                Auth: {
-                    screens: {
-                        Login: 'login',
-                        Register: 'register',
-                        // Guest Routes
-                        VitrineGuest: 'vitrine/:slug',
-                        ProductDetail: 'product/:slug',
-                        OrderClientDetail: 'order/:orderId',
-                    },
-                },
+                // Common screens (Root level in both stacks)
+                Login: 'login',
+                Register: 'register',
+                VitrineDetail: 'vitrine/:slug',
+                ProductDetail: 'product/:slug',
+                OrderClientDetail: 'order/:orderId',
+
+                // Nested screens in AppStack
                 MainTabs: {
                     screens: {
-                        HomeTab: 'home', // Changed from vitrine/:slug? to avoid conflict. Owner sees their own vitrine via HomeTab logic
+                        HomeTab: 'home',
                         AddProductTab: 'add-product',
                         OrdersTab: 'orders',
                     },
                 },
-                ProductDetail: 'product-owner/:slug', // Alias for owner view if needed, though they usually navigate internally
             },
         },
     };

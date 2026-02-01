@@ -8,6 +8,7 @@
 import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { AppTabs } from './AppTabs';
+import { ProductsCatalogScreen } from '../screens/products/ProductsCatalogScreen';
 
 // Order Screens
 import { OrderInfoScreen } from '../screens/orders/OrderInfoScreen';
@@ -61,6 +62,7 @@ export const AppStack = () => {
             <Stack.Screen name="VitrineModificationMain" component={VitrineModificationMain} />
             <Stack.Screen name="EditVitrineField" component={EditVitrineFieldScreen} />
             <Stack.Screen name="Settings" component={SettingsScreen} />
+            <Stack.Screen name="VitrineDetail" component={ProductsCatalogScreen} />
         </Stack.Navigator>
     );
 };

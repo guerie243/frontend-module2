@@ -31,7 +31,7 @@ export const AuthStack = () => {
             <Stack.Screen name="Register" component={RegisterScreen} />
 
             {/* Guest Routes */}
-            <Stack.Screen name="VitrineGuest" component={ProductsCatalogScreen} />
+            <Stack.Screen name="VitrineDetail" component={ProductsCatalogScreen} />
             <Stack.Screen name="ProductDetail" component={ProductDetailScreen} />
             <Stack.Screen name="OrderInfo" component={OrderInfoScreen} />
             <Stack.Screen name="DeliveryLocation" component={DeliveryLocationScreen} />
