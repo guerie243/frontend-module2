@@ -38,6 +38,15 @@ export const vitrineService = {
     },
 
     /**
+     * Create vitrine (calls Module 1)
+     */
+    createVitrine: async (data: Partial<Vitrine>) => {
+        const payload = hasFiles(data) ? await toFormData(data) : data;
+        const response = await module1Api.post<Vitrine>('/vitrines', payload);
+        return response.data;
+    },
+
+    /**
      * Update vitrine (calls Module 1)
      */
     updateVitrine: async (slug: string, data: Partial<Vitrine>) => {
@@ -50,5 +59,11 @@ export const vitrineService = {
         return response.data.vitrine;
     },
 
-
+    /**
+     * Delete vitrine (calls Module 1)
+     */
+    deleteVitrine: async (slug: string) => {
+        const response = await module1Api.delete(`/vitrines/myvitrine/${slug}`);
+        return response.data;
+    },
 };

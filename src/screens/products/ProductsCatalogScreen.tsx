@@ -270,18 +270,10 @@ export const ProductsCatalogScreen = () => {
     }
     /* END DEBUG */
 
-    /* VISIBLE DEBUG ON WEB */
-    const debugInfo = isOwner ? JSON.stringify({
-        s: currentVitrine.slug,
-        c: currentVitrine.coverImage,
-        b: currentVitrine.banner,
-        l: currentVitrine.logo,
-        a: currentVitrine.avatar,
-        sc: getSafeUri(currentVitrine.coverImage || currentVitrine.banner),
-        sa: getSafeUri(currentVitrine.logo || currentVitrine.avatar)
-    }, null, 2) : '';
+    /* END DEBUG */
 
     // Helper for navigation to product detail
+
 
     const pagePath = `v/${currentVitrine.slug}`;
 
@@ -472,15 +464,8 @@ export const ProductsCatalogScreen = () => {
                 title={currentVitrine.name || 'Ma Vitrine'}
                 onShare={() => setIsShareModalVisible(true)}
             />
-            {isOwner && (
-                <View style={{ padding: 10, backgroundColor: '#ffffcc', margin: 10, borderRadius: 5, borderColor: 'red', borderWidth: 1 }}>
-                    <Text style={{ fontSize: 10, fontFamily: 'monospace', color: 'black' }}>
-                        DEBUG: {debugInfo}
-                    </Text>
-                </View>
-            )}
-
             <FlatList
+
 
                 data={products}
                 renderItem={({ item }) => (
