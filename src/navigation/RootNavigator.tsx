@@ -22,8 +22,9 @@ export const RootNavigator = () => {
         prefixes: [
             prefix,
             'andybusiness://',
+            'https://frontend-module2.vercel.app/',
             'https://frontend-module2.vercel.app',
-            ...(Platform.OS === 'web' && typeof window !== 'undefined' ? [window.location.origin] : [])
+            ...(Platform.OS === 'web' && typeof window !== 'undefined' ? [window.location.origin, window.location.origin + '/'] : [])
         ],
         config: {
             screens: {
