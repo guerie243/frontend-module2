@@ -280,7 +280,7 @@ export const ProductsCatalogScreen = () => {
                         }}
                     >
                         <Image
-                            source={getSafeUri(currentVitrine.coverImage || currentVitrine.banner) ? { uri: getSafeUri(currentVitrine.coverImage || currentVitrine.banner) } : DEFAULT_IMAGES.cover}
+                            source={getSafeUri(currentVitrine.coverImage || currentVitrine.banner) || DEFAULT_IMAGES.cover}
                             style={styles.coverImage}
                             contentFit="cover"
                         />
@@ -310,7 +310,7 @@ export const ProductsCatalogScreen = () => {
                             }}
                         >
                             <Image
-                                source={getSafeUri(currentVitrine.logo || currentVitrine.avatar) ? { uri: getSafeUri(currentVitrine.logo || currentVitrine.avatar) } : DEFAULT_IMAGES.avatar}
+                                source={getSafeUri(currentVitrine.logo || currentVitrine.avatar) || DEFAULT_IMAGES.avatar}
                                 style={styles.avatarLarge}
                                 contentFit="cover"
                             />
