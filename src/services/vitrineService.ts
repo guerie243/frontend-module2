@@ -33,6 +33,10 @@ export const vitrineService = {
      * Get single vitrine by slug or ID
      */
     getVitrineBySlug: async (idOrSlug: string) => {
+        if (!idOrSlug || idOrSlug === 'undefined') {
+            console.warn('[vitrineService] getVitrineBySlug called with invalid slug:', idOrSlug);
+            return null;
+        }
         const response = await module1Api.get<{ success: boolean; vitrine: Vitrine }>(`/vitrines/${idOrSlug}`);
         return response.data.vitrine;
     },

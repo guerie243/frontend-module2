@@ -32,7 +32,7 @@ export const RootNavigator = () => {
                 },
                 MainTabs: {
                     screens: {
-                        HomeTab: 'vitrine/:slug',
+                        HomeTab: 'vitrine/:slug?',
                         AddProductTab: 'add-product',
                         OrdersTab: 'orders',
                     },

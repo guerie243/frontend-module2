@@ -16,7 +16,7 @@ export const useVitrineDetail = (slug: string, enabled = true) => {
     return useQuery({
         queryKey: ['vitrines', slug],
         queryFn: () => vitrineService.getVitrineBySlug(slug),
-        enabled: enabled && !!slug,
+        enabled: enabled && !!slug && slug !== 'undefined',
     });
 };
 
