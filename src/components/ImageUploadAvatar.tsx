@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     TouchableOpacity,
     View,
@@ -16,6 +16,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { MaterialIcons } from '@expo/vector-icons';
 import { compressImage } from '../utils/imageUploader';
 import { useAlertService } from '../utils/alertService';
+import { getSafeUri } from '../utils/imageUtils';
 
 // Image par défaut 
 const DefaultAvatar = require('../../assets/images/default_avatar.png');
@@ -31,9 +32,16 @@ const ImageUploadAvatar = ({
     onImagePress?: (url: string) => void;
     size?: number;
 }) => {
-    const [imageUri, setImageUri] = useState(initialImage);
+    const [imageUri, setImageUri] = useState<string | undefined>(getSafeUri(initialImage));
     const [loading, setLoading] = useState(false);
     const { showError } = useAlertService();
+
+    // Effet pour mettre à jour l'URI si initialImage change
+    useEffect(() => {
+        if (initialImage) {
+            setImageUri(getSafeUri(initialImage));
+        }
+    }, [initialImage]);
 
     // LOGIQUE MODALE
     const [modalVisible, setModalVisible] = useState(false);
@@ -43,7 +51,7 @@ const ImageUploadAvatar = ({
 
     const openModal = () => {
         if (onImagePress && hasImage) {
-            onImagePress(imageUri || initialImage || '');
+            onImagePress(imageUri || '');
             return;
         }
         if (hasImage) {
@@ -81,7 +89,7 @@ const ImageUploadAvatar = ({
 
         } catch (error) {
             showError('Impossible de traiter l\'image.');
-            setImageUri(initialImage);
+            setImageUri(getSafeUri(initialImage));
         } finally {
             setLoading(false);
         }
@@ -116,7 +124,7 @@ const ImageUploadAvatar = ({
                         <ActivityIndicator size="small" color="#000" />
                     ) : (
                         <Image
-                            source={imageUri ? imageUri : DefaultAvatar}
+                            source={imageUri ? { uri: imageUri } : DefaultAvatar}
                             style={imageStyle}
                             contentFit="cover"
                             transition={300}
@@ -155,7 +163,7 @@ const ImageUploadAvatar = ({
                         ]}
                     >
                         <Image
-                            source={imageUri ? imageUri : DefaultAvatar}
+                            source={imageUri ? { uri: imageUri } : DefaultAvatar}
                             style={styles.fullImage}
                             contentFit="contain"
                         />
@@ -165,6 +173,7 @@ const ImageUploadAvatar = ({
         </>
     );
 };
+
 
 const styles = StyleSheet.create({
     wrapper: {

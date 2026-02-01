@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     TouchableOpacity,
     View,
@@ -15,6 +15,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { MaterialIcons } from '@expo/vector-icons';
 import { compressImage } from '../utils/imageUploader';
 import { useAlertService } from '../utils/alertService';
+import { getSafeUri } from '../utils/imageUtils';
 
 const SCREEN_WIDTH = Dimensions.get("window").width;
 const DefaultCover = require('../../assets/images/default_cover.png');
@@ -31,8 +32,15 @@ const ImageUploadCover = ({
     height?: number;
 }) => {
     const [loading, setLoading] = useState(false);
-    const [imageUri, setImageUri] = useState(initialImage);
+    const [imageUri, setImageUri] = useState<string | undefined>(getSafeUri(initialImage));
     const { showError } = useAlertService();
+
+    // Effet pour mettre à jour l'URI si initialImage change
+    useEffect(() => {
+        if (initialImage) {
+            setImageUri(getSafeUri(initialImage));
+        }
+    }, [initialImage]);
 
     // LOGIQUE MODALE
     const [modalVisible, setModalVisible] = useState(false);
@@ -42,7 +50,7 @@ const ImageUploadCover = ({
 
     const openModal = () => {
         if (onImagePress && hasImage) {
-            onImagePress(imageUri || initialImage || '');
+            onImagePress(imageUri || '');
             return;
         }
         if (hasImage) {
@@ -88,7 +96,7 @@ const ImageUploadCover = ({
             <View style={[styles.container, { height }]}>
                 <Pressable onPress={openModal} style={styles.content}>
                     <Image
-                        source={imageUri ? imageUri : DefaultCover}
+                        source={imageUri ? { uri: imageUri } : DefaultCover}
                         style={[styles.coverImage, { height }]}
                         contentFit="cover"
                         transition={300}
@@ -123,7 +131,7 @@ const ImageUploadCover = ({
                         ]}
                     >
                         <Image
-                            source={imageUri ? imageUri : DefaultCover}
+                            source={imageUri ? { uri: imageUri } : DefaultCover}
                             style={styles.fullImage}
                             contentFit="contain"
                             cachePolicy="memory-disk"
@@ -134,6 +142,7 @@ const ImageUploadCover = ({
         </>
     );
 };
+
 
 const styles = StyleSheet.create({
     container: {
