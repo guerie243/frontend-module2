@@ -49,8 +49,8 @@ export const vitrineService = {
         console.log('[vitrineService] Data to update:', JSON.stringify(data, null, 2));
 
         const payload = hasFiles(data) ? await toFormData(data) : data;
+        const config = hasFiles(data) ? { headers: { 'Content-Type': 'multipart/form-data' } } : {};
 
-        // Cannot easily log FormData content, but we know toFormData logs it.
         if (hasFiles(data)) {
             console.log('[vitrineService] Sending FormData payload.');
         } else {
@@ -59,7 +59,8 @@ export const vitrineService = {
 
         const response = await module1Api.patch<{ success: boolean; vitrine: Vitrine }>(
             `/vitrines/myvitrine/${slug}`,
-            payload
+            payload,
+            config  // Ajouter le config avec le Content-Type
         );
         console.log('[vitrineService] Update response:', response.status);
         return response.data.vitrine;
