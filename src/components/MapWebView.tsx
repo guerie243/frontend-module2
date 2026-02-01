@@ -6,7 +6,7 @@
  */
 
 import React from 'react';
-import { View, StyleSheet, ActivityIndicator } from 'react-native';
+import { View, StyleSheet, ActivityIndicator, Platform } from 'react-native';
 import { WebView } from 'react-native-webview';
 import { useTheme } from '../context/ThemeContext';
 
@@ -30,7 +30,22 @@ export const MapWebView: React.FC<MapWebViewProps> = ({
     // Google Maps embed URL with marker
     const mapUrl = `https://maps.google.com/maps?q=${lat},${lon}&z=${zoom}&output=embed`;
 
-    // HTML wrapper to satisfy "must be used in an iframe" requirement
+    // Web-specific rendering using iframe
+    if (Platform.OS === 'web') {
+        return (
+            <View style={[styles.container, { height }]}>
+                <iframe
+                    src={mapUrl}
+                    style={{ width: '100%', height: '100%', border: 0 }}
+                    allowFullScreen
+                    loading="lazy"
+                    title="Map"
+                />
+            </View>
+        );
+    }
+
+    // HTML wrapper to satisfy "must be used in an iframe" requirement for mobile WebView
     const htmlSource = `
         <!DOCTYPE html>
         <html>
@@ -69,6 +84,7 @@ export const MapWebView: React.FC<MapWebViewProps> = ({
         </View>
     );
 };
+
 
 const styles = StyleSheet.create({
     container: {

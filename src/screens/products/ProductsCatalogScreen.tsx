@@ -46,12 +46,22 @@ import { ShareMenuModal } from '../../components/ShareMenuModal';
 // Helper pour sécuriser les sources d'images
 const getSafeUri = (source: any): string | undefined => {
     if (!source) return undefined;
-    if (typeof source === 'string') return source;
-    if (source.uri) return source.uri;
-    if (source.url) return source.url;
-    if (Array.isArray(source) && source.length > 0) return getSafeUri(source[0]);
-    return undefined;
+    let uri: string | undefined;
+
+    if (typeof source === 'string') uri = source;
+    else if (source.uri) uri = source.uri;
+    else if (source.url) uri = source.url;
+    else if (Array.isArray(source) && source.length > 0) return getSafeUri(source[0]);
+
+    if (uri && uri.startsWith('/')) {
+        // Supposer que les chemins relatifs proviennent du backend Module 1
+        const baseUrl = ENV.MODULE1_API_URL.replace('/api', '');
+        return `${baseUrl}${uri}`;
+    }
+
+    return uri;
 };
+
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 

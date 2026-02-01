@@ -6,7 +6,7 @@
  */
 
 import React from 'react';
-import { View, Text, TextInput, StyleSheet, TextInputProps, StyleProp, ViewStyle } from 'react-native';
+import { View, Text, TextInput, StyleSheet, TextInputProps, StyleProp, ViewStyle, Platform } from 'react-native';
 import { useTheme } from '../context/ThemeContext';
 import { Ionicons } from '@expo/vector-icons';
 
@@ -60,6 +60,7 @@ export const CustomInput: React.FC<CustomInputProps> = ({
                         styles.input,
                         { color: theme.colors.text },
                         icon && styles.inputWithIcon,
+                        Platform.OS === 'web' && { outlineStyle: 'none' } as any,
                         style,
                     ]}
                     placeholderTextColor={theme.colors.textTertiary}

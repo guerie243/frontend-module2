@@ -87,7 +87,7 @@ export const DeliveryLocationScreen = () => {
             }
 
             const location = await Location.getCurrentPositionAsync({
-                accuracy: Location.Accuracy.Highest,
+                accuracy: Location.Accuracy.BestForNavigation,
             });
 
             const { latitude, longitude, accuracy } = location.coords;
