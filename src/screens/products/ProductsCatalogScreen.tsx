@@ -15,10 +15,10 @@ import {
     FlatList,
     ActivityIndicator,
     Dimensions,
-    Image,
     Image as RNImage,
 } from 'react-native';
-import { Image as ExpoImage } from 'expo-image';
+import { Image } from 'expo-image';
+
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { ScreenWrapper } from '../../components/ScreenWrapper';
 import { GuestPrompt } from '../../components/GuestPrompt';
@@ -274,7 +274,9 @@ export const ProductsCatalogScreen = () => {
             <View style={styles.coverSection}>
                 {isOwner ? (
                     <ImageUploadCover
+                        key={`cover-${displayedVitrine.slug}-${displayedVitrine.coverImage || displayedVitrine.banner}`}
                         initialImage={displayedVitrine.coverImage || displayedVitrine.banner}
+
                         height={200}
                         onUploadSuccess={handleCoverUploadSuccess}
                         onImagePress={(url) => setPreviewImage({ visible: true, url })}
@@ -291,9 +293,9 @@ export const ProductsCatalogScreen = () => {
                         }}
                     >
                         <Image
-                            source={getSafeUri(currentVitrine.coverImage || currentVitrine.banner) ? { uri: getSafeUri(currentVitrine.coverImage || currentVitrine.banner) } : DEFAULT_IMAGES.cover}
+                            source={getSafeUri(currentVitrine.coverImage || currentVitrine.banner) || DEFAULT_IMAGES.cover}
                             style={styles.coverImage}
-                            resizeMode="cover"
+                            contentFit="cover"
                         />
                     </TouchableOpacity>
                 )}
@@ -304,7 +306,9 @@ export const ProductsCatalogScreen = () => {
                 ]}>
                     {isOwner ? (
                         <ImageUploadAvatar
+                            key={`logo-${displayedVitrine.slug}-${displayedVitrine.logo || displayedVitrine.avatar}`}
                             initialImage={displayedVitrine.logo || displayedVitrine.avatar}
+
                             size={100}
                             onUploadSuccess={handleAvatarUploadSuccess}
                             onImagePress={(url) => setPreviewImage({ visible: true, url })}
@@ -321,9 +325,9 @@ export const ProductsCatalogScreen = () => {
                             }}
                         >
                             <Image
-                                source={getSafeUri(currentVitrine.logo || currentVitrine.avatar) ? { uri: getSafeUri(currentVitrine.logo || currentVitrine.avatar) } : DEFAULT_IMAGES.avatar}
+                                source={getSafeUri(currentVitrine.logo || currentVitrine.avatar) || DEFAULT_IMAGES.avatar}
                                 style={styles.avatarLarge}
-                                resizeMode="cover"
+                                contentFit="cover"
                             />
                         </TouchableOpacity>
                     )}

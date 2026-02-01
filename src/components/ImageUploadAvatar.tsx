@@ -85,6 +85,7 @@ const ImageUploadAvatar = ({
         if (pickerResult.canceled) return;
 
         const localImageUri = pickerResult.assets[0].uri;
+
         setImageUri(localImageUri);
 
         try {
