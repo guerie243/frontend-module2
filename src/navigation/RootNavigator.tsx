@@ -13,6 +13,8 @@ import { AppStack } from './AppStack';
 import { View, ActivityIndicator, StyleSheet } from 'react-native';
 
 import * as Linking from 'expo-linking';
+import { LinkingHandler } from './LinkingHandler';
+import { Platform } from 'react-native';
 
 const prefix = Linking.createURL('/');
 
@@ -21,7 +23,12 @@ export const RootNavigator = () => {
     console.log('[RootNavigator] Render. isAuthenticated:', isAuthenticated, 'isLoading:', isLoading);
 
     const linking = {
-        prefixes: [prefix, 'andybusiness://'],
+        prefixes: [
+            prefix,
+            'andybusiness://',
+            'https://frontend-module2.vercel.app',
+            ...(Platform.OS === 'web' && typeof window !== 'undefined' ? [window.location.origin] : [])
+        ],
         config: {
             screens: {
                 // Common screens (Root level in both stacks)
@@ -53,6 +60,7 @@ export const RootNavigator = () => {
 
     return (
         <NavigationContainer linking={linking}>
+            <LinkingHandler />
             {isAuthenticated ? (
                 <AppStack key="authenticated" />
             ) : (
