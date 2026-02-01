@@ -156,7 +156,7 @@ export const ProductsCatalogScreen = () => {
         try {
             await updateVitrineMutation.mutateAsync({
                 slug: displayedVitrine.slug,
-                data: { logo: newImageUrl, avatar: newImageUrl }
+                data: { logo: newImageUrl }  // UN SEUL CHAMP comme module1
             });
             showSuccess('Le logo a été mis à jour !');
         } catch (error) {
@@ -171,7 +171,7 @@ export const ProductsCatalogScreen = () => {
         try {
             await updateVitrineMutation.mutateAsync({
                 slug: displayedVitrine.slug,
-                data: { coverImage: newImageUrl, banner: newImageUrl }
+                data: { coverImage: newImageUrl }  // UN SEUL CHAMP comme module1
             });
             showSuccess('Image de couverture mise à jour !');
         } catch (error) {
