@@ -42,19 +42,24 @@ export const useAllVitrines = (category = '', search = '', enabled = true) => {
     });
 };
 
-/**
- * Update vitrine mutation
- */
 export const useUpdateVitrine = () => {
     const queryClient = useQueryClient();
 
     return useMutation({
         mutationFn: ({ slug, data }: { slug: string; data: Partial<Vitrine> }) =>
             vitrineService.updateVitrine(slug, data),
-        onSuccess: (updatedVitrine) => {
+        onSuccess: (updatedVitrine, variables) => {
             console.log('Vitrine updated successfully');
+
+            // Invalider TOUTES les queries de vitrines pour forcer le rafraîchissement
             queryClient.invalidateQueries({ queryKey: ['vitrines'] });
-            queryClient.setQueryData(['vitrines', updatedVitrine.slug], updatedVitrine);
+
+            // Mettre à jour le cache avec les nouvelles données pour le slug spécifique
+            queryClient.setQueryData(['vitrines', variables.slug], updatedVitrine);
+
+            // Forcer un refetch immédiat
+            queryClient.refetchQueries({ queryKey: ['vitrines', 'my'] });
+            queryClient.refetchQueries({ queryKey: ['vitrines', variables.slug] });
         },
     });
 };
