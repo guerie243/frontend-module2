@@ -256,7 +256,36 @@ export const ProductsCatalogScreen = () => {
     }
 
     const currentVitrine = displayedVitrine;
+    /* DEBUG VIEW - TEMP */
+    if (isOwner) {
+        console.log('[DEBUG] Vitrine Data:', JSON.stringify({
+            slug: currentVitrine.slug,
+            cover: currentVitrine.coverImage,
+            banner: currentVitrine.banner,
+            logo: currentVitrine.logo,
+            avatar: currentVitrine.avatar,
+            safeCover: getSafeUri(currentVitrine.coverImage || currentVitrine.banner),
+            safeAvatar: getSafeUri(currentVitrine.logo || currentVitrine.avatar)
+        }, null, 2));
+    }
+    /* END DEBUG */
+
+    /* VISIBLE DEBUG ON WEB */
+    const debugInfo = isOwner ? JSON.stringify({
+        s: currentVitrine.slug,
+        c: currentVitrine.coverImage,
+        b: currentVitrine.banner,
+        l: currentVitrine.logo,
+        a: currentVitrine.avatar,
+        sc: getSafeUri(currentVitrine.coverImage || currentVitrine.banner),
+        sa: getSafeUri(currentVitrine.logo || currentVitrine.avatar)
+    }, null, 2) : '';
+
+    // Helper for navigation to product detail
+
     const pagePath = `v/${currentVitrine.slug}`;
+
+
     const fullUrl = ENV.SHARE_BASE_URL ? `${ENV.SHARE_BASE_URL}/${pagePath}` : 'Lien non disponible';
 
     const shareData = {
@@ -443,7 +472,16 @@ export const ProductsCatalogScreen = () => {
                 title={currentVitrine.name || 'Ma Vitrine'}
                 onShare={() => setIsShareModalVisible(true)}
             />
+            {isOwner && (
+                <View style={{ padding: 10, backgroundColor: '#ffffcc', margin: 10, borderRadius: 5, borderColor: 'red', borderWidth: 1 }}>
+                    <Text style={{ fontSize: 10, fontFamily: 'monospace', color: 'black' }}>
+                        DEBUG: {debugInfo}
+                    </Text>
+                </View>
+            )}
+
             <FlatList
+
                 data={products}
                 renderItem={({ item }) => (
                     <View style={{ width: (SCREEN_WIDTH / 2) - 24, marginBottom: 16 }}>

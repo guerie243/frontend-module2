@@ -103,12 +103,13 @@ const ImageUploadCover = ({
             <View style={[styles.container, { height }]}>
                 <Pressable onPress={openModal} style={styles.content}>
                     <Image
-                        source={imageUri || DefaultCover}
+                        source={imageUri ? { uri: imageUri } : DefaultCover}
                         style={[styles.coverImage, { height }]}
                         contentFit="cover"
                         transition={300}
                         cachePolicy="memory-disk"
                     />
+
                     {loading && (
                         <View style={styles.loadingOverlay}>
                             <ActivityIndicator size="large" color="#fff" />
@@ -138,11 +139,12 @@ const ImageUploadCover = ({
                         ]}
                     >
                         <Image
-                            source={imageUri ? imageUri : DefaultCover}
+                            source={imageUri ? { uri: imageUri } : DefaultCover}
                             style={styles.fullImage}
                             contentFit="contain"
                             cachePolicy="memory-disk"
                         />
+
                     </Animated.View>
                 </View>
             </Modal>
