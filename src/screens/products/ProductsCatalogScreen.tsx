@@ -15,9 +15,10 @@ import {
     FlatList,
     ActivityIndicator,
     Dimensions,
+    Image,
     Image as RNImage,
 } from 'react-native';
-import { Image } from 'expo-image';
+import { Image as ExpoImage } from 'expo-image';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { ScreenWrapper } from '../../components/ScreenWrapper';
 import { GuestPrompt } from '../../components/GuestPrompt';
@@ -142,7 +143,10 @@ export const ProductsCatalogScreen = () => {
     const handleAvatarUploadSuccess = async (newImageUrl: string) => {
         if (!displayedVitrine) return;
         try {
-            await updateVitrineMutation.mutateAsync({ slug: displayedVitrine.slug, data: { logo: newImageUrl } });
+            await updateVitrineMutation.mutateAsync({
+                slug: displayedVitrine.slug,
+                data: { logo: newImageUrl, avatar: newImageUrl }
+            });
             showSuccess('Le logo a été mis à jour !');
         } catch (error) {
             console.error('Erreur mise à jour logo:', error);
@@ -150,16 +154,21 @@ export const ProductsCatalogScreen = () => {
         }
     };
 
+
     const handleCoverUploadSuccess = async (newImageUrl: string) => {
         if (!displayedVitrine) return;
         try {
-            await updateVitrineMutation.mutateAsync({ slug: displayedVitrine.slug, data: { coverImage: newImageUrl } });
+            await updateVitrineMutation.mutateAsync({
+                slug: displayedVitrine.slug,
+                data: { coverImage: newImageUrl, banner: newImageUrl }
+            });
             showSuccess('Image de couverture mise à jour !');
         } catch (error) {
             console.error('Erreur mise à jour couverture:', error);
             showError('Échec de la sauvegarde de la couverture.');
         }
     };
+
 
     // Helper for navigation to product detail
     const handleProductPress = (product: Product) => {
@@ -265,7 +274,7 @@ export const ProductsCatalogScreen = () => {
             <View style={styles.coverSection}>
                 {isOwner ? (
                     <ImageUploadCover
-                        initialImage={displayedVitrine.coverImage}
+                        initialImage={displayedVitrine.coverImage || displayedVitrine.banner}
                         height={200}
                         onUploadSuccess={handleCoverUploadSuccess}
                         onImagePress={(url) => setPreviewImage({ visible: true, url })}
@@ -282,9 +291,9 @@ export const ProductsCatalogScreen = () => {
                         }}
                     >
                         <Image
-                            source={getSafeUri(currentVitrine.coverImage || currentVitrine.banner) || DEFAULT_IMAGES.cover}
+                            source={getSafeUri(currentVitrine.coverImage || currentVitrine.banner) ? { uri: getSafeUri(currentVitrine.coverImage || currentVitrine.banner) } : DEFAULT_IMAGES.cover}
                             style={styles.coverImage}
-                            contentFit="cover"
+                            resizeMode="cover"
                         />
                     </TouchableOpacity>
                 )}
@@ -295,7 +304,7 @@ export const ProductsCatalogScreen = () => {
                 ]}>
                     {isOwner ? (
                         <ImageUploadAvatar
-                            initialImage={displayedVitrine.logo}
+                            initialImage={displayedVitrine.logo || displayedVitrine.avatar}
                             size={100}
                             onUploadSuccess={handleAvatarUploadSuccess}
                             onImagePress={(url) => setPreviewImage({ visible: true, url })}
@@ -312,9 +321,9 @@ export const ProductsCatalogScreen = () => {
                             }}
                         >
                             <Image
-                                source={getSafeUri(currentVitrine.logo || currentVitrine.avatar) || DEFAULT_IMAGES.avatar}
+                                source={getSafeUri(currentVitrine.logo || currentVitrine.avatar) ? { uri: getSafeUri(currentVitrine.logo || currentVitrine.avatar) } : DEFAULT_IMAGES.avatar}
                                 style={styles.avatarLarge}
-                                contentFit="cover"
+                                resizeMode="cover"
                             />
                         </TouchableOpacity>
                     )}

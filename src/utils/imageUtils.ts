@@ -31,5 +31,6 @@ export const getSafeUri = (source: any): string | undefined => {
         return `${baseUrl}${cleanUri}`;
     }
 
+
     return uri;
 };

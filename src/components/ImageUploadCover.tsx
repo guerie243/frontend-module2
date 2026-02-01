@@ -38,12 +38,8 @@ const ImageUploadCover = ({
     const [loading, setLoading] = useState(false);
     const { showError } = useAlertService();
 
-    // Sync state with prop changes - only when loading is finished
-    useEffect(() => {
-        if (!loading) {
-            setImageUri(getSafeUri(initialImage));
-        }
-    }, [initialImage, loading]);
+    // Modale logic moved here if needed
+
 
 
 
