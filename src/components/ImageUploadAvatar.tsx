@@ -40,13 +40,13 @@ const ImageUploadAvatar = ({
     const [loading, setLoading] = useState(false);
     const { showError } = useAlertService();
 
-    // Sync state with prop changes
+    // Sync state with prop changes - only when loading is finished
     useEffect(() => {
-        const resolved = getSafeUri(initialImage);
-        if (resolved && !loading) {
-            setImageUri(resolved);
+        if (!loading) {
+            setImageUri(getSafeUri(initialImage));
         }
     }, [initialImage, loading]);
+
 
 
     // LOGIQUE MODALE

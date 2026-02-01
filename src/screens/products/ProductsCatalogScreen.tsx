@@ -23,7 +23,7 @@ import { ScreenWrapper } from '../../components/ScreenWrapper';
 import { GuestPrompt } from '../../components/GuestPrompt';
 import { CustomButton } from '../../components/CustomButton';
 import { useTheme } from '../../context/ThemeContext';
-import { useVitrines, useVitrineDetail, useMyVitrines, useUpdateVitrine } from '../../hooks/useVitrines';
+import { useVitrineDetail, useMyVitrines, useUpdateVitrine } from '../../hooks/useVitrines';
 
 import { ShareButton } from '../../components/ShareButton';
 import { WhatsAppButton } from '../../components/WhatsAppButton';
@@ -154,10 +154,10 @@ export const ProductsCatalogScreen = () => {
         if (!displayedVitrine) return;
         try {
             await updateVitrineMutation.mutateAsync({ slug: displayedVitrine.slug, data: { coverImage: newImageUrl } });
-            showSuccess('La bannière a été mise à jour !');
+            showSuccess('Image de couverture mise à jour !');
         } catch (error) {
-            console.error('Erreur mise à jour bannière:', error);
-            showError('Échec de la sauvegarde de la bannière.');
+            console.error('Erreur mise à jour couverture:', error);
+            showError('Échec de la sauvegarde de la couverture.');
         }
     };
 
@@ -236,10 +236,11 @@ export const ProductsCatalogScreen = () => {
         return (
             <ScreenWrapper>
                 <StateMessage
-                    type="no-results"
+                    type="empty"
+                    title="Vitrine introuvable"
                     message="Désolé, cette vitrine semble ne pas exister ou a été supprimée."
-                    onRetry={() => navigation.goBack()}
-                    icon="arrow-back-outline"
+                    actionLabel="Retour"
+                    onActionPress={() => navigation.goBack()}
                 />
             </ScreenWrapper>
         );
@@ -273,6 +274,7 @@ export const ProductsCatalogScreen = () => {
                     <TouchableOpacity
                         activeOpacity={0.9}
                         onPress={() => {
+                            const uri = getSafeUri(currentVitrine.coverImage || currentVitrine.banner);
                             setPreviewImage({
                                 visible: true,
                                 url: uri || RNImage.resolveAssetSource(DEFAULT_IMAGES.cover).uri
@@ -302,6 +304,7 @@ export const ProductsCatalogScreen = () => {
                         <TouchableOpacity
                             activeOpacity={0.9}
                             onPress={() => {
+                                const uri = getSafeUri(currentVitrine.logo || currentVitrine.avatar);
                                 setPreviewImage({
                                     visible: true,
                                     url: uri || RNImage.resolveAssetSource(DEFAULT_IMAGES.avatar).uri
@@ -454,6 +457,7 @@ export const ProductsCatalogScreen = () => {
                     ) : (
                         <StateMessage
                             type="empty"
+                            title="Aucun produit"
                             message={isOwner
                                 ? "Vous n'avez pas encore de produits. Donnez vie à votre vitrine en publiant votre premier article !"
                                 : "Cette vitrine n'a pas encore de produits disponibles."}

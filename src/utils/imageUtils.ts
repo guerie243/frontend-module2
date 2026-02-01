@@ -28,11 +28,8 @@ export const getSafeUri = (source: any): string | undefined => {
     if (uri.startsWith('/') || (!uri.startsWith('http') && !uri.startsWith('file') && !uri.startsWith('data'))) {
         const cleanUri = uri.startsWith('/') ? uri : `/${uri}`;
         const baseUrl = ENV.MODULE1_API_URL.replace('/api', '');
-        const resolved = `${baseUrl}${cleanUri}`;
-        console.log(`[ImageUtils] Resolved relative path: ${uri} -> ${resolved}`);
-        return resolved;
+        return `${baseUrl}${cleanUri}`;
     }
 
     return uri;
 };
-
