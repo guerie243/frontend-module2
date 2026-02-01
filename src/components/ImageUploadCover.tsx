@@ -15,6 +15,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { MaterialIcons } from '@expo/vector-icons';
 import { compressImage } from '../utils/imageUploader';
 import { useAlertService } from '../utils/alertService';
+import { useEffect } from 'react';
 
 import { getSafeUri } from '../utils/imageUtils';
 
@@ -32,10 +33,15 @@ const ImageUploadCover = ({
     onImagePress?: (url: string) => void;
     height?: number;
 }) => {
-    const [loading, setLoading] = useState(false);
     const resolvedInitialImage = getSafeUri(initialImage);
     const [imageUri, setImageUri] = useState(resolvedInitialImage);
+    const [loading, setLoading] = useState(false);
     const { showError } = useAlertService();
+
+    // Sync state with prop changes
+    useEffect(() => {
+        setImageUri(getSafeUri(initialImage));
+    }, [initialImage]);
 
     // LOGIQUE MODALE
     const [modalVisible, setModalVisible] = useState(false);
@@ -91,7 +97,7 @@ const ImageUploadCover = ({
             <View style={[styles.container, { height }]}>
                 <Pressable onPress={openModal} style={styles.content}>
                     <Image
-                        source={imageUri ? imageUri : DefaultCover}
+                        source={imageUri ? { uri: imageUri } : DefaultCover}
                         style={[styles.coverImage, { height }]}
                         contentFit="cover"
                         transition={300}

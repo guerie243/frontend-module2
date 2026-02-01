@@ -9,13 +9,15 @@ import {
     Easing,
     Pressable,
     ViewStyle,
-    FlexAlignType
+    FlexAlignType,
+    Platform
 } from 'react-native';
 import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
 import { MaterialIcons } from '@expo/vector-icons';
 import { compressImage } from '../utils/imageUploader';
 import { useAlertService } from '../utils/alertService';
+import { useEffect } from 'react';
 
 import { getSafeUri } from '../utils/imageUtils';
 
@@ -37,6 +39,11 @@ const ImageUploadAvatar = ({
     const [imageUri, setImageUri] = useState(resolvedInitialImage);
     const [loading, setLoading] = useState(false);
     const { showError } = useAlertService();
+
+    // Sync state with prop changes
+    useEffect(() => {
+        setImageUri(getSafeUri(initialImage));
+    }, [initialImage]);
 
     // LOGIQUE MODALE
     const [modalVisible, setModalVisible] = useState(false);
@@ -119,7 +126,7 @@ const ImageUploadAvatar = ({
                         <ActivityIndicator size="small" color="#000" />
                     ) : (
                         <Image
-                            source={imageUri ? imageUri : DefaultAvatar}
+                            source={imageUri ? { uri: imageUri } : DefaultAvatar}
                             style={imageStyle}
                             contentFit="cover"
                             transition={300}
