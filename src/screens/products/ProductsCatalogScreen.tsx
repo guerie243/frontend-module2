@@ -79,12 +79,6 @@ export const ProductsCatalogScreen = () => {
 
     // --- QUERIES TANSTACK ---
     const {
-        data: detailVitrine,
-        isLoading: isDetailLoading,
-        refetch: refetchDetail
-    } = useVitrineDetail(slug || '', !!slug);
-
-    const {
         data: myVitrines,
         isLoading: isMyVitrinesLoading,
         refetch: refetchMyVitrines,
@@ -92,7 +86,22 @@ export const ProductsCatalogScreen = () => {
         enabled: isAuthenticated && !slug
     });
 
-    const displayedVitrine = slug ? detailVitrine : (myVitrines?.[0] || null);
+    // DETERMINE SLUG TO FETCH FULL DETAILS
+    // If route has slug, use it.
+    // If not, and we have myVitrines, use the first one's slug.
+    const targetSlug = slug || myVitrines?.[0]?.slug;
+
+    // FETCH FULL DETAILS (Images, etc)
+    const {
+        data: detailVitrine,
+        isLoading: isDetailLoading,
+        refetch: refetchDetail
+    } = useVitrineDetail(targetSlug || '', !!targetSlug);
+
+    // Displayed vitrine is ALWAYS the detailed one if available, 
+    // otherwise fallback to myVitrines[0] (which might be "light") while loading.
+    const displayedVitrine = detailVitrine || myVitrines?.[0] || null;
+
 
     // RECUPERATION STRATEGIE : ID vs Slug
     const vitrineId = displayedVitrine?.vitrineId || displayedVitrine?.id || displayedVitrine?._id || '';
@@ -128,10 +137,12 @@ export const ProductsCatalogScreen = () => {
     // --- LOGIQUE REFRESH ---
     const onRefresh = useCallback(async () => {
         await Promise.all([
-            slug ? refetchDetail() : refetchMyVitrines(),
+            refetchMyVitrines(),
+            targetSlug ? refetchDetail() : Promise.resolve(),
             refetchProducts()
         ]);
-    }, [slug, refetchDetail, refetchMyVitrines, refetchProducts]);
+    }, [targetSlug, refetchDetail, refetchMyVitrines, refetchProducts]);
+
 
     const loadMoreProducts = () => {
         if (!productsLoading && hasNextPage) {
@@ -176,9 +187,10 @@ export const ProductsCatalogScreen = () => {
     };
 
     // --- Chargement / Erreurs ---
-    const isOverallLoading = slug
+    const isOverallLoading = targetSlug
         ? isDetailLoading
         : (isAuthenticated ? isMyVitrinesLoading : false);
+
 
     if (isOverallLoading && !displayedVitrine) {
         return <LoadingComponent />;
