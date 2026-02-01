@@ -40,6 +40,7 @@ export const RootNavigator = () => {
 
                 // Nested screens in AppStack
                 MainTabs: {
+                    path: '',
                     screens: {
                         HomeTab: 'home',
                         AddProductTab: 'add-product',
@@ -61,11 +62,7 @@ export const RootNavigator = () => {
     return (
         <NavigationContainer linking={linking}>
             <LinkingHandler />
-            {isAuthenticated ? (
-                <AppStack key="authenticated" />
-            ) : (
-                <AuthStack key="unauthenticated" />
-            )}
+            <AppStack />
         </NavigationContainer>
     );
 };

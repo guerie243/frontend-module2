@@ -30,6 +30,10 @@ import { VitrineModificationMain } from '../screens/vitrines/VitrineModification
 import { EditVitrineFieldScreen } from '../screens/vitrines/EditVitrineFieldScreen';
 import { SettingsScreen } from '../screens/settings/SettingsScreen';
 
+// Auth Screens
+import { LoginScreen } from '../screens/auth/LoginScreen';
+import { RegisterScreen } from '../screens/auth/RegisterScreen';
+
 const Stack = createNativeStackNavigator();
 
 export const AppStack = () => {
@@ -63,6 +67,10 @@ export const AppStack = () => {
             <Stack.Screen name="EditVitrineField" component={EditVitrineFieldScreen} />
             <Stack.Screen name="Settings" component={SettingsScreen} />
             <Stack.Screen name="VitrineDetail" component={ProductsCatalogScreen} />
+
+            {/* Auth Routes */}
+            <Stack.Screen name="Login" component={LoginScreen} />
+            <Stack.Screen name="Register" component={RegisterScreen} />
         </Stack.Navigator>
     );
 };
