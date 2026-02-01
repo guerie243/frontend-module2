@@ -97,7 +97,7 @@ const ImageUploadCover = ({
             <View style={[styles.container, { height }]}>
                 <Pressable onPress={openModal} style={styles.content}>
                     <Image
-                        source={imageUri || DefaultCover}
+                        source={imageUri ? { uri: imageUri } : DefaultCover}
                         style={[styles.coverImage, { height }]}
                         contentFit="cover"
                         transition={300}

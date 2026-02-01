@@ -126,7 +126,7 @@ const ImageUploadAvatar = ({
                         <ActivityIndicator size="small" color="#000" />
                     ) : (
                         <Image
-                            source={imageUri || DefaultAvatar}
+                            source={imageUri ? { uri: imageUri } : DefaultAvatar}
                             style={imageStyle}
                             contentFit="cover"
                             transition={300}
