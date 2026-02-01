@@ -42,14 +42,13 @@ export const vitrineService = {
      */
     updateVitrine: async (slug: string, data: Partial<Vitrine>) => {
         const payload = hasFiles(data) ? await toFormData(data) : data;
-        const config = hasFiles(data) ? { headers: { 'Content-Type': 'multipart/form-data' } } : {};
 
         const response = await module1Api.patch<{ success: boolean; vitrine: Vitrine }>(
             `/vitrines/myvitrine/${slug}`,
-            payload,
-            config
+            payload
         );
         return response.data.vitrine;
     },
+
 
 };

@@ -40,7 +40,13 @@ const ImageUploadAvatar = ({
     const [loading, setLoading] = useState(false);
     const { showError } = useAlertService();
 
-    // Modale logic moved here if needed
+    // Sync state with prop changes - only when loading is finished
+    useEffect(() => {
+        if (!loading) {
+            setImageUri(getSafeUri(initialImage));
+        }
+    }, [initialImage, loading]);
+
 
 
 
