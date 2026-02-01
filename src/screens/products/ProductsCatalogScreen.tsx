@@ -17,9 +17,6 @@ import {
     Dimensions,
     Image as RNImage,
 } from 'react-native';
-
-
-
 import { Image } from 'expo-image';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { ScreenWrapper } from '../../components/ScreenWrapper';
@@ -267,7 +264,7 @@ export const ProductsCatalogScreen = () => {
             <View style={styles.coverSection}>
                 {isOwner ? (
                     <ImageUploadCover
-                        initialImage={displayedVitrine.coverImage || displayedVitrine.banner}
+                        initialImage={displayedVitrine.coverImage}
                         height={200}
                         onUploadSuccess={handleCoverUploadSuccess}
                         onImagePress={(url) => setPreviewImage({ visible: true, url })}
@@ -276,7 +273,6 @@ export const ProductsCatalogScreen = () => {
                     <TouchableOpacity
                         activeOpacity={0.9}
                         onPress={() => {
-                            const uri = getSafeUri(currentVitrine.coverImage || currentVitrine.banner);
                             setPreviewImage({
                                 visible: true,
                                 url: uri || RNImage.resolveAssetSource(DEFAULT_IMAGES.cover).uri
@@ -284,7 +280,7 @@ export const ProductsCatalogScreen = () => {
                         }}
                     >
                         <Image
-                            source={getSafeUri(currentVitrine.coverImage || currentVitrine.banner) ? { uri: getSafeUri(currentVitrine.coverImage || currentVitrine.banner) } : DEFAULT_IMAGES.cover}
+                            source={getSafeUri(currentVitrine.coverImage || currentVitrine.banner) || DEFAULT_IMAGES.cover}
                             style={styles.coverImage}
                             contentFit="cover"
                         />
@@ -297,7 +293,7 @@ export const ProductsCatalogScreen = () => {
                 ]}>
                     {isOwner ? (
                         <ImageUploadAvatar
-                            initialImage={displayedVitrine.logo || displayedVitrine.avatar}
+                            initialImage={displayedVitrine.logo}
                             size={100}
                             onUploadSuccess={handleAvatarUploadSuccess}
                             onImagePress={(url) => setPreviewImage({ visible: true, url })}
@@ -306,7 +302,6 @@ export const ProductsCatalogScreen = () => {
                         <TouchableOpacity
                             activeOpacity={0.9}
                             onPress={() => {
-                                const uri = getSafeUri(currentVitrine.logo || currentVitrine.avatar);
                                 setPreviewImage({
                                     visible: true,
                                     url: uri || RNImage.resolveAssetSource(DEFAULT_IMAGES.avatar).uri
@@ -314,7 +309,7 @@ export const ProductsCatalogScreen = () => {
                             }}
                         >
                             <Image
-                                source={getSafeUri(currentVitrine.logo || currentVitrine.avatar) ? { uri: getSafeUri(currentVitrine.logo || currentVitrine.avatar) } : DEFAULT_IMAGES.avatar}
+                                source={getSafeUri(currentVitrine.logo || currentVitrine.avatar) || DEFAULT_IMAGES.avatar}
                                 style={styles.avatarLarge}
                                 contentFit="cover"
                             />

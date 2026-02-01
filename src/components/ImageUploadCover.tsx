@@ -40,8 +40,12 @@ const ImageUploadCover = ({
 
     // Sync state with prop changes
     useEffect(() => {
-        setImageUri(getSafeUri(initialImage));
-    }, [initialImage]);
+        const resolved = getSafeUri(initialImage);
+        if (resolved && !loading) {
+            setImageUri(resolved);
+        }
+    }, [initialImage, loading]);
+
 
     // LOGIQUE MODALE
     const [modalVisible, setModalVisible] = useState(false);
@@ -97,7 +101,7 @@ const ImageUploadCover = ({
             <View style={[styles.container, { height }]}>
                 <Pressable onPress={openModal} style={styles.content}>
                     <Image
-                        source={imageUri ? { uri: imageUri } : DefaultCover}
+                        source={imageUri || DefaultCover}
                         style={[styles.coverImage, { height }]}
                         contentFit="cover"
                         transition={300}

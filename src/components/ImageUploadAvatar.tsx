@@ -42,8 +42,12 @@ const ImageUploadAvatar = ({
 
     // Sync state with prop changes
     useEffect(() => {
-        setImageUri(getSafeUri(initialImage));
-    }, [initialImage]);
+        const resolved = getSafeUri(initialImage);
+        if (resolved && !loading) {
+            setImageUri(resolved);
+        }
+    }, [initialImage, loading]);
+
 
     // LOGIQUE MODALE
     const [modalVisible, setModalVisible] = useState(false);
@@ -126,7 +130,7 @@ const ImageUploadAvatar = ({
                         <ActivityIndicator size="small" color="#000" />
                     ) : (
                         <Image
-                            source={imageUri ? { uri: imageUri } : DefaultAvatar}
+                            source={imageUri || DefaultAvatar}
                             style={imageStyle}
                             contentFit="cover"
                             transition={300}

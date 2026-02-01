@@ -14,7 +14,7 @@ import { useTheme } from '../context/ThemeContext';
 
 interface ImagePreviewModalProps {
     visible: boolean;
-    imageUrl: string | undefined;
+    imageUrl: string | number | undefined;
     onClose: () => void;
 }
 
@@ -27,7 +27,8 @@ export const ImagePreviewModal: React.FC<ImagePreviewModalProps> = ({
 }) => {
     const { theme } = useTheme();
 
-    if (!imageUrl) return null;
+    if (imageUrl === undefined) return null;
+
 
     return (
         <Modal
@@ -51,7 +52,8 @@ export const ImagePreviewModal: React.FC<ImagePreviewModalProps> = ({
                 {/* Image */}
                 <View style={styles.imageContainer}>
                     <Image
-                        source={{ uri: imageUrl }}
+                        source={typeof imageUrl === 'string' ? { uri: imageUrl } : imageUrl}
+
                         style={styles.image}
                         resizeMode="contain"
                     />
