@@ -28,16 +28,20 @@ export const RootNavigator = () => {
                     screens: {
                         Login: 'login',
                         Register: 'register',
+                        // Guest Routes
+                        VitrineGuest: 'vitrine/:slug',
+                        ProductDetail: 'product/:slug',
+                        OrderClientDetail: 'order/:orderId',
                     },
                 },
                 MainTabs: {
                     screens: {
-                        HomeTab: 'vitrine/:slug?',
+                        HomeTab: 'home', // Changed from vitrine/:slug? to avoid conflict. Owner sees their own vitrine via HomeTab logic
                         AddProductTab: 'add-product',
                         OrdersTab: 'orders',
                     },
                 },
-                ProductDetail: 'product/:slug',
+                ProductDetail: 'product-owner/:slug', // Alias for owner view if needed, though they usually navigate internally
                 OrderClientDetail: 'order/:orderId',
             },
         },
