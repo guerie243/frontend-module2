@@ -17,6 +17,7 @@ import { CartItem } from '../../types';
 import { getProductUrl } from '../../utils/sharingUtils';
 import { ScreenHeader } from '../../components/ScreenHeader';
 import { ShareMenuModal } from '../../components/ShareMenuModal';
+import { getSafeUri } from '../../utils/imageUtils';
 
 export const ProductDetailScreen = () => {
     const navigation = useNavigation<any>();
@@ -105,7 +106,7 @@ export const ProductDetailScreen = () => {
                             showsHorizontalScrollIndicator={false}
                             renderItem={({ item }) => (
                                 <Image
-                                    source={{ uri: item }}
+                                    source={{ uri: getSafeUri(item) }}
                                     style={styles.image}
                                     contentFit="cover"
                                     transition={200}

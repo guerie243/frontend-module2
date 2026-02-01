@@ -11,6 +11,7 @@ import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../context/ThemeContext';
 import { Product } from '../types';
+import { getSafeUri } from '../utils/imageUtils';
 
 interface ProductCardProps {
     product: Product;
@@ -30,7 +31,8 @@ export const ProductCard: React.FC<ProductCardProps> = ({
     const { theme } = useTheme();
 
     // Get first image or use placeholder
-    const imageUri = product.images && product.images.length > 0 ? product.images[0] : undefined;
+    const rawImageUri = product.images && product.images.length > 0 ? product.images[0] : undefined;
+    const imageUri = getSafeUri(rawImageUri);
 
     return (
         <TouchableOpacity

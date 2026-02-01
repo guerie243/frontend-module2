@@ -42,8 +42,8 @@ import { Product } from '../../types';
 import { getVitrineUrl } from '../../utils/sharingUtils';
 import { ScreenHeader } from '../../components/ScreenHeader';
 import { ShareMenuModal } from '../../components/ShareMenuModal';
-
 import { getSafeUri } from '../../utils/imageUtils';
+
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 

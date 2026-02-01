@@ -1,27 +1,32 @@
 import { ENV } from '../config/config';
 
 /**
- * Resolves an image source into a safe URI string.
- * Handles:
- * - Direct strings (URLs or local paths)
- * - Objects with .uri or .url
- * - Arrays of sources
- * - Relative paths (prepends backend base URL)
+ * Resolves an image source into a safe URI.
+ * Handles relative paths from the backend and absolute URLs.
  * 
- * @param source The image source to resolve
- * @returns A string URI or undefined
+ * @param source - The image source (string, object with uri, or array)
+ * @returns A safe URI string or undefined
  */
 export const getSafeUri = (source: any): string | undefined => {
     if (!source) return undefined;
+
     let uri: string | undefined;
 
-    if (typeof source === 'string') uri = source;
-    else if (source.uri) uri = source.uri;
-    else if (source.url) uri = source.url;
-    else if (Array.isArray(source) && source.length > 0) return getSafeUri(source[0]);
+    if (typeof source === 'string') {
+        uri = source;
+    } else if (source && typeof source === 'object') {
+        uri = source.uri || source.url;
+    }
 
-    if (uri && (uri.startsWith('/') && !uri.startsWith('//'))) {
-        // Assume relative paths come from Module 1 backend
+    if (!uri && Array.isArray(source) && source.length > 0) {
+        return getSafeUri(source[0]);
+    }
+
+    if (!uri) return undefined;
+
+    // If it's a relative path starting with /, prepend the base backend URL
+    if (uri.startsWith('/')) {
+        // Assume relative paths come from Module 1 Backend (where vitrines are stored)
         const baseUrl = ENV.MODULE1_API_URL.replace('/api', '');
         return `${baseUrl}${uri}`;
     }
