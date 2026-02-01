@@ -41,12 +41,23 @@ export const vitrineService = {
      * Create vitrine (calls Module 1)
      */
     updateVitrine: async (slug: string, data: Partial<Vitrine>) => {
+        console.log('[vitrineService] updateVitrine called for slug:', slug);
+        console.log('[vitrineService] Data to update:', JSON.stringify(data, null, 2));
+
         const payload = hasFiles(data) ? await toFormData(data) : data;
+
+        // Cannot easily log FormData content, but we know toFormData logs it.
+        if (hasFiles(data)) {
+            console.log('[vitrineService] Sending FormData payload.');
+        } else {
+            console.log('[vitrineService] Sending JSON payload.');
+        }
 
         const response = await module1Api.patch<{ success: boolean; vitrine: Vitrine }>(
             `/vitrines/myvitrine/${slug}`,
             payload
         );
+        console.log('[vitrineService] Update response:', response.status);
         return response.data.vitrine;
     },
 

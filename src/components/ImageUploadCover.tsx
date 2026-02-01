@@ -73,25 +73,33 @@ const ImageUploadCover = ({
     };
 
     const handleImagePick = async () => {
+        console.log('[ImageUploadCover] Starting image pick...');
         let pickerResult = await ImagePicker.launchImageLibraryAsync({
             mediaTypes: ImagePicker.MediaTypeOptions.Images,
             allowsEditing: false,
             quality: 1,
         });
 
+        console.log('[ImageUploadCover] Picker result:', pickerResult.canceled ? 'Canceled' : 'Success');
         if (pickerResult.canceled) return;
+
         const localImageUri = pickerResult.assets[0].uri;
+        console.log('[ImageUploadCover] Local URI:', localImageUri);
         setImageUri(localImageUri);
 
         try {
             setLoading(true);
+            console.log('[ImageUploadCover] Compressing image:', localImageUri);
             const compressedUri = await compressImage(localImageUri);
+            console.log('[ImageUploadCover] Compressed URI:', compressedUri);
 
             if (onUploadSuccess) {
+                console.log('[ImageUploadCover] Calling onUploadSuccess with:', compressedUri);
                 onUploadSuccess(compressedUri);
             }
 
         } catch (error) {
+            console.error('[ImageUploadCover] Error processing image:', error);
             showError('Impossible de traiter l\'image de couverture.');
         } finally {
             setLoading(false);

@@ -8,29 +8,37 @@ import { Platform } from 'react-native';
  * ALIGNED WITH MODULE 1 IMPLEMENTATION
  */
 export const toFormData = async (data: Record<string, any>): Promise<FormData> => {
+    console.log('[formDataHelper] Starting conversion for keys:', Object.keys(data));
     const formData = new FormData();
 
     for (const key of Object.keys(data)) {
         const value = data[key];
 
-        if (value === undefined || value === null) continue;
+        if (value === undefined || value === null) {
+            console.log(`[formDataHelper] Skipping null/undefined key: ${key}`);
+            continue;
+        }
 
         // Cas des tableaux (souvent pour les images)
         if (Array.isArray(value)) {
+            console.log(`[formDataHelper] Processing array for key: ${key}, length: ${value.length}`);
             for (let i = 0; i < value.length; i++) {
                 const item = value[i];
                 const itemUri = (typeof item === 'string') ? item : (item && typeof item === 'object' ? (item as any).uri : null);
 
                 if (itemUri && typeof itemUri === 'string' && (itemUri.startsWith('file://') || itemUri.startsWith('content://') || itemUri.startsWith('blob:') || itemUri.startsWith('data:'))) {
                     // C'est un fichier local
+                    console.log(`[formDataHelper] Array item ${i} is file: ${itemUri.substring(0, 50)}...`);
                     if (Platform.OS === 'web') {
                         // Sur Web, il faut convertir l'URI en Blob
                         try {
+                            console.log(`[formDataHelper] Fetching blob for array item ${i}...`);
                             const response = await fetch(itemUri);
                             const blob = await response.blob();
                             formData.append(key, blob, `image_${Date.now()}_${i}.jpg`);
+                            console.log(`[formDataHelper] Appended blob for array item ${i}, size: ${blob.size}, type: ${blob.type}`);
                         } catch (e) {
-                            console.error("Erreur conversion Blob Web:", e);
+                            console.error(`[formDataHelper] Error fetching blob for array item ${i}:`, e);
                         }
                     } else {
                         // Native
@@ -42,6 +50,7 @@ export const toFormData = async (data: Record<string, any>): Promise<FormData> =
                     }
                 } else {
                     // Non-fichier : repeat keys
+                    console.log(`[formDataHelper] Array item ${i} is NOT file, appending as is:`, item);
                     formData.append(key, item);
                 }
             }
@@ -52,14 +61,17 @@ export const toFormData = async (data: Record<string, any>): Promise<FormData> =
             (typeof value === 'object' && value !== null && typeof (value as any).uri === 'string' && ((value as any).uri.startsWith('file://') || (value as any).uri.startsWith('content://') || (value as any).uri.startsWith('blob:') || (value as any).uri.startsWith('data:')))
         ) {
             const uri = typeof value === 'string' ? value : (value as any).uri;
+            console.log(`[formDataHelper] Processing single file for key: ${key}, URI: ${uri.substring(0, 50)}...`);
 
             if (Platform.OS === 'web') {
                 try {
+                    console.log(`[formDataHelper] Fetching blob for single file key: ${key}...`);
                     const response = await fetch(uri);
                     const blob = await response.blob();
                     formData.append(key, blob, `image_${Date.now()}.jpg`);
+                    console.log(`[formDataHelper] Appended blob for key: ${key}, size: ${blob.size}, type: ${blob.type}`);
                 } catch (e) {
-                    console.error("Erreur conversion Blob Web (Single):", e);
+                    console.error(`[formDataHelper] Error fetching blob for single file key: ${key}:`, e);
                 }
             } else {
                 formData.append(key, {
@@ -71,14 +83,17 @@ export const toFormData = async (data: Record<string, any>): Promise<FormData> =
         }
         // Cas d'un objet (ex: contact) qui n'est pas un fichier
         else if (typeof value === 'object' && value !== null) {
+            console.log(`[formDataHelper] Stringifying object for key: ${key}`);
             formData.append(key, JSON.stringify(value));
         }
         // Valeur simple
         else {
+            console.log(`[formDataHelper] Appending simple value for key: ${key}:`, value);
             formData.append(key, value);
         }
     }
 
+    console.log('[formDataHelper] Conversion complete.');
     return formData;
 };
 
