@@ -5,7 +5,7 @@
  * Revamped to match VitrineDetailScreen from Module 1
  */
 
-import React, { useMemo, useCallback, useState } from 'react';
+import React, { useMemo, useCallback, useState, useEffect } from 'react';
 import {
     View,
     Text,
@@ -54,11 +54,29 @@ export const ProductsCatalogScreen = () => {
     const route = useRoute<any>();
     const { slug: routeSlug } = route.params || {};
 
-    // Debug Deep Link Params
-    console.log('[ProductsCatalogScreen] Route Params Slug:', routeSlug);
+    // Fallback manual slug extraction for Web
+    const [manualSlug, setManualSlug] = useState<string | undefined>(undefined);
 
-    // For Home Screen of Module 2, we assume we want to show "My Vitrine" by default if no slug is passed
-    const { slug } = route.params || {};
+    useEffect(() => {
+        if (Platform.OS === 'web' && !routeSlug && typeof window !== 'undefined') {
+            const href = window.location.href;
+            if (href.includes('/vitrine/')) {
+                const parts = href.split('/vitrine/');
+                const extracted = parts[parts.length - 1]?.split('?')[0]?.split('#')[0];
+                if (extracted) {
+                    console.log('[ProductsCatalogScreen] Slugs manuel extrait de URL:', extracted);
+                    setManualSlug(decodeURIComponent(extracted));
+                }
+            }
+        }
+    }, [routeSlug]);
+
+    // Final slug selection: Route params > Manual Fallback
+    const slug = routeSlug || manualSlug;
+
+    // Debug Deep Link Params
+    console.log('[ProductsCatalogScreen] Final Slug:', slug, '| Route Slug:', routeSlug, '| Manual Slug:', manualSlug);
+
     const { theme } = useTheme();
     // Assuming updateVitrine exists in useVitrines hook, checking imports...
     // In Module 1 it was: const { updateVitrine } = useVitrines();
