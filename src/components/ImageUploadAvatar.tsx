@@ -19,7 +19,7 @@ import { compressImage } from '../utils/imageUploader';
 import { useAlertService } from '../utils/alertService';
 import { useEffect } from 'react';
 
-import { getSafeUri } from '../utils/imageUtils';
+
 
 // Image par défaut 
 const DefaultAvatar = require('../../assets/images/default_avatar.png');
@@ -35,15 +35,14 @@ const ImageUploadAvatar = ({
     onImagePress?: (url: string) => void;
     size?: number;
 }) => {
-    const resolvedInitialImage = getSafeUri(initialImage);
-    const [imageUri, setImageUri] = useState(resolvedInitialImage);
+    const [imageUri, setImageUri] = useState(initialImage);
     const [loading, setLoading] = useState(false);
     const { showError } = useAlertService();
 
     // Sync state with prop changes - only when loading is finished
     useEffect(() => {
         if (!loading) {
-            setImageUri(getSafeUri(initialImage));
+            setImageUri(initialImage);
         }
     }, [initialImage, loading]);
 

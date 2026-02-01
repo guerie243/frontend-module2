@@ -17,7 +17,7 @@ import { compressImage } from '../utils/imageUploader';
 import { useAlertService } from '../utils/alertService';
 import { useEffect } from 'react';
 
-import { getSafeUri } from '../utils/imageUtils';
+
 
 const SCREEN_WIDTH = Dimensions.get("window").width;
 const DefaultCover = require('../../assets/images/default_cover.png');
@@ -33,15 +33,14 @@ const ImageUploadCover = ({
     onImagePress?: (url: string) => void;
     height?: number;
 }) => {
-    const resolvedInitialImage = getSafeUri(initialImage);
-    const [imageUri, setImageUri] = useState(resolvedInitialImage);
+    const [imageUri, setImageUri] = useState(initialImage);
     const [loading, setLoading] = useState(false);
     const { showError } = useAlertService();
 
     // Sync state with prop changes - only when loading is finished
     useEffect(() => {
         if (!loading) {
-            setImageUri(getSafeUri(initialImage));
+            setImageUri(initialImage);
         }
     }, [initialImage, loading]);
 
