@@ -40,15 +40,6 @@ export const vitrineService = {
     /**
      * Create vitrine (calls Module 1)
      */
-    createVitrine: async (data: Partial<Vitrine>) => {
-        const payload = hasFiles(data) ? await toFormData(data) : data;
-        const response = await module1Api.post<Vitrine>('/vitrines', payload);
-        return response.data;
-    },
-
-    /**
-     * Update vitrine (calls Module 1)
-     */
     updateVitrine: async (slug: string, data: Partial<Vitrine>) => {
         const payload = hasFiles(data) ? await toFormData(data) : data;
 

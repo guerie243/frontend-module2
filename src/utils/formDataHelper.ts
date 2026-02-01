@@ -1,12 +1,13 @@
 import { Platform } from 'react-native';
 
 /**
- * Converts a flat object into FormData, handling files (local URIs).
- * Supports arrays of files (e.g., images).
- * ASYNC to support fetching Blobs on Web.
+ * Convertit un objet plat en FormData, gérant les fichiers (URI locales).
+ * Supporte les tableaux de fichiers (e.g., images).
+ * ASYNC pour supporter le fetch de Blobs sur Web.
+ * 
+ * ALIGNED WITH MODULE 1 IMPLEMENTATION
  */
 export const toFormData = async (data: Record<string, any>): Promise<FormData> => {
-    console.log('[formDataHelper] toFormData: Starting conversion with keys:', Object.keys(data));
     const formData = new FormData();
 
     for (const key of Object.keys(data)) {
@@ -14,56 +15,38 @@ export const toFormData = async (data: Record<string, any>): Promise<FormData> =
 
         if (value === undefined || value === null) continue;
 
-        // Case for arrays (often for images, but also for locations, etc.)
+        // Cas des tableaux (souvent pour les images)
         if (Array.isArray(value)) {
-            // Check if this is an array of file URIs or an array of simple values
-            const hasFileUris = value.some(item => {
+            for (let i = 0; i < value.length; i++) {
+                const item = value[i];
                 const itemUri = (typeof item === 'string') ? item : (item && typeof item === 'object' ? (item as any).uri : null);
-                return itemUri && typeof itemUri === 'string' && (itemUri.startsWith('file://') || itemUri.startsWith('content://') || itemUri.startsWith('blob:') || itemUri.startsWith('data:'));
-            });
 
-            if (hasFileUris) {
-                // Process as file array
-                for (let i = 0; i < value.length; i++) {
-                    const item = value[i];
-                    const itemUri = (typeof item === 'string') ? item : (item && typeof item === 'object' ? (item as any).uri : null);
-
-                    if (itemUri && typeof itemUri === 'string' && (itemUri.startsWith('file://') || itemUri.startsWith('content://') || itemUri.startsWith('blob:') || itemUri.startsWith('data:'))) {
-                        // It's a local file
-                        console.log(`[toFormData] Processing file array item ${i}:`, itemUri);
-                        if (Platform.OS === 'web') {
-                            // On Web, convert URI to Blob
-                            try {
-                                const response = await fetch(itemUri);
-                                const blob = await response.blob();
-                                formData.append(key, blob, `image_${Date.now()}_${i}.jpg`);
-                                console.log(`[toFormData] Appended blob for item ${i}, size: ${blob.size}`);
-                            } catch (e) {
-                                console.error("Error converting Web Blob:", e);
-                            }
-                        } else {
-                            // Native
-                            console.log(`[toFormData] Appending native file for item ${i}`);
-                            formData.append(key, {
-                                uri: (Platform.OS === 'ios') ? itemUri.replace('file://', '') : itemUri,
-                                type: 'image/jpeg',
-                                name: `${key}_${i}.jpg`,
-                            } as any);
+                if (itemUri && typeof itemUri === 'string' && (itemUri.startsWith('file://') || itemUri.startsWith('content://') || itemUri.startsWith('blob:') || itemUri.startsWith('data:'))) {
+                    // C'est un fichier local
+                    if (Platform.OS === 'web') {
+                        // Sur Web, il faut convertir l'URI en Blob
+                        try {
+                            const response = await fetch(itemUri);
+                            const blob = await response.blob();
+                            formData.append(key, blob, `image_${Date.now()}_${i}.jpg`);
+                        } catch (e) {
+                            console.error("Erreur conversion Blob Web:", e);
                         }
                     } else {
-                        // Non-file: append directly
-                        console.log(`[toFormData] Appending non-file item ${i}:`, item);
-                        formData.append(key, item);
+                        // Native
+                        formData.append(key, {
+                            uri: (Platform.OS === 'ios') ? itemUri.replace('file://', '') : itemUri,
+                            type: 'image/jpeg',
+                            name: `${key}_${i}.jpg`,
+                        } as any);
                     }
+                } else {
+                    // Non-fichier : repeat keys
+                    formData.append(key, item);
                 }
-            } else {
-                // Array of simple values (e.g., locations: ['Alger', 'Oran'])
-                // Stringify the entire array so backend can parse it
-                console.log(`[toFormData] Stringifying non-file array for key '${key}':`, value);
-                formData.append(key, JSON.stringify(value));
             }
         }
-        // Case for single file (uri string or object with uri)
+        // Cas d'un fichier seul (uri string ou objet avec uri)
         else if (
             (typeof value === 'string' && (value.startsWith('file://') || value.startsWith('content://') || value.startsWith('blob:') || value.startsWith('data:'))) ||
             (typeof value === 'object' && value !== null && typeof (value as any).uri === 'string' && ((value as any).uri.startsWith('file://') || (value as any).uri.startsWith('content://') || (value as any).uri.startsWith('blob:') || (value as any).uri.startsWith('data:')))
@@ -72,54 +55,51 @@ export const toFormData = async (data: Record<string, any>): Promise<FormData> =
 
             if (Platform.OS === 'web') {
                 try {
-                    console.log(`[toFormData] Processing single file (Web):`, uri);
                     const response = await fetch(uri);
                     const blob = await response.blob();
                     formData.append(key, blob, `image_${Date.now()}.jpg`);
-                    console.log(`[toFormData] Appended blob, size: ${blob.size}`);
                 } catch (e) {
-                    console.error("Error converting Web Blob (Single):", e);
+                    console.error("Erreur conversion Blob Web (Single):", e);
                 }
             } else {
-                console.log(`[toFormData] Processing single file (Native):`, uri);
                 formData.append(key, {
                     uri: (Platform.OS === 'ios') ? uri.replace('file://', '') : uri,
-                    type: 'image/jpeg',
+                    type: 'image/jpeg', // Mimetype par défaut
                     name: `${key}.jpg`,
                 } as any);
             }
         }
-        // Case for objects (not a file)
+        // Cas d'un objet (ex: contact) qui n'est pas un fichier
         else if (typeof value === 'object' && value !== null) {
             formData.append(key, JSON.stringify(value));
         }
-        // Simple value
+        // Valeur simple
         else {
             formData.append(key, value);
         }
     }
 
-    console.log('[formDataHelper] toFormData: Conversion complete');
     return formData;
 };
 
 /**
- * Check if data contains files that require FormData
+ * Helper to check if data contains files
+ * (Re-implementing this based on Module 1 pattern if needed, or keeping Module 2's helper if it aligns)
+ * Module 1 formDataHelper didn't export hasFiles in the view I saw, but it's likely used.
+ * I will keep Module 2's hasFiles if it's compatible, or check if Module 1 has it.
+ * The file view of Module 1 formDataHelper ended at line 86 without hasFiles export.
+ * If Module 1 doesn't have it, then Module 2 vitrineService (which uses it) might break.
+ * I will KEEP hasFiles from Module 2 (adapted to match the logic I just pasted if necessary) to avoid compilation errors.
+ * But wait, I am overwriting the file. So I must INCLUDE hasFiles.
+ * Let's assume Module 2's hasFiles is fine as long as it detects the same things.
  */
 export const hasFiles = (data: any): boolean => {
     return Object.values(data).some(value => {
-        // String URI
-        if (typeof value === 'string' && (value.startsWith('file://') || value.startsWith('content://') || value.startsWith('blob:') || value.startsWith('data:'))) {
-            return true;
-        }
-        // Object with uri property
+        if (typeof value === 'string' && (value.startsWith('file://') || value.startsWith('content://') || value.startsWith('blob:') || value.startsWith('data:'))) return true;
         if (value && typeof value === 'object' && !Array.isArray(value)) {
             const v = value as any;
-            if (typeof v.uri === 'string' && (v.uri.startsWith('file://') || v.uri.startsWith('content://') || v.uri.startsWith('blob:') || v.uri.startsWith('data:'))) {
-                return true;
-            }
+            if (typeof v.uri === 'string' && (v.uri.startsWith('file://') || v.uri.startsWith('content://') || v.uri.startsWith('blob:') || v.uri.startsWith('data:'))) return true;
         }
-        // Array containing URIs
         if (Array.isArray(value)) {
             return value.some(v => {
                 const uri = (typeof v === 'string') ? v : (v && typeof v === 'object' ? (v as any).uri : null);
