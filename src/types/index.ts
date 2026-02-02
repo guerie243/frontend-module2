@@ -31,7 +31,7 @@ export interface Product {
     category: string;
     images: string[];
     vitrineId: string;
-    locations?: string[];
+    locations?: string | string[];
     stock?: number;
     currency?: string;
     deliveryFee?: number;
@@ -47,7 +47,7 @@ export interface OrderProduct {
     quantity: number;
     price: number;
     currency?: string;
-    locations?: string[];
+    locations?: string | string[];
 }
 
 export interface Order {

@@ -40,11 +40,15 @@ export const DeliveryLocationScreen = () => {
         let commonCities: string[] | null = null;
 
         orderData.products.forEach((p: any) => {
-            if (p.locations && p.locations.length > 0) {
+            const productLocations = p.locations
+                ? (Array.isArray(p.locations) ? p.locations : [p.locations])
+                : [];
+
+            if (productLocations.length > 0) {
                 if (commonCities === null) {
-                    commonCities = [...p.locations];
+                    commonCities = [...productLocations];
                 } else {
-                    commonCities = commonCities.filter(c => p.locations.includes(c));
+                    commonCities = commonCities.filter(c => productLocations.includes(c));
                 }
             }
         });

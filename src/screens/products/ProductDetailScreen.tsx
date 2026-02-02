@@ -44,6 +44,11 @@ export const ProductDetailScreen = () => {
         String(currentUserId) === String(vitrine.owner)
     );
 
+    const normalizedLocations = useMemo(() => {
+        if (!product?.locations) return [];
+        return Array.isArray(product.locations) ? product.locations : [product.locations];
+    }, [product?.locations]);
+
     const handleAddToCart = () => {
         if (product) {
             const cartItem: CartItem = { product, quantity };
@@ -173,13 +178,13 @@ export const ProductDetailScreen = () => {
                         </View>
                     )}
 
-                    {Array.isArray(product.locations) && product.locations.length > 0 && (
+                    {normalizedLocations.length > 0 && (
                         <View style={styles.locationsContainer}>
                             <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>
                                 Lieux de disponibilité
                             </Text>
                             <View style={styles.locationBadges}>
-                                {product.locations.map((loc, idx) => (
+                                {normalizedLocations.map((loc, idx) => (
                                     <View key={idx} style={[styles.locationBadge, { backgroundColor: theme.colors.background }]}>
                                         <Ionicons name="location-sharp" size={14} color={theme.colors.primary} />
                                         <Text style={[styles.locationText, { color: theme.colors.text }]}>{loc}</Text>

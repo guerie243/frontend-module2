@@ -62,7 +62,11 @@ export const EditProductScreen = () => {
             setPrice(product.price?.toString() || '');
             setCurrency(product.currency || 'DZD');
             setCategory(product.category || '');
-            setLocations(product.locations || []);
+            if (product.locations) {
+                setLocations(Array.isArray(product.locations) ? product.locations : [product.locations]);
+            } else {
+                setLocations([]);
+            }
             const hasDeliveryFee = !!product.deliveryFee && product.deliveryFee > 0;
             setIsDeliveryPaid(hasDeliveryFee);
             setDeliveryFee(product.deliveryFee?.toString() || '');
