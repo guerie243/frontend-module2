@@ -120,11 +120,8 @@ export const DeliveryLocationScreen = () => {
             return;
         }
 
-        console.log('Submitting order:', {
-            ...orderData,
-            deliveryAddress,
-            deliveryLocation,
-        });
+        // Pré-ouvrir la fenêtre sur le Web pour éviter le blocage de popup
+        const webWindow = Platform.OS === 'web' ? window.open('', '_blank') : null;
 
         try {
             const order = await createOrderMutation.mutateAsync({
@@ -136,8 +133,10 @@ export const DeliveryLocationScreen = () => {
                 status: 'pending',
             });
 
-            if (order && (order.id || order._id)) {
-                console.log('Order created successfully:', order.id || order._id);
+            if (order && (order.orderId || order._id)) {
+                // Utiliser l'orderId public (ex: ORD-XXXXXX)
+                const publicOrderId = order.orderId || order._id;
+                console.log('Order created successfully:', publicOrderId);
 
                 // Préparer le message WhatsApp
                 const whatsappNumber = vitrine?.contact?.phone;
@@ -164,36 +163,36 @@ export const DeliveryLocationScreen = () => {
                         message += `\n*Notes:* ${orderData.notes}\n`;
                     }
 
-                    // Utiliser l'orderId public pour le lien de suivi
-                    const publicOrderId = order.orderId || order.id || order._id;
                     message += `\n*Lien de suivi de votre commande:* ${getOrderUrl(publicOrderId)}`;
 
                     const whatsappUrl = `https://wa.me/${cleanNumber}?text=${encodeURIComponent(message)}`;
 
-                    try {
-                        if (Platform.OS === 'web') {
-                            window.open(whatsappUrl, '_blank');
-                        } else {
-                            await Linking.openURL(whatsappUrl);
-                        }
-                    } catch (err) {
-                        console.error('Erreur ouverture WhatsApp:', err);
-                        // Fallback simple si Linking échoue
-                        const fallbackUrl = `https://wa.me/${cleanNumber}?text=${encodeURIComponent(message)}`;
-                        Linking.openURL(fallbackUrl).catch(() => { });
+                    if (webWindow) {
+                        webWindow.location.href = whatsappUrl;
+                    } else {
+                        await Linking.openURL(whatsappUrl).catch(async () => {
+                            // Fallback si Linking échoue sur mobile
+                            const fallbackUrl = `https://wa.me/${cleanNumber}?text=${encodeURIComponent(message)}`;
+                            await Linking.openURL(fallbackUrl).catch(() => { });
+                        });
                     }
+                } else if (webWindow) {
+                    webWindow.close();
                 }
+            } else if (webWindow) {
+                webWindow.close();
             }
 
             showSuccess('Commande créée avec succès !');
 
             // Redirection vers le détail de la commande pour le client
-            const orderIdForNav = order.orderId || order.id || order._id;
+            const orderIdForNav = order.orderId || order._id;
 
             setTimeout(() => {
                 navigation.navigate('OrderClientDetail', { orderId: orderIdForNav });
             }, 1000);
         } catch (error: any) {
+            if (webWindow) webWindow.close();
             console.error('Order creation failed:', error.message);
             showError(error.message || 'Échec de la création de la commande');
         }
