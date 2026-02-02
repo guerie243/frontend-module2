@@ -96,7 +96,7 @@ export const ProductsCatalogScreen = () => {
     // User wants "trait pour trait".
     // Let's implement the logic assuming updateVitrine is needed.
 
-    const { user, isAuthenticated } = useAuth(); // isGuest might not be in useAuth of Module 2? Step 97 -> exports useAuth from context.
+    const { user, isAuthenticated, isLoading } = useAuth(); // isGuest might not be in useAuth of Module 2? Step 97 -> exports useAuth from context.
     const { showSuccess, showError } = useAlertService();
     const updateVitrineMutation = useUpdateVitrine();
 
