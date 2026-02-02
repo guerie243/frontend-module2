@@ -120,9 +120,6 @@ export const DeliveryLocationScreen = () => {
             return;
         }
 
-        // Pré-ouvrir la fenêtre sur le Web pour éviter le blocage de popup
-        const webWindow = Platform.OS === 'web' ? window.open('', '_blank') : null;
-
         try {
             const order = await createOrderMutation.mutateAsync({
                 ...orderData,
@@ -144,8 +141,7 @@ export const DeliveryLocationScreen = () => {
                     const cleanNumber = whatsappNumber.replace(/\D/g, '');
 
                     let message = `*Nouvelle Commande*\n\n`;
-                    message += `*Client:* ${orderData.clientName}\n`;
-                    message += `*Téléphone:* ${orderData.clientPhone}\n\n`;
+                    message += `*Client:* ${orderData.clientName}\n\n`;
 
                     message += `*Articles:*\n`;
                     orderData.products.forEach((p: any) => {
@@ -167,28 +163,17 @@ export const DeliveryLocationScreen = () => {
 
                     const whatsappUrl = `whatsapp://send?phone=${cleanNumber}&text=${encodeURIComponent(message)}`;
 
-                    if (webWindow) {
-                        webWindow.location.assign(whatsappUrl);
-                    } else {
-                        try {
-                            const supported = await Linking.canOpenURL(whatsappUrl);
-                            if (supported) {
-                                await Linking.openURL(whatsappUrl);
-                            } else {
-                                const webUrl = `https://wa.me/${cleanNumber}?text=${encodeURIComponent(message)}`;
-                                await Linking.openURL(webUrl);
-                            }
-                        } catch (err) {
-                            console.error('Erreur ouverture WhatsApp:', err);
+                    try {
+                        // On tente l'ouverture directe via le protocole whatsapp:// (comportement comme sur l'accueil)
+                        await Linking.openURL(whatsappUrl).catch(async () => {
+                            // Fallback web si le protocole n'est pas supporté (ex: pas de WhatsApp Desktop sur Web)
                             const webUrl = `https://wa.me/${cleanNumber}?text=${encodeURIComponent(message)}`;
-                            Linking.openURL(webUrl).catch(() => { });
-                        }
+                            await Linking.openURL(webUrl);
+                        });
+                    } catch (err) {
+                        console.error('Erreur ouverture WhatsApp:', err);
                     }
-                } else if (webWindow) {
-                    webWindow.close();
                 }
-            } else if (webWindow) {
-                webWindow.close();
             }
 
             showSuccess('Commande créée avec succès !');
@@ -200,7 +185,6 @@ export const DeliveryLocationScreen = () => {
                 navigation.navigate('OrderClientDetail', { orderId: orderIdForNav });
             }, 1000);
         } catch (error: any) {
-            if (webWindow) webWindow.close();
             console.error('Order creation failed:', error.message);
             showError(error.message || 'Échec de la création de la commande');
         }
