@@ -17,14 +17,10 @@ import { useAlertService } from '../../utils/alertService';
 import { CartItem } from '../../types';
 import { getProductUrl } from '../../utils/sharingUtils';
 import { ScreenHeader } from '../../components/ScreenHeader';
-import { ShareMenuModal } from '../../components/ShareMenuModal';
 import { getSafeUri } from '../../utils/imageUtils';
-import { useMemo, useRef } from 'react';
+import { useMemo, useRef, useState } from 'react';
+import { ProductCarousel } from '../../components/ProductCarousel';
 
-const { width: screenWidth } = Dimensions.get('window');
-const ITEM_WIDTH = Math.round(screenWidth * 0.85);
-const SPACING = (screenWidth - ITEM_WIDTH) / 2;
-const ITEM_LAYOUT_WIDTH = ITEM_WIDTH + SPACING;
 const CAROUSEL_HEIGHT = 350;
 
 export const ProductDetailScreen = () => {
@@ -40,11 +36,11 @@ export const ProductDetailScreen = () => {
     const { data: vitrine } = useVitrineDetail(product?.vitrineId || '', !!product?.vitrineId);
     const deleteProductMutation = useDeleteProduct();
 
-    const [quantity, setQuantity] = useState(1);
     const [isShareModalVisible, setIsShareModalVisible] = useState(false);
+
+    // Height fixe pour le ProductCarousel dans ce contexte (pas d'animation complexe de parallaxe pour l'instant sauf si demandé)
+    const carouselHeight = useRef(new Animated.Value(CAROUSEL_HEIGHT)).current;
     const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
-    const [currentImageIndex, setCurrentImageIndex] = useState(0);
-    const flatListRef = useRef<FlatList>(null);
 
     const currentUserId = user?.userId || user?.id || user?._id;
     const isOwner = isAuthenticated && !!user && !!vitrine && (
@@ -122,116 +118,26 @@ export const ProductDetailScreen = () => {
             />
 
             <ScrollView style={styles.container}>
-                {/* Product Image Gallery */}
-                <View style={[styles.galleryContainer, { height: CAROUSEL_HEIGHT }]}>
-                    {normalizedImages.length > 0 ? (
-                        <>
-                            <FlatList
-                                ref={flatListRef}
-                                data={normalizedImages}
-                                keyExtractor={(item, index) => `${item}-${index}`}
-                                horizontal
-                                showsHorizontalScrollIndicator={false}
-                                contentContainerStyle={{
-                                    paddingLeft: SPACING,
-                                    paddingRight: 0, // Last item has margin right
-                                }}
-                                snapToInterval={ITEM_LAYOUT_WIDTH}
-                                decelerationRate="fast"
-                                snapToAlignment="start"
-                                pagingEnabled={false}
-                                disableIntervalMomentum={true}
-                                getItemLayout={(data, index) => ({
-                                    length: ITEM_LAYOUT_WIDTH,
-                                    offset: ITEM_LAYOUT_WIDTH * index, // Simplified offset since padding is outside content calculation for index?
-                                    // Actually for scrollToIndex with padding: viewOffset might be needed or just standard calculation.
-                                    // Let's keep it simple. Index * Interval.
-                                    index,
-                                })}
-                                onMomentumScrollEnd={(e) => {
-                                    const scrollOffset = e.nativeEvent.contentOffset.x;
-                                    const index = Math.round(scrollOffset / ITEM_LAYOUT_WIDTH);
-                                    setCurrentImageIndex(Math.max(0, Math.min(index, normalizedImages.length - 1)));
-                                }}
-                                renderItem={({ item, index }) => {
-                                    return (
-                                        <View style={[styles.slideContainer, { marginRight: SPACING }]}>
-                                            <Image
-                                                source={{ uri: getSafeUri(item) }}
-                                                style={styles.image}
-                                                contentFit="cover"
-                                                transition={200}
-                                            />
-                                        </View>
-                                    );
-                                }}
-                            />
-
-                            {/* Navigation Arrows */}
-                            {normalizedImages.length > 1 && (
-                                <>
-                                    {currentImageIndex > 0 && (
-                                        <TouchableOpacity
-                                            style={[styles.navButton, styles.leftNavButton]}
-                                            onPress={() => {
-                                                const newIndex = currentImageIndex - 1;
-                                                flatListRef.current?.scrollToIndex({
-                                                    index: newIndex,
-                                                    animated: true,
-                                                    viewOffset: SPACING // Compensate for paddingLeft?
-                                                    // Experimentation shows: if snapToAlignment is start, and paddingLeft exists.
-                                                    // scrollToIndex(0) usually goes to 0 offset (which shows padding).
-                                                    // scrollToIndex(1) goes to 1 * Interval.
-                                                    // Let's rely on standard behavior first.
-                                                });
-                                            }}
-                                        >
-                                            <Ionicons name="chevron-back" size={24} color="#FFF" />
-                                        </TouchableOpacity>
-                                    )}
-
-                                    {currentImageIndex < normalizedImages.length - 1 && (
-                                        <TouchableOpacity
-                                            style={[styles.navButton, styles.rightNavButton]}
-                                            onPress={() => {
-                                                const newIndex = currentImageIndex + 1;
-                                                flatListRef.current?.scrollToIndex({
-                                                    index: newIndex,
-                                                    animated: true,
-                                                });
-                                            }}
-                                        >
-                                            <Ionicons name="chevron-forward" size={24} color="#FFF" />
-                                        </TouchableOpacity>
-                                    )}
-
-                                    {/* Pagination Dots */}
-                                    <View style={styles.paginationDots}>
-                                        {normalizedImages.map((_, i) => (
-                                            <View
-                                                key={i}
-                                                style={[
-                                                    styles.dot,
-                                                    { backgroundColor: i === currentImageIndex ? theme.colors.primary : 'rgba(255,255,255,0.5)' }
-                                                ]}
-                                            />
-                                        ))}
-                                    </View>
-                                </>
-                            )}
-                        </>
-                    ) : (
-                        <View style={styles.placeholderContainer}>
-                            <Ionicons name="image-outline" size={80} color={theme.colors.textTertiary} />
-                            <Text style={[styles.imagePlaceholderText, { color: theme.colors.textTertiary }]}>
-                                Pas d'image
-                            </Text>
-                        </View>
-                    )}
+                {/* Product Image Gallery using ProductCarousel */}
+                <View style={styles.galleryContainer}>
+                    <ProductCarousel
+                        height={carouselHeight}
+                        images={normalizedImages}
+                    // onImagePress={handleImagePress} // Add handleImagePress if we want preview
+                    />
                 </View>
 
                 {/* Product Info */}
-                <View style={[styles.section, { backgroundColor: theme.colors.surface }]}>
+                <View style={[
+                    styles.infoContainer,
+                    {
+                        backgroundColor: theme.colors.surface,
+                        borderTopLeftRadius: 30,
+                        borderTopRightRadius: 30,
+                        marginTop: -20, // Overlap effect
+                        paddingTop: 30,
+                    }
+                ]}>
                     <Text style={[styles.productName, { color: theme.colors.text }]}>
                         {product.name}
                     </Text>
@@ -362,37 +268,9 @@ const createStyles = (theme: any) => StyleSheet.create({
     emptyText: {
         fontSize: 16,
     },
-    imageContainer: {
-        // Removed fixed width here, handled by slideContainer
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
     galleryContainer: {
-        // Removed absolute padding to allow full width scrolling
-        marginTop: 16,
-    },
-    slideContainer: {
-        width: ITEM_WIDTH,
-        height: CAROUSEL_HEIGHT,
-        borderRadius: 16,
-        overflow: 'hidden',
-        backgroundColor: '#f0f0f0', // placeholder background
-    },
-    image: {
-        width: '100%',
-        height: '100%',
-    },
-    floatingShareButton: {
-        position: 'absolute',
-        top: 20,
-        right: 20,
-        backgroundColor: 'rgba(0,0,0,0.5)',
-        width: 44,
-        height: 44,
-        borderRadius: 22,
-        justifyContent: 'center',
-        alignItems: 'center',
-        zIndex: 30,
+        marginTop: 10,
+        marginBottom: 0,
     },
     placeholderContainer: {
         alignItems: 'center',
@@ -406,6 +284,11 @@ const createStyles = (theme: any) => StyleSheet.create({
     section: {
         padding: 16,
         margin: 16,
+        borderRadius: 12,
+    },
+    infoContainer: {
+        padding: 16,
+        marginHorizontal: 16,
         borderRadius: 12,
     },
     productName: {

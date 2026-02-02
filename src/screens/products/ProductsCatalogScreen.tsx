@@ -474,15 +474,28 @@ export const ProductsCatalogScreen = () => {
                 vitrineLogo={scrolled ? getSafeUri(currentVitrine.logo || currentVitrine.avatar) : undefined}
                 onVitrinePress={() => flatListRef.current?.scrollToOffset({ offset: 0, animated: true })}
                 onShare={() => setIsShareModalVisible(true)}
-                rightElement={isOwner ? (
-                    <TouchableOpacity
-                        activeOpacity={0.7}
-                        onPress={() => navigation.navigate('Settings')}
-                        style={styles.headerIconButton}
-                    >
-                        <Ionicons name="settings-outline" size={24} color={theme.colors.text} />
-                    </TouchableOpacity>
-                ) : undefined}
+                rightElement={
+                    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                        {/* Bouton Mes Commandes (Pour Tous) */}
+                        <TouchableOpacity
+                            activeOpacity={0.7}
+                            onPress={() => navigation.navigate('OrdersList')}
+                            style={[styles.headerIconButton, { marginRight: 8 }]}
+                        >
+                            <Ionicons name="receipt-outline" size={24} color={theme.colors.text} />
+                        </TouchableOpacity>
+
+                        {isOwner && (
+                            <TouchableOpacity
+                                activeOpacity={0.7}
+                                onPress={() => navigation.navigate('Settings')}
+                                style={styles.headerIconButton}
+                            >
+                                <Ionicons name="settings-outline" size={24} color={theme.colors.text} />
+                            </TouchableOpacity>
+                        )}
+                    </View>
+                }
             />
             <FlatList
                 ref={flatListRef}

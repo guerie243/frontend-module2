@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator, Linking } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { useTheme } from '../../context/ThemeContext';
 import { useAlertService } from '../../utils/alertService';
@@ -208,6 +209,20 @@ export const DeliveryLocationScreen = () => {
             }
 
             showSuccess('Commande créée avec succès !');
+
+            // Stockage local de la commande pour l'historique visiteur/invité
+            try {
+                const savedOrdersJson = await AsyncStorage.getItem('GUEST_ORDERS');
+                const savedOrders = savedOrdersJson ? JSON.parse(savedOrdersJson) : [];
+
+                if (!savedOrders.includes(publicOrderId)) {
+                    const newOrders = [publicOrderId, ...savedOrders];
+                    await AsyncStorage.setItem('GUEST_ORDERS', JSON.stringify(newOrders));
+                    console.log('Order ID saved locally:', publicOrderId);
+                }
+            } catch (e) {
+                console.error('Failed to save order locally:', e);
+            }
 
             // Redirection vers le détail de la commande pour le client
             const orderIdForNav = order.orderId || order._id;

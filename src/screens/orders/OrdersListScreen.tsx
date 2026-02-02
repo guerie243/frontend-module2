@@ -20,6 +20,9 @@ import { LoadingComponent } from '../../components/LoadingComponent';
 import { CustomButton } from '../../components/CustomButton';
 import { Order } from '../../types';
 import { ScreenHeader } from '../../components/ScreenHeader';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useGuestOrders } from '../../hooks/useCommandes';
+import { useFocusEffect } from '@react-navigation/native';
 
 export const OrdersListScreen = () => {
     const navigation = useNavigation<any>();
@@ -44,14 +47,50 @@ export const OrdersListScreen = () => {
 
     console.log('[OrdersListScreen] Active Vitrine:', activeVitrine?.name, 'vitrineId:', vitrineId);
 
-    // Get orders for this vitrine
-    const {
-        data: orders = [],
-        isLoading: ordersLoading,
-        refetch: refetchOrders
-    } = useOrdersByVitrine(vitrineId, !!vitrineId);
+    const isSellerMode = isAuthenticated && activeVitrine;
 
-    console.log('[OrdersListScreen] Orders fetched count:', orders?.length);
+    // --- MODE VENDEUR : Commandes reçues ---
+    const {
+        data: sellerOrders = [],
+        isLoading: sellerOrdersLoading,
+        refetch: refetchSellerOrders
+    } = useOrdersByVitrine(vitrineId, !!vitrineId && !!isSellerMode);
+
+    // --- MODE ACHETEUR : Commandes passées (Local Storage) ---
+    const [guestOrderIds, setGuestOrderIds] = useState<string[]>([]);
+
+    const loadGuestOrders = async () => {
+        try {
+            const savedOrdersJson = await AsyncStorage.getItem('GUEST_ORDERS');
+            if (savedOrdersJson) {
+                const ids = JSON.parse(savedOrdersJson);
+                setGuestOrderIds(ids);
+            }
+        } catch (e) {
+            console.error('Failed to load guest orders:', e);
+        }
+    };
+
+    useFocusEffect(
+        React.useCallback(() => {
+            if (!isSellerMode) {
+                loadGuestOrders();
+            }
+        }, [isSellerMode])
+    );
+
+    const {
+        data: guestOrders = [],
+        isLoading: guestOrdersLoading,
+        refetch: refetchGuestOrders
+    } = useGuestOrders(guestOrderIds, !isSellerMode && guestOrderIds.length > 0);
+
+
+    // Fusion / Sélection des commandes à afficher
+    const orders = isSellerMode ? sellerOrders : guestOrders;
+    const ordersLoading = isSellerMode ? sellerOrdersLoading : guestOrdersLoading;
+
+    console.log('[OrdersListScreen] Mode:', isSellerMode ? 'SELLER' : 'BUYER', 'Count:', orders?.length);
 
     const [statusFilter, setStatusFilter] = useState<Order['status'] | 'all'>('all');
     const [selectedOrderForShare, setSelectedOrderForShare] = useState<Order | null>(null);
@@ -73,7 +112,12 @@ export const OrdersListScreen = () => {
 
     const onRefresh = async () => {
         console.log('Refreshing orders list');
-        await Promise.all([refetchVitrines(), refetchOrders()]);
+        if (isSellerMode) {
+            await Promise.all([refetchVitrines(), refetchSellerOrders()]);
+        } else {
+            await loadGuestOrders();
+            await refetchGuestOrders();
+        }
     };
 
     const handleOrderPress = (order: Order) => {
@@ -169,54 +213,39 @@ export const OrdersListScreen = () => {
         </TouchableOpacity>
     );
 
-    // Redirection si non authentifié
+    // Suppression de la redirection automatique si non authentifié
+    // Car maintenant accessible aux invités pour voir l'historique
+    /*
     useEffect(() => {
         if (!isLoading && !isAuthenticated) {
             console.log('[OrdersListScreen] Not authenticated, redirecting to Login');
             navigation.navigate('Login');
         }
     }, [isLoading, isAuthenticated, navigation]);
+    */
 
     // 2. Show loading while fetching vitrines or orders (initial load)
     if (vitrinesLoading || (ordersLoading && orders.length === 0)) {
         return <LoadingComponent message="Chargement de vos commandes..." />;
     }
 
-    // 3. Show message if no vitrines found
-    if (isAuthenticated && myVitrines.length === 0) {
-        return (
-            <ScreenWrapper>
-                <View style={styles.centerContainer}>
-                    <Text style={[styles.title, { color: theme.colors.text, marginBottom: 12 }]}>
-                        Oups ! Aucune vitrine trouvée
-                    </Text>
-                    <Text style={{ textAlign: 'center', color: theme.colors.textSecondary, marginBottom: 24, paddingHorizontal: 40 }}>
-                        Vous devez posséder une vitrine pour recevoir et gérer des commandes.
-                    </Text>
-                    <CustomButton
-                        title="Créer ma Vitrine"
-                        onPress={() => navigation.navigate('CreateVitrine')}
-                        style={{ paddingHorizontal: 40 }}
-                    />
-                    <TouchableOpacity
-                        onPress={() => refetchVitrines()}
-                        style={{ marginTop: 20 }}
-                    >
-                        <Text style={{ color: theme.colors.primary }}>Actualiser</Text>
-                    </TouchableOpacity>
-                </View>
-            </ScreenWrapper>
-        );
-    }
+    // 3. Show message if no vitrines found AND authenticated (Maybe user wants to be a seller but has no vitrine)
+    // But wait, if authenticated and no vitrine, we should probably show Guest Orders (My Purchases) instead of blocking?
+    // User said: "Si c'est une personne connecté et propriétaire... ça doit le ramener vers la liste de ces commandes"
+    // "Si c'est une personne non connectée... on va regarder dans ses données"
+    // What if connected but NOT owner? He is a buyer then.
+    // So the condition `isAuthenticated && myVitrines.length === 0` should probably fall back to Buyer Mode (Guest Orders) logic.
+    // Let's remove the blocking return and handle it in the render.
 
     return (
         <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
             <ScreenHeader
-                title="Mes Commandes"
-                showBack={false}
+                <ScreenHeader
+                title={isSellerMode ? "Commandes Reçues" : "Mes Achats"}
+                showBack={true} // Allow back navigation
             />
 
-            {activeVitrine && (
+            {isSellerMode && activeVitrine && (
                 <Text style={[styles.subtitle, { color: theme.colors.textSecondary, marginTop: 8 }]}>
                     Vitrine : {activeVitrine.name}
                 </Text>
@@ -250,7 +279,9 @@ export const OrdersListScreen = () => {
                 ListEmptyComponent={
                     <View style={styles.emptyContainer}>
                         <Text style={[styles.emptyText, { color: theme.colors.textSecondary }]}>
-                            Aucune commande
+                            {isSellerMode
+                                ? "Aucune commande reçue pour le moment."
+                                : "Vous n'avez pas encore passé de commande."}
                         </Text>
                     </View>
                 }
