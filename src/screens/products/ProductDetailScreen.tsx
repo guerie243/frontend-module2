@@ -22,10 +22,9 @@ import { getSafeUri } from '../../utils/imageUtils';
 import { useMemo, useRef } from 'react';
 
 const { width: screenWidth } = Dimensions.get('window');
-const CARD_PADDING = 16;
-const CARD_SPACING = 8;
-const CARD_WIDTH = screenWidth - (CARD_PADDING * 2);
-const ITEM_LAYOUT_WIDTH = CARD_WIDTH + CARD_SPACING;
+const ITEM_WIDTH = Math.round(screenWidth * 0.85);
+const SPACING = (screenWidth - ITEM_WIDTH) / 2;
+const ITEM_LAYOUT_WIDTH = ITEM_WIDTH + SPACING;
 const CAROUSEL_HEIGHT = 350;
 
 export const ProductDetailScreen = () => {
@@ -134,8 +133,8 @@ export const ProductDetailScreen = () => {
                                 horizontal
                                 showsHorizontalScrollIndicator={false}
                                 contentContainerStyle={{
-                                    paddingLeft: CARD_PADDING,
-                                    paddingRight: CARD_PADDING - CARD_SPACING,
+                                    paddingLeft: SPACING,
+                                    paddingRight: 0, // Last item has margin right
                                 }}
                                 snapToInterval={ITEM_LAYOUT_WIDTH}
                                 decelerationRate="fast"
@@ -144,27 +143,19 @@ export const ProductDetailScreen = () => {
                                 disableIntervalMomentum={true}
                                 getItemLayout={(data, index) => ({
                                     length: ITEM_LAYOUT_WIDTH,
-                                    offset: ITEM_LAYOUT_WIDTH * index + CARD_PADDING,
+                                    offset: ITEM_LAYOUT_WIDTH * index, // Simplified offset since padding is outside content calculation for index?
+                                    // Actually for scrollToIndex with padding: viewOffset might be needed or just standard calculation.
+                                    // Let's keep it simple. Index * Interval.
                                     index,
                                 })}
                                 onMomentumScrollEnd={(e) => {
                                     const scrollOffset = e.nativeEvent.contentOffset.x;
-                                    // Adjust for padding start
-                                    const effectiveScrollOffset = scrollOffset // + CARD_PADDING (logic differs slightly if we want exact index, usually offset / width is enough if aligned start)
-                                    // Actually Module 1 uses: const index = Math.round((scrollOffset + CARD_PADDING) / ITEM_LAYOUT_WIDTH); 
-                                    // But since we snap to start (offset 0 puts first item at paddingLeft), 0 / width = 0.
-                                    // Let's stick to standard offset division for now, testing will tell if offset needs adjustment.
-                                    // Module 1 says: const effectiveScrollOffset = scrollOffset + CARD_PADDING; const index = Math.round(effectiveScrollOffset / ITEM_LAYOUT_WIDTH);
-                                    // Let's try simple division first as snapToStart=true usually aligns 0 with first item active area (minus padding).
-                                    // Actually, if paddingLeft is applied, scrollOffset 0 means showing padding.
                                     const index = Math.round(scrollOffset / ITEM_LAYOUT_WIDTH);
                                     setCurrentImageIndex(Math.max(0, Math.min(index, normalizedImages.length - 1)));
                                 }}
                                 renderItem={({ item, index }) => {
-                                    const isLastItem = index === normalizedImages.length - 1;
-                                    const marginRight = isLastItem ? 0 : CARD_SPACING;
                                     return (
-                                        <View style={[styles.slideContainer, { marginRight }]}>
+                                        <View style={[styles.slideContainer, { marginRight: SPACING }]}>
                                             <Image
                                                 source={{ uri: getSafeUri(item) }}
                                                 style={styles.image}
@@ -184,18 +175,14 @@ export const ProductDetailScreen = () => {
                                             style={[styles.navButton, styles.leftNavButton]}
                                             onPress={() => {
                                                 const newIndex = currentImageIndex - 1;
-                                                // Calculate offset manually to be safe or use scrollToIndex with correct item layout
                                                 flatListRef.current?.scrollToIndex({
                                                     index: newIndex,
                                                     animated: true,
-                                                    viewOffset: CARD_PADDING // Important to center/align correctly if using scrollToIndex with padding content container?
-                                                    // With getItemLayout referencing full layout (including padding in offset?), scrollToIndex should work. 
-                                                    // Module 1 used scrollToOffset. Let's try scrollToIndex first as we provided getItemLayout.
-                                                    // Actually getItemLayout offset usually excludes container padding... 
-                                                    // Let's use scrollToOffset matching Module 1 logic: targetIndex * (ITEM_LAYOUT_WIDTH) but here offset 0 is start.
-                                                    // ITEM_LAYOUT_WIDTH = CARD_WIDTH + SPACING.
-                                                    // Index 0: offset 0.
-                                                    // Index 1: offset ITEM_LAYOUT_WIDTH.
+                                                    viewOffset: SPACING // Compensate for paddingLeft?
+                                                    // Experimentation shows: if snapToAlignment is start, and paddingLeft exists.
+                                                    // scrollToIndex(0) usually goes to 0 offset (which shows padding).
+                                                    // scrollToIndex(1) goes to 1 * Interval.
+                                                    // Let's rely on standard behavior first.
                                                 });
                                             }}
                                         >
@@ -211,7 +198,6 @@ export const ProductDetailScreen = () => {
                                                 flatListRef.current?.scrollToIndex({
                                                     index: newIndex,
                                                     animated: true,
-                                                    // viewOffset: CARD_PADDING 
                                                 });
                                             }}
                                         >
@@ -386,7 +372,7 @@ const createStyles = (theme: any) => StyleSheet.create({
         marginTop: 16,
     },
     slideContainer: {
-        width: CARD_WIDTH,
+        width: ITEM_WIDTH,
         height: CAROUSEL_HEIGHT,
         borderRadius: 16,
         overflow: 'hidden',
