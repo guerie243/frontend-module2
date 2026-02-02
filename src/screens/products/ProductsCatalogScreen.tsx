@@ -458,7 +458,6 @@ export const ProductsCatalogScreen = () => {
                     </>
                 )}
             </View>
-        </View>
 
             <View style={styles.productsHeader}>
                 <Text style={styles.productsTitle}>Produits ({products.length})</Text>
@@ -466,89 +465,89 @@ export const ProductsCatalogScreen = () => {
         </>
     );
 
-return (
-    <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
-        <ScreenHeader
-            title=""
-            showBack={false}
-            vitrineName={scrolled ? currentVitrine.name : undefined}
-            vitrineLogo={scrolled ? getSafeUri(currentVitrine.logo || currentVitrine.avatar) : undefined}
-            onVitrinePress={() => flatListRef.current?.scrollToOffset({ offset: 0, animated: true })}
-            onShare={() => setIsShareModalVisible(true)}
-            rightElement={isOwner ? (
-                <TouchableOpacity
-                    activeOpacity={0.7}
-                    onPress={() => navigation.navigate('Settings')}
-                    style={styles.headerIconButton}
-                >
-                    <Ionicons name="settings-outline" size={24} color={theme.colors.text} />
-                </TouchableOpacity>
-            ) : undefined}
-        />
-        <FlatList
-            ref={flatListRef}
-            onScroll={handleScroll}
-            scrollEventThrottle={16}
+    return (
+        <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
+            <ScreenHeader
+                title=""
+                showBack={false}
+                vitrineName={scrolled ? currentVitrine.name : undefined}
+                vitrineLogo={scrolled ? getSafeUri(currentVitrine.logo || currentVitrine.avatar) : undefined}
+                onVitrinePress={() => flatListRef.current?.scrollToOffset({ offset: 0, animated: true })}
+                onShare={() => setIsShareModalVisible(true)}
+                rightElement={isOwner ? (
+                    <TouchableOpacity
+                        activeOpacity={0.7}
+                        onPress={() => navigation.navigate('Settings')}
+                        style={styles.headerIconButton}
+                    >
+                        <Ionicons name="settings-outline" size={24} color={theme.colors.text} />
+                    </TouchableOpacity>
+                ) : undefined}
+            />
+            <FlatList
+                ref={flatListRef}
+                onScroll={handleScroll}
+                scrollEventThrottle={16}
 
 
-            data={products}
-            renderItem={({ item }) => (
-                <View style={{ width: (SCREEN_WIDTH / 2) - 24, marginBottom: 16 }}>
-                    <ProductCard
-                        product={item}
-                        onPress={() => handleProductPress(item)}
-                        showActions={true}
-                    />
-                </View>
-            )}
-            keyExtractor={(item) => item.id || item._id || item.slug}
-            numColumns={2}
-            columnWrapperStyle={styles.columnWrapper}
-            contentContainerStyle={styles.content}
-            ListHeaderComponent={ListHeader}
-            ListEmptyComponent={
-                productsLoading ? (
-                    <View style={{ paddingVertical: 40, alignItems: 'center' }}>
-                        <ActivityIndicator size="large" color={theme.colors.primary} />
-                        <Text style={{ marginTop: 16, color: theme.colors.textSecondary, fontSize: 14 }}>
-                            Chargement des produits...
-                        </Text>
+                data={products}
+                renderItem={({ item }) => (
+                    <View style={{ width: (SCREEN_WIDTH / 2) - 24, marginBottom: 16 }}>
+                        <ProductCard
+                            product={item}
+                            onPress={() => handleProductPress(item)}
+                            showActions={true}
+                        />
                     </View>
-                ) : (
-                    <StateMessage
-                        type="empty"
-                        title="Aucun produit"
-                        message={isOwner
-                            ? "Vous n'avez pas encore de produits. Donnez vie à votre vitrine en publiant votre premier article !"
-                            : "Cette vitrine n'a pas encore de produits disponibles."}
-                    />
-                )
-            }
-            ListFooterComponent={
-                productsLoading && products.length > 0 ? (
-                    <ActivityIndicator size="small" color={theme.colors.primary} style={{ marginVertical: 16 }} />
-                ) : null
-            }
-            onEndReached={loadMoreProducts}
-            onEndReachedThreshold={0.5}
-            refreshControl={
-                <RefreshControl refreshing={isRefetchingProducts || false} onRefresh={onRefresh} colors={[theme.colors.primary]} />
-            }
-        />
-        <ImagePreviewModal
-            visible={previewImage.visible}
-            imageUrl={previewImage.url}
-            onClose={() => setPreviewImage({ ...previewImage, visible: false })}
-        />
-        <ShareMenuModal
-            isVisible={isShareModalVisible}
-            onClose={() => setIsShareModalVisible(false)}
-            url={getVitrineUrl(currentVitrine.slug)}
-            title={`Vitrine de ${currentVitrine.name}`}
-            message={`Visitez la vitrine de ${currentVitrine.name} sur Andy Business !`}
-        />
-    </View>
-);
+                )}
+                keyExtractor={(item) => item.id || item._id || item.slug}
+                numColumns={2}
+                columnWrapperStyle={styles.columnWrapper}
+                contentContainerStyle={styles.content}
+                ListHeaderComponent={ListHeader}
+                ListEmptyComponent={
+                    productsLoading ? (
+                        <View style={{ paddingVertical: 40, alignItems: 'center' }}>
+                            <ActivityIndicator size="large" color={theme.colors.primary} />
+                            <Text style={{ marginTop: 16, color: theme.colors.textSecondary, fontSize: 14 }}>
+                                Chargement des produits...
+                            </Text>
+                        </View>
+                    ) : (
+                        <StateMessage
+                            type="empty"
+                            title="Aucun produit"
+                            message={isOwner
+                                ? "Vous n'avez pas encore de produits. Donnez vie à votre vitrine en publiant votre premier article !"
+                                : "Cette vitrine n'a pas encore de produits disponibles."}
+                        />
+                    )
+                }
+                ListFooterComponent={
+                    productsLoading && products.length > 0 ? (
+                        <ActivityIndicator size="small" color={theme.colors.primary} style={{ marginVertical: 16 }} />
+                    ) : null
+                }
+                onEndReached={loadMoreProducts}
+                onEndReachedThreshold={0.5}
+                refreshControl={
+                    <RefreshControl refreshing={isRefetchingProducts || false} onRefresh={onRefresh} colors={[theme.colors.primary]} />
+                }
+            />
+            <ImagePreviewModal
+                visible={previewImage.visible}
+                imageUrl={previewImage.url}
+                onClose={() => setPreviewImage({ ...previewImage, visible: false })}
+            />
+            <ShareMenuModal
+                isVisible={isShareModalVisible}
+                onClose={() => setIsShareModalVisible(false)}
+                url={getVitrineUrl(currentVitrine.slug)}
+                title={`Vitrine de ${currentVitrine.name}`}
+                message={`Visitez la vitrine de ${currentVitrine.name} sur Andy Business !`}
+            />
+        </View>
+    );
 };
 
 const createStyles = (theme: any) => StyleSheet.create({
