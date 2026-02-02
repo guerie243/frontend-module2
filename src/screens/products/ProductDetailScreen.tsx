@@ -51,6 +51,11 @@ export const ProductDetailScreen = () => {
         return Array.isArray(product.locations) ? product.locations : [product.locations];
     }, [product?.locations]);
 
+    const normalizedImages = useMemo(() => {
+        if (!product?.images) return [];
+        return Array.isArray(product.images) ? product.images : [product.images as unknown as string];
+    }, [product?.images]);
+
     const handleAddToCart = () => {
         if (product) {
             const cartItem: CartItem = { product, quantity };
@@ -114,29 +119,29 @@ export const ProductDetailScreen = () => {
                 {/* Product Image Gallery */}
                 <View style={styles.galleryContainer}>
                     <View style={[styles.imageContainer, { backgroundColor: theme.colors.surfaceLight }]}>
-                        {product.images && product.images.length > 0 ? (
+                        {normalizedImages.length > 0 ? (
                             <>
                                 <FlatList
                                     ref={flatListRef}
-                                    data={product.images}
+                                    data={normalizedImages}
                                     keyExtractor={(item, index) => `${item}-${index}`}
                                     horizontal
                                     showsHorizontalScrollIndicator={false}
                                     snapToInterval={Dimensions.get('window').width - 32}
                                     decelerationRate="fast"
-                                    snapToAlignment="center"
+                                    snapToAlignment="start" // Changed to start to align with container
+                                    pagingEnabled={false} // Explicitly false to rely on snapToInterval
                                     disableIntervalMomentum={true}
                                     getItemLayout={(data, index) => ({
                                         length: Dimensions.get('window').width - 32,
                                         offset: (Dimensions.get('window').width - 32) * index,
                                         index,
                                     })}
-                                    onScroll={(e) => {
+                                    onMomentumScrollEnd={(e) => {
                                         const offset = e.nativeEvent.contentOffset.x;
                                         const index = Math.round(offset / (Dimensions.get('window').width - 32));
                                         setCurrentImageIndex(index);
                                     }}
-                                    scrollEventThrottle={16}
                                     renderItem={({ item }) => (
                                         <Image
                                             source={{ uri: getSafeUri(item) }}
@@ -148,7 +153,7 @@ export const ProductDetailScreen = () => {
                                 />
 
                                 {/* Navigation Arrows */}
-                                {product.images.length > 1 && (
+                                {normalizedImages.length > 1 && (
                                     <>
                                         {currentImageIndex > 0 && (
                                             <TouchableOpacity
@@ -164,7 +169,7 @@ export const ProductDetailScreen = () => {
                                             </TouchableOpacity>
                                         )}
 
-                                        {currentImageIndex < product.images.length - 1 && (
+                                        {currentImageIndex < normalizedImages.length - 1 && (
                                             <TouchableOpacity
                                                 style={[styles.navButton, styles.rightNavButton]}
                                                 onPress={() => {
@@ -180,7 +185,7 @@ export const ProductDetailScreen = () => {
 
                                         {/* Pagination Dots */}
                                         <View style={styles.paginationDots}>
-                                            {product.images.map((_, i) => (
+                                            {normalizedImages.map((_, i) => (
                                                 <View
                                                     key={i}
                                                     style={[
