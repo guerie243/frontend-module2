@@ -19,7 +19,15 @@ import { getProductUrl } from '../../utils/sharingUtils';
 import { ScreenHeader } from '../../components/ScreenHeader';
 import { ShareMenuModal } from '../../components/ShareMenuModal';
 import { getSafeUri } from '../../utils/imageUtils';
+import { getSafeUri } from '../../utils/imageUtils';
 import { useMemo, useRef } from 'react';
+
+const { width: screenWidth } = Dimensions.get('window');
+const CARD_PADDING = 16;
+const CARD_SPACING = 8;
+const CARD_WIDTH = screenWidth - (CARD_PADDING * 2);
+const ITEM_LAYOUT_WIDTH = CARD_WIDTH + CARD_SPACING;
+const CAROUSEL_HEIGHT = 350;
 
 export const ProductDetailScreen = () => {
     const navigation = useNavigation<any>();
@@ -117,96 +125,124 @@ export const ProductDetailScreen = () => {
 
             <ScrollView style={styles.container}>
                 {/* Product Image Gallery */}
-                <View style={styles.galleryContainer}>
-                    <View style={[styles.imageContainer, { backgroundColor: theme.colors.surfaceLight }]}>
-                        {normalizedImages.length > 0 ? (
-                            <>
-                                <FlatList
-                                    ref={flatListRef}
-                                    data={normalizedImages}
-                                    keyExtractor={(item, index) => `${item}-${index}`}
-                                    horizontal
-                                    showsHorizontalScrollIndicator={false}
-                                    snapToInterval={Dimensions.get('window').width - 32}
-                                    decelerationRate="fast"
-                                    snapToAlignment="start" // Changed to start to align with container
-                                    pagingEnabled={false} // Explicitly false to rely on snapToInterval
-                                    disableIntervalMomentum={true}
-                                    getItemLayout={(data, index) => ({
-                                        length: Dimensions.get('window').width - 32,
-                                        offset: (Dimensions.get('window').width - 32) * index,
-                                        index,
-                                    })}
-                                    onMomentumScrollEnd={(e) => {
-                                        const offset = e.nativeEvent.contentOffset.x;
-                                        const index = Math.round(offset / (Dimensions.get('window').width - 32));
-                                        setCurrentImageIndex(index);
-                                    }}
-                                    renderItem={({ item }) => (
-                                        <Image
-                                            source={{ uri: getSafeUri(item) }}
-                                            style={styles.image}
-                                            contentFit="cover"
-                                            transition={200}
-                                        />
-                                    )}
-                                />
-
-                                {/* Navigation Arrows */}
-                                {normalizedImages.length > 1 && (
-                                    <>
-                                        {currentImageIndex > 0 && (
-                                            <TouchableOpacity
-                                                style={[styles.navButton, styles.leftNavButton]}
-                                                onPress={() => {
-                                                    flatListRef.current?.scrollToIndex({
-                                                        index: currentImageIndex - 1,
-                                                        animated: true
-                                                    });
-                                                }}
-                                            >
-                                                <Ionicons name="chevron-back" size={24} color="#FFF" />
-                                            </TouchableOpacity>
-                                        )}
-
-                                        {currentImageIndex < normalizedImages.length - 1 && (
-                                            <TouchableOpacity
-                                                style={[styles.navButton, styles.rightNavButton]}
-                                                onPress={() => {
-                                                    flatListRef.current?.scrollToIndex({
-                                                        index: currentImageIndex + 1,
-                                                        animated: true
-                                                    });
-                                                }}
-                                            >
-                                                <Ionicons name="chevron-forward" size={24} color="#FFF" />
-                                            </TouchableOpacity>
-                                        )}
-
-                                        {/* Pagination Dots */}
-                                        <View style={styles.paginationDots}>
-                                            {normalizedImages.map((_, i) => (
-                                                <View
-                                                    key={i}
-                                                    style={[
-                                                        styles.dot,
-                                                        { backgroundColor: i === currentImageIndex ? theme.colors.primary : 'rgba(255,255,255,0.5)' }
-                                                    ]}
-                                                />
-                                            ))}
+                <View style={[styles.galleryContainer, { height: CAROUSEL_HEIGHT }]}>
+                    {normalizedImages.length > 0 ? (
+                        <>
+                            <FlatList
+                                ref={flatListRef}
+                                data={normalizedImages}
+                                keyExtractor={(item, index) => `${item}-${index}`}
+                                horizontal
+                                showsHorizontalScrollIndicator={false}
+                                contentContainerStyle={{
+                                    paddingLeft: CARD_PADDING,
+                                    paddingRight: CARD_PADDING - CARD_SPACING,
+                                }}
+                                snapToInterval={ITEM_LAYOUT_WIDTH}
+                                decelerationRate="fast"
+                                snapToAlignment="start"
+                                pagingEnabled={false}
+                                disableIntervalMomentum={true}
+                                getItemLayout={(data, index) => ({
+                                    length: ITEM_LAYOUT_WIDTH,
+                                    offset: ITEM_LAYOUT_WIDTH * index + CARD_PADDING,
+                                    index,
+                                })}
+                                onMomentumScrollEnd={(e) => {
+                                    const scrollOffset = e.nativeEvent.contentOffset.x;
+                                    // Adjust for padding start
+                                    const effectiveScrollOffset = scrollOffset // + CARD_PADDING (logic differs slightly if we want exact index, usually offset / width is enough if aligned start)
+                                    // Actually Module 1 uses: const index = Math.round((scrollOffset + CARD_PADDING) / ITEM_LAYOUT_WIDTH); 
+                                    // But since we snap to start (offset 0 puts first item at paddingLeft), 0 / width = 0.
+                                    // Let's stick to standard offset division for now, testing will tell if offset needs adjustment.
+                                    // Module 1 says: const effectiveScrollOffset = scrollOffset + CARD_PADDING; const index = Math.round(effectiveScrollOffset / ITEM_LAYOUT_WIDTH);
+                                    // Let's try simple division first as snapToStart=true usually aligns 0 with first item active area (minus padding).
+                                    // Actually, if paddingLeft is applied, scrollOffset 0 means showing padding.
+                                    const index = Math.round(scrollOffset / ITEM_LAYOUT_WIDTH);
+                                    setCurrentImageIndex(Math.max(0, Math.min(index, normalizedImages.length - 1)));
+                                }}
+                                renderItem={({ item, index }) => {
+                                    const isLastItem = index === normalizedImages.length - 1;
+                                    const marginRight = isLastItem ? 0 : CARD_SPACING;
+                                    return (
+                                        <View style={[styles.slideContainer, { marginRight }]}>
+                                            <Image
+                                                source={{ uri: getSafeUri(item) }}
+                                                style={styles.image}
+                                                contentFit="cover"
+                                                transition={200}
+                                            />
                                         </View>
-                                    </>
-                                )}
-                            </>
-                        ) : (
-                            <View style={styles.placeholderContainer}>
-                                <Ionicons name="image-outline" size={80} color={theme.colors.textTertiary} />
-                                <Text style={[styles.imagePlaceholderText, { color: theme.colors.textTertiary }]}>
-                                    Pas d'image
-                                </Text>
-                            </View>
-                        )}
-                    </View>
+                                    );
+                                }}
+                            />
+
+                            {/* Navigation Arrows */}
+                            {normalizedImages.length > 1 && (
+                                <>
+                                    {currentImageIndex > 0 && (
+                                        <TouchableOpacity
+                                            style={[styles.navButton, styles.leftNavButton]}
+                                            onPress={() => {
+                                                const newIndex = currentImageIndex - 1;
+                                                // Calculate offset manually to be safe or use scrollToIndex with correct item layout
+                                                flatListRef.current?.scrollToIndex({
+                                                    index: newIndex,
+                                                    animated: true,
+                                                    viewOffset: CARD_PADDING // Important to center/align correctly if using scrollToIndex with padding content container?
+                                                    // With getItemLayout referencing full layout (including padding in offset?), scrollToIndex should work. 
+                                                    // Module 1 used scrollToOffset. Let's try scrollToIndex first as we provided getItemLayout.
+                                                    // Actually getItemLayout offset usually excludes container padding... 
+                                                    // Let's use scrollToOffset matching Module 1 logic: targetIndex * (ITEM_LAYOUT_WIDTH) but here offset 0 is start.
+                                                    // ITEM_LAYOUT_WIDTH = CARD_WIDTH + SPACING.
+                                                    // Index 0: offset 0.
+                                                    // Index 1: offset ITEM_LAYOUT_WIDTH.
+                                                });
+                                            }}
+                                        >
+                                            <Ionicons name="chevron-back" size={24} color="#FFF" />
+                                        </TouchableOpacity>
+                                    )}
+
+                                    {currentImageIndex < normalizedImages.length - 1 && (
+                                        <TouchableOpacity
+                                            style={[styles.navButton, styles.rightNavButton]}
+                                            onPress={() => {
+                                                const newIndex = currentImageIndex + 1;
+                                                flatListRef.current?.scrollToIndex({
+                                                    index: newIndex,
+                                                    animated: true,
+                                                    // viewOffset: CARD_PADDING 
+                                                });
+                                            }}
+                                        >
+                                            <Ionicons name="chevron-forward" size={24} color="#FFF" />
+                                        </TouchableOpacity>
+                                    )}
+
+                                    {/* Pagination Dots */}
+                                    <View style={styles.paginationDots}>
+                                        {normalizedImages.map((_, i) => (
+                                            <View
+                                                key={i}
+                                                style={[
+                                                    styles.dot,
+                                                    { backgroundColor: i === currentImageIndex ? theme.colors.primary : 'rgba(255,255,255,0.5)' }
+                                                ]}
+                                            />
+                                        ))}
+                                    </View>
+                                </>
+                            )}
+                        </>
+                    ) : (
+                        <View style={styles.placeholderContainer}>
+                            <Ionicons name="image-outline" size={80} color={theme.colors.textTertiary} />
+                            <Text style={[styles.imagePlaceholderText, { color: theme.colors.textTertiary }]}>
+                                Pas d'image
+                            </Text>
+                        </View>
+                    )}
                 </View>
 
                 {/* Product Info */}
@@ -283,9 +319,7 @@ export const ProductDetailScreen = () => {
                             <Ionicons name="settings-outline" size={20} color="#FFF" style={{ marginRight: 8 }} />
                             <Text style={styles.buttonText}>Gérer mon produit</Text>
                         </TouchableOpacity>
-                        <Text style={styles.ownerNote}>
-                            Vous seul voyez ce bouton. Il vous permet de modifier ou supprimer le produit.
-                        </Text>
+
                     </View>
                 )}
 
@@ -344,20 +378,24 @@ const createStyles = (theme: any) => StyleSheet.create({
         fontSize: 16,
     },
     imageContainer: {
-        width: Dimensions.get('window').width - 32,
-        height: 350,
+        // Removed fixed width here, handled by slideContainer
         justifyContent: 'center',
         alignItems: 'center',
-        borderRadius: 16,
-        overflow: 'hidden',
     },
     galleryContainer: {
-        paddingHorizontal: 16,
-        paddingTop: 16,
+        // Removed absolute padding to allow full width scrolling
+        marginTop: 16,
+    },
+    slideContainer: {
+        width: CARD_WIDTH,
+        height: CAROUSEL_HEIGHT,
+        borderRadius: 16,
+        overflow: 'hidden',
+        backgroundColor: '#f0f0f0', // placeholder background
     },
     image: {
-        width: Dimensions.get('window').width - 32,
-        height: 350,
+        width: '100%',
+        height: '100%',
     },
     floatingShareButton: {
         position: 'absolute',
