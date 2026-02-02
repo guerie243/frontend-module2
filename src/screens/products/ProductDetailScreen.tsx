@@ -198,37 +198,16 @@ export const ProductDetailScreen = () => {
                 {/* Owner Actions */}
                 {isOwner && (
                     <View style={styles.ownerActionsContainer}>
-                        <View style={styles.ownerActionsHeader}>
-                            <Ionicons name="settings-outline" size={20} color={theme.colors.primary} />
-                            <Text style={[styles.ownerActionsTitle, { color: theme.colors.text }]}>Gestion du produit</Text>
-                        </View>
-
-                        <View style={styles.ownerButtonsRow}>
-                            <TouchableOpacity
-                                style={[styles.ownerButton, { backgroundColor: theme.colors.primary }]}
-                                onPress={handleEdit}
-                            >
-                                <Ionicons name="create-outline" size={20} color="#FFF" />
-                                <Text style={styles.ownerButtonText}>Modifier</Text>
-                            </TouchableOpacity>
-
-                            <TouchableOpacity
-                                style={[styles.ownerButton, { backgroundColor: theme.colors.error }]}
-                                onPress={handleDelete}
-                                disabled={deleteProductMutation.isPending}
-                            >
-                                {deleteProductMutation.isPending ? (
-                                    <ActivityIndicator color="#FFF" />
-                                ) : (
-                                    <>
-                                        <Ionicons name="trash-outline" size={20} color="#FFF" />
-                                        <Text style={styles.ownerButtonText}>Supprimer</Text>
-                                    </>
-                                )}
-                            </TouchableOpacity>
-                        </View>
-
-                        <Text style={styles.ownerNote}>Les clients ne voient pas ces options.</Text>
+                        <TouchableOpacity
+                            style={[styles.button, { backgroundColor: theme.colors.primary }]}
+                            onPress={handleEdit}
+                        >
+                            <Ionicons name="settings-outline" size={20} color="#FFF" style={{ marginRight: 8 }} />
+                            <Text style={styles.buttonText}>Gérer mon produit</Text>
+                        </TouchableOpacity>
+                        <Text style={styles.ownerNote}>
+                            Vous seul voyez ce bouton. Il vous permet de modifier ou supprimer le produit.
+                        </Text>
                     </View>
                 )}
 
@@ -429,34 +408,6 @@ const createStyles = (theme: any) => StyleSheet.create({
         backgroundColor: theme.colors.surface,
         borderWidth: 1,
         borderColor: theme.colors.primary + '30',
-    },
-    ownerActionsHeader: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginBottom: 16,
-    },
-    ownerActionsTitle: {
-        fontSize: 16,
-        fontWeight: '700',
-        marginLeft: 8,
-    },
-    ownerButtonsRow: {
-        flexDirection: 'row',
-        gap: 12,
-    },
-    ownerButton: {
-        flex: 1,
-        height: 44,
-        borderRadius: 12,
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
-        gap: 8,
-    },
-    ownerButtonText: {
-        color: '#FFF',
-        fontSize: 14,
-        fontWeight: '600',
     },
     ownerNote: {
         fontSize: 12,
