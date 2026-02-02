@@ -115,8 +115,8 @@ export const DeliveryLocationScreen = () => {
             showError('Veuillez sélectionner votre commune');
             return;
         }
-        if (!deliveryAddress.trim()) {
-            showError('Veuillez entrer l\'adresse de livraison');
+        if (deliveryLocation.latitude === 0) {
+            showError('Veuillez activer votre position GPS pour la livraison');
             return;
         }
 
@@ -268,7 +268,7 @@ export const DeliveryLocationScreen = () => {
 
                     <View style={styles.gpsSection}>
                         <Text style={[styles.gpsLabel, { color: theme.colors.textSecondary }]}>
-                            Votre position GPS
+                            Votre position GPS *
                         </Text>
                         {isFetchingLocation ? (
                             <View style={styles.mapLoading}>
