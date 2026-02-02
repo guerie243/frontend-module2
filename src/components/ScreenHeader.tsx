@@ -74,7 +74,7 @@ export const ScreenHeader: React.FC<ScreenHeaderProps> = ({
                             />
                         )}
                         <Text
-                            style={[styles.title, { color: theme.colors.text, textAlign: 'left', flex: 0 }]}
+                            style={[styles.vitrineName, { color: theme.colors.text }]}
                             numberOfLines={1}
                         >
                             {vitrineName}
@@ -143,7 +143,12 @@ const styles = StyleSheet.create({
         flex: 1,
         flexDirection: 'row',
         alignItems: 'center',
-        justifyContent: 'center',
+        justifyContent: 'flex-start',
+    },
+    vitrineName: {
+        fontSize: 18,
+        fontWeight: '700',
+        marginRight: 4,
     },
     vitrineLogo: {
         width: 32,
