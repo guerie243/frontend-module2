@@ -19,6 +19,8 @@ import { getOrderUrl } from '../../utils/sharingUtils';
 import { ScreenHeader } from '../../components/ScreenHeader';
 import { ShareMenuModal } from '../../components/ShareMenuModal';
 import { useState } from 'react';
+import { useVitrineDetail } from '../../hooks/useVitrines';
+import { getSafeUri } from '../../utils/imageUtils';
 
 export const OrderVitrineDetailScreen = () => {
     const navigation = useNavigation<any>();
@@ -28,6 +30,10 @@ export const OrderVitrineDetailScreen = () => {
 
     const { orderId } = route.params || {};
     const { data: order, isLoading, refetch } = useOrderDetail(orderId);
+
+    // Fetch vitrine details
+    const { data: vitrine } = useVitrineDetail(order?.vitrineId || '', !!order?.vitrineId);
+
     const updateStatusMutation = useUpdateOrderStatus();
     const [isShareModalVisible, setIsShareModalVisible] = useState(false);
 
@@ -98,6 +104,9 @@ export const OrderVitrineDetailScreen = () => {
             <ScreenHeader
                 title={`Commande #${order.id?.slice(-6) || order._id?.slice(-6)}`}
                 onShare={() => setIsShareModalVisible(true)}
+                vitrineName={vitrine?.name}
+                vitrineLogo={getSafeUri(vitrine?.logo || vitrine?.avatar)}
+                onVitrinePress={() => vitrine?.slug && navigation.navigate('ProductsCatalog', { slug: vitrine.slug })}
             />
             <ScrollView style={styles.container}>
                 <View style={[styles.section, { backgroundColor: theme.colors.surface }]}>

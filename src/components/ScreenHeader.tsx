@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
+import { Image } from 'expo-image';
 import { useTheme } from '../context/ThemeContext';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -18,6 +19,9 @@ interface ScreenHeaderProps {
     showBack?: boolean;
     transparent?: boolean;
     rightElement?: React.ReactNode;
+    vitrineLogo?: string;
+    vitrineName?: string;
+    onVitrinePress?: () => void;
 }
 
 export const ScreenHeader: React.FC<ScreenHeaderProps> = ({
@@ -26,6 +30,9 @@ export const ScreenHeader: React.FC<ScreenHeaderProps> = ({
     showBack = true,
     transparent = false,
     rightElement,
+    vitrineLogo,
+    vitrineName,
+    onVitrinePress,
 }) => {
     const { theme } = useTheme();
     const navigation = useNavigation();
@@ -53,12 +60,35 @@ export const ScreenHeader: React.FC<ScreenHeaderProps> = ({
                     )}
                 </View>
 
-                <Text
-                    style={[styles.title, { color: theme.colors.text }]}
-                    numberOfLines={1}
-                >
-                    {title}
-                </Text>
+                {vitrineName ? (
+                    <TouchableOpacity
+                        style={styles.vitrineContainer}
+                        onPress={onVitrinePress}
+                        activeOpacity={0.7}
+                    >
+                        {vitrineLogo && (
+                            <Image
+                                source={{ uri: vitrineLogo }}
+                                style={styles.vitrineLogo}
+                                contentFit="cover"
+                            />
+                        )}
+                        <Text
+                            style={[styles.title, { color: theme.colors.text, textAlign: 'left', flex: 0 }]}
+                            numberOfLines={1}
+                        >
+                            {vitrineName}
+                        </Text>
+                        <Ionicons name="chevron-forward" size={16} color={theme.colors.textTertiary} style={{ marginLeft: 4 }} />
+                    </TouchableOpacity>
+                ) : (
+                    <Text
+                        style={[styles.title, { color: theme.colors.text }]}
+                        numberOfLines={1}
+                    >
+                        {title}
+                    </Text>
+                )}
 
                 <View style={styles.right}>
                     {onShare && (
@@ -108,5 +138,18 @@ const styles = StyleSheet.create({
         textAlign: 'center',
         fontSize: 18,
         fontWeight: '700',
+    },
+    vitrineContainer: {
+        flex: 1,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    vitrineLogo: {
+        width: 32,
+        height: 32,
+        borderRadius: 16,
+        marginRight: 8,
+        backgroundColor: '#f0f0f0',
     },
 });

@@ -6,11 +6,13 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator, Linking } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { useTheme } from '../../context/ThemeContext';
 import { useAlertService } from '../../utils/alertService';
 import { useCreateOrder } from '../../hooks/useCommandes';
+import { useVitrineDetail } from '../../hooks/useVitrines';
+import { useAuth } from '../../hooks/useAuth';
 import * as Location from 'expo-location';
 import { Image } from 'expo-image';
 import { ALGERIA_CITIES } from '../../constants/locations';
@@ -23,10 +25,12 @@ export const DeliveryLocationScreen = () => {
     const navigation = useNavigation<any>();
     const route = useRoute<any>();
     const { theme } = useTheme();
+    const { isAuthenticated, isGuest } = useAuth();
     const { showError, showSuccess } = useAlertService();
     const createOrderMutation = useCreateOrder();
 
     const { orderData } = route.params || {};
+    const { data: vitrine } = useVitrineDetail(orderData?.vitrineId, !!orderData?.vitrineId);
 
     // Get available cities based on products in the cart
     const availableCities = React.useMemo(() => {
@@ -135,13 +139,67 @@ export const DeliveryLocationScreen = () => {
                 status: 'pending',
             });
 
-            if (order && order.id) {
-                console.log('Order created successfully:', order.id);
+            if (order && (order.id || order._id)) {
+                console.log('Order created successfully:', order.id || order._id);
+
+                // Préparer le message WhatsApp
+                const whatsappNumber = vitrine?.contact?.phone;
+                if (whatsappNumber) {
+                    const cleanNumber = whatsappNumber.replace(/\D/g, '');
+
+                    let message = `*Nouvelle Commande*\n\n`;
+                    message += `*Client:* ${orderData.clientName}\n`;
+                    message += `*Téléphone:* ${orderData.clientPhone}\n\n`;
+
+                    message += `*Articles:*\n`;
+                    orderData.products.forEach((p: any) => {
+                        message += `- ${p.productName} x ${p.quantity} (${(p.price * p.quantity).toFixed(2)} ${p.currency || 'USD'})\n`;
+                    });
+
+                    message += `\n*Total:* ${orderData.totalPrice.toFixed(2)} ${orderData.products?.[0]?.currency || 'USD'}\n\n`;
+
+                    message += `*Livraison:*\n`;
+                    message += `- Ville: ${city}\n`;
+                    message += `- Commune: ${commune}\n`;
+                    message += `- Adresse: ${deliveryAddress}\n`;
+
+                    if (deliveryLocation.latitude !== 0) {
+                        message += `- GPS: https://www.google.com/maps/search/?api=1&query=${deliveryLocation.latitude},${deliveryLocation.longitude}\n`;
+                    }
+
+                    if (orderData.notes) {
+                        message += `\n*Notes:* ${orderData.notes}\n`;
+                    }
+
+                    const whatsappUrl = `whatsapp://send?phone=${cleanNumber}&text=${encodeURIComponent(message)}`;
+
+                    try {
+                        const canOpen = await Linking.canOpenURL(whatsappUrl);
+                        if (canOpen) {
+                            await Linking.openURL(whatsappUrl);
+                        } else {
+                            // Fallback web si l'app n'est pas installée
+                            const webUrl = `https://wa.me/${cleanNumber}?text=${encodeURIComponent(message)}`;
+                            await Linking.openURL(webUrl);
+                        }
+                    } catch (err) {
+                        console.error('Erreur ouverture WhatsApp:', err);
+                    }
+                }
             }
+
             showSuccess('Commande créée avec succès !');
 
-            // Navigate back to catalog or show order confirmation
-            navigation.navigate('MainTabs', { screen: 'ProductsTab' });
+            // Redirection conditionnelle :
+            // Si c'est un invité, on le renvoie vers le catalogue de la vitrine
+            // Si c'est un utilisateur connecté (vendeur), on peut le renvoyer vers les onglets principaux
+            if (isGuest && vitrine?.slug) {
+                console.log('[DeliveryLocationScreen] Redirection invité vers la vitrine:', vitrine.slug);
+                navigation.navigate('ProductsCatalog', { slug: vitrine.slug });
+            } else {
+                console.log('[DeliveryLocationScreen] Redirection utilisateur connecté vers MainTabs');
+                navigation.navigate('MainTabs', { screen: 'ProductsTab' });
+            }
         } catch (error: any) {
             console.error('Order creation failed:', error.message);
             showError(error.message || 'Échec de la création de la commande');

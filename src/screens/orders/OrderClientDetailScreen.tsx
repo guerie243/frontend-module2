@@ -17,13 +17,21 @@ import { TouchableOpacity } from 'react-native-gesture-handler';
 import { ScreenHeader } from '../../components/ScreenHeader';
 import { ShareMenuModal } from '../../components/ShareMenuModal';
 import { useState } from 'react';
+import { useVitrineDetail } from '../../hooks/useVitrines';
+import { getSafeUri } from '../../utils/imageUtils';
+import { useNavigation } from '@react-navigation/native';
 
 export const OrderClientDetailScreen = () => {
     const route = useRoute<any>();
+    const navigation = useNavigation<any>();
     const { theme } = useTheme();
 
     const { orderId } = route.params || {};
     const { data: order, isLoading } = useOrderDetail(orderId);
+
+    // Fetch vitrine details if order is available
+    const { data: vitrine } = useVitrineDetail(order?.vitrineId || '', !!order?.vitrineId);
+
     const [isShareModalVisible, setIsShareModalVisible] = useState(false);
 
     if (isLoading) {
@@ -73,6 +81,9 @@ export const OrderClientDetailScreen = () => {
             <ScreenHeader
                 title={`Commande #${order.id?.slice(-6) || order._id?.slice(-6)}`}
                 onShare={() => setIsShareModalVisible(true)}
+                vitrineName={vitrine?.name}
+                vitrineLogo={getSafeUri(vitrine?.logo || vitrine?.avatar)}
+                onVitrinePress={() => vitrine?.slug && navigation.navigate('ProductsCatalog', { slug: vitrine.slug })}
             />
             <ScrollView style={styles.container}>
                 <View style={[styles.section, { backgroundColor: theme.colors.surface }]}>
