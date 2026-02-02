@@ -325,10 +325,7 @@ export const ProductsCatalogScreen = () => {
                     </TouchableOpacity>
                 )}
 
-                <View style={[
-                    styles.avatarSection,
-                    !isOwner && { bottom: -60 }
-                ]}>
+                <View style={styles.avatarSection}>
                     {isOwner ? (
                         <ImageUploadAvatar
                             key={`logo-${displayedVitrine.slug}-${displayedVitrine.logo || displayedVitrine.avatar}`}
@@ -557,14 +554,14 @@ const createStyles = (theme: any) => StyleSheet.create({
     loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
     content: { paddingBottom: 40, backgroundColor: theme.colors.background },
     coverSection: {
-        marginTop: 5, // Reduced from 10
-        marginBottom: 65, // Increased slightly to prevent overlap with reduced cover
+        marginTop: 10,
+        marginBottom: 65,
         width: '100%',
         paddingHorizontal: 16,
     },
     coverImage: {
         width: '100%',
-        height: 120, // Reduced from 140
+        height: 170,
         backgroundColor: theme.colors.surfaceLight,
         borderRadius: 20,
     },
