@@ -454,6 +454,7 @@ export const ProductsCatalogScreen = () => {
         <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
             <ScreenHeader
                 title={currentVitrine.name || 'Ma Vitrine'}
+                showBack={false}
                 vitrineName={scrolled ? currentVitrine.name : undefined}
                 vitrineLogo={scrolled ? getSafeUri(currentVitrine.logo || currentVitrine.avatar) : undefined}
                 onVitrinePress={() => flatListRef.current?.scrollToOffset({ offset: 0, animated: true })}

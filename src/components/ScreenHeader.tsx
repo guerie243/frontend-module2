@@ -52,7 +52,7 @@ export const ScreenHeader: React.FC<ScreenHeaderProps> = ({
                 <View style={styles.left}>
                     {showBack && (
                         <TouchableOpacity
-                            style={[styles.iconButton, !transparent && { backgroundColor: theme.colors.background }]}
+                            style={styles.iconButton}
                             onPress={() => navigation.goBack()}
                         >
                             <Ionicons name="arrow-back" size={24} color={theme.colors.text} />
@@ -93,7 +93,7 @@ export const ScreenHeader: React.FC<ScreenHeaderProps> = ({
                 <View style={styles.right}>
                     {onShare && (
                         <TouchableOpacity
-                            style={[styles.iconButton, !transparent && { backgroundColor: theme.colors.background }]}
+                            style={styles.iconButton}
                             onPress={onShare}
                         >
                             <Ionicons name="share-social-outline" size={22} color={theme.colors.primary} />
@@ -123,8 +123,10 @@ const styles = StyleSheet.create({
         alignItems: 'flex-start',
     },
     right: {
-        width: 44,
-        alignItems: 'flex-end',
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'flex-end',
+        gap: 8,
     },
     iconButton: {
         width: 40,
