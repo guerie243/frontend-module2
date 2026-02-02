@@ -34,6 +34,7 @@ export const ProductDetailScreen = () => {
 
     const [quantity, setQuantity] = useState(1);
     const [isShareModalVisible, setIsShareModalVisible] = useState(false);
+    const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
 
     const isOwner = isAuthenticated && product && (
         user?.id === product.vitrineId ||
@@ -150,14 +151,43 @@ export const ProductDetailScreen = () => {
                             <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>
                                 Description
                             </Text>
-                            <Text style={[styles.description, { color: theme.colors.textSecondary }]}>
+                            <Text
+                                style={[styles.description, { color: theme.colors.textSecondary }]}
+                                numberOfLines={isDescriptionExpanded ? undefined : 5}
+                            >
                                 {product.description}
                             </Text>
+                            {product.description.length > 200 && ( // Threshold for toggle
+                                <TouchableOpacity
+                                    onPress={() => setIsDescriptionExpanded(!isDescriptionExpanded)}
+                                    style={styles.expandLink}
+                                >
+                                    <Text style={styles.expandLinkText}>
+                                        {isDescriptionExpanded ? 'Voir moins' : 'Voir plus'}
+                                    </Text>
+                                </TouchableOpacity>
+                            )}
+                        </View>
+                    )}
+
+                    {product.locations && product.locations.length > 0 && (
+                        <View style={styles.locationsContainer}>
+                            <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>
+                                Lieux de disponibilité
+                            </Text>
+                            <View style={styles.locationBadges}>
+                                {product.locations.map((loc, idx) => (
+                                    <View key={idx} style={[styles.locationBadge, { backgroundColor: theme.colors.background }]}>
+                                        <Ionicons name="location-sharp" size={14} color={theme.colors.primary} />
+                                        <Text style={[styles.locationText, { color: theme.colors.text }]}>{loc}</Text>
+                                    </View>
+                                ))}
+                            </View>
                         </View>
                     )}
 
                     {product.stock !== undefined && (
-                        <Text style={[styles.stock, { color: theme.colors.textSecondary }]}>
+                        <Text style={[styles.stock, { color: theme.colors.textTertiary }]}>
                             Stock: {product.stock} disponible(s)
                         </Text>
                     )}
@@ -165,25 +195,38 @@ export const ProductDetailScreen = () => {
 
                 {/* Owner Actions */}
                 {isOwner && (
-                    <View style={[styles.section, { backgroundColor: theme.colors.surface }]}>
-                        <TouchableOpacity
-                            style={[styles.button, { backgroundColor: theme.colors.primary }]}
-                            onPress={handleEdit}
-                        >
-                            <Text style={styles.buttonText}>Modifier le produit</Text>
-                        </TouchableOpacity>
+                    <View style={styles.ownerActionsContainer}>
+                        <View style={styles.ownerActionsHeader}>
+                            <Ionicons name="settings-outline" size={20} color={theme.colors.primary} />
+                            <Text style={[styles.ownerActionsTitle, { color: theme.colors.text }]}>Gestion du produit</Text>
+                        </View>
 
-                        <TouchableOpacity
-                            style={[styles.button, { backgroundColor: theme.colors.error }]}
-                            onPress={handleDelete}
-                            disabled={deleteProductMutation.isPending}
-                        >
-                            {deleteProductMutation.isPending ? (
-                                <ActivityIndicator color={theme.colors.white} />
-                            ) : (
-                                <Text style={styles.buttonText}>Supprimer</Text>
-                            )}
-                        </TouchableOpacity>
+                        <View style={styles.ownerButtonsRow}>
+                            <TouchableOpacity
+                                style={[styles.ownerButton, { backgroundColor: theme.colors.primary }]}
+                                onPress={handleEdit}
+                            >
+                                <Ionicons name="create-outline" size={20} color="#FFF" />
+                                <Text style={styles.ownerButtonText}>Modifier</Text>
+                            </TouchableOpacity>
+
+                            <TouchableOpacity
+                                style={[styles.ownerButton, { backgroundColor: theme.colors.error }]}
+                                onPress={handleDelete}
+                                disabled={deleteProductMutation.isPending}
+                            >
+                                {deleteProductMutation.isPending ? (
+                                    <ActivityIndicator color="#FFF" />
+                                ) : (
+                                    <>
+                                        <Ionicons name="trash-outline" size={20} color="#FFF" />
+                                        <Text style={styles.ownerButtonText}>Supprimer</Text>
+                                    </>
+                                )}
+                            </TouchableOpacity>
+                        </View>
+
+                        <Text style={styles.ownerNote}>Les clients ne voient pas ces options.</Text>
                     </View>
                 )}
 
@@ -347,5 +390,77 @@ const styles = StyleSheet.create({
         color: '#FFFFFF',
         fontSize: 16,
         fontWeight: '600',
+    },
+    expandLink: {
+        marginTop: 4,
+        paddingVertical: 4,
+    },
+    expandLinkText: {
+        fontSize: 14,
+        fontWeight: '600',
+        color: theme.colors.primary,
+    },
+    locationsContainer: {
+        marginTop: 16,
+    },
+    locationBadges: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        gap: 8,
+    },
+    locationBadge: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingHorizontal: 10,
+        paddingVertical: 6,
+        borderRadius: 20,
+    },
+    locationText: {
+        fontSize: 13,
+        fontWeight: '500',
+        marginLeft: 4,
+    },
+    ownerActionsContainer: {
+        padding: 16,
+        margin: 16,
+        borderRadius: 16,
+        backgroundColor: theme.colors.surface,
+        borderWidth: 1,
+        borderColor: theme.colors.primary + '30',
+    },
+    ownerActionsHeader: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: 16,
+    },
+    ownerActionsTitle: {
+        fontSize: 16,
+        fontWeight: '700',
+        marginLeft: 8,
+    },
+    ownerButtonsRow: {
+        flexDirection: 'row',
+        gap: 12,
+    },
+    ownerButton: {
+        flex: 1,
+        height: 44,
+        borderRadius: 12,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 8,
+    },
+    ownerButtonText: {
+        color: '#FFF',
+        fontSize: 14,
+        fontWeight: '600',
+    },
+    ownerNote: {
+        fontSize: 12,
+        color: theme.colors.textTertiary,
+        textAlign: 'center',
+        marginTop: 12,
+        fontStyle: 'italic',
     },
 });
