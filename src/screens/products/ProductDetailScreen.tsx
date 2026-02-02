@@ -19,11 +19,13 @@ import { getProductUrl } from '../../utils/sharingUtils';
 import { ScreenHeader } from '../../components/ScreenHeader';
 import { ShareMenuModal } from '../../components/ShareMenuModal';
 import { getSafeUri } from '../../utils/imageUtils';
+import { useMemo } from 'react';
 
 export const ProductDetailScreen = () => {
     const navigation = useNavigation<any>();
     const route = useRoute<any>();
     const { theme } = useTheme();
+    const styles = useMemo(() => createStyles(theme), [theme]);
     const { user, isAuthenticated } = useAuth();
     const { showSuccess, showError, showConfirm } = useAlertService();
 
@@ -272,7 +274,7 @@ export const ProductDetailScreen = () => {
     );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (theme: any) => StyleSheet.create({
     container: {
         flex: 1,
     },
