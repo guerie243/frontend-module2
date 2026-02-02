@@ -332,7 +332,7 @@ export const ProductsCatalogScreen = () => {
                         key={`cover-${displayedVitrine.slug}-${displayedVitrine.coverImage || displayedVitrine.banner}`}
                         initialImage={displayedVitrine.coverImage || displayedVitrine.banner}
 
-                        height={200}
+                        height={170}
                         onUploadSuccess={handleCoverUploadSuccess}
                         onImagePress={(url) => setPreviewImage({ visible: true, url })}
                     />
@@ -364,7 +364,7 @@ export const ProductsCatalogScreen = () => {
                             key={`logo-${displayedVitrine.slug}-${displayedVitrine.logo || displayedVitrine.avatar}`}
                             initialImage={displayedVitrine.logo || displayedVitrine.avatar}
 
-                            size={100}
+                            size={90}
                             onUploadSuccess={handleAvatarUploadSuccess}
                             onImagePress={(url) => setPreviewImage({ visible: true, url })}
                         />
@@ -565,13 +565,14 @@ const createStyles = (theme: any) => StyleSheet.create({
     loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
     content: { paddingBottom: 40, backgroundColor: theme.colors.background },
     coverSection: {
-        marginBottom: 60,
+        marginTop: 10,
+        marginBottom: 50,
         width: '100%',
         paddingHorizontal: 16,
     },
     coverImage: {
         width: '100%',
-        height: 200,
+        height: 170,
         backgroundColor: theme.colors.surfaceLight,
         borderRadius: 20,
     },
@@ -597,23 +598,23 @@ const createStyles = (theme: any) => StyleSheet.create({
     },
     avatarSection: {
         position: "absolute",
-        bottom: -70,
+        bottom: -50,
         left: '50%',
-        transform: [{ translateX: -60 }], // Half of avatar size (120/2)
+        transform: [{ translateX: -45 }], // Half of avatar size (90/2)
         zIndex: 15,
         borderColor: theme.colors.surface,
     },
     avatar: {
-        width: 80,
-        height: 80,
-        borderRadius: 40,
+        width: 70,
+        height: 70,
+        borderRadius: 35,
         borderWidth: 3,
         borderColor: theme.colors.surface,
     },
     avatarLarge: {
-        width: 120,
-        height: 120,
-        borderRadius: 60,
+        width: 90,
+        height: 90,
+        borderRadius: 45,
         borderWidth: 3,
         borderColor: theme.colors.surface,
     },

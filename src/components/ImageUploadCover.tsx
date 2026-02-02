@@ -165,6 +165,7 @@ const styles = StyleSheet.create({
         backgroundColor: "#eee",
         position: "relative",
         overflow: "hidden",
+        borderRadius: 20,
     },
     content: {
         flex: 1,
