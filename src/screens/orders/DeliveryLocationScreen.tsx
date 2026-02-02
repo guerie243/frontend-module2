@@ -64,6 +64,9 @@ export const DeliveryLocationScreen = () => {
     const [deliveryLocation, setDeliveryLocation] = useState({ latitude: 0, longitude: 0 });
     const [locationAccuracy, setLocationAccuracy] = useState<number | null>(null);
     const [isFetchingLocation, setIsFetchingLocation] = useState(false);
+    const locationSubscription = React.useRef<Location.LocationSubscription | null>(null);
+
+    const isAccuracyAcceptable = locationAccuracy !== null && locationAccuracy <= 50;
 
     useEffect(() => {
         // Automatically set city if only one is available
@@ -75,6 +78,13 @@ export const DeliveryLocationScreen = () => {
     useEffect(() => {
         // Automatically request permission and get location on mount
         handleGetCurrentLocation();
+
+        return () => {
+            if (locationSubscription.current) {
+                locationSubscription.current.remove();
+                locationSubscription.current = null;
+            }
+        };
     }, []);
 
     const handleGetCurrentLocation = async () => {
@@ -82,25 +92,40 @@ export const DeliveryLocationScreen = () => {
         try {
             const { status } = await Location.requestForegroundPermissionsAsync();
             if (status !== 'granted') {
-                showError('Permission de localisation refusée');
+                showError('Permission de localisation refusée. Elle est nécessaire pour la livraison.');
                 setIsFetchingLocation(false);
                 return;
             }
 
-            const location = await Location.getCurrentPositionAsync({
-                accuracy: Location.Accuracy.BestForNavigation,
-            });
+            // Si une souscription existe déjà, on la nettoie
+            if (locationSubscription.current) {
+                locationSubscription.current.remove();
+            }
 
-            const { latitude, longitude, accuracy } = location.coords;
-            console.log(`[GPS] Captured location: ${latitude}, ${longitude} (Accuracy: ${accuracy}m)`);
-            setDeliveryLocation({ latitude, longitude });
-            setLocationAccuracy(accuracy);
+            // Surveillance en temps réel pour obtenir la meilleure précision possible
+            locationSubscription.current = await Location.watchPositionAsync(
+                {
+                    accuracy: Location.Accuracy.BestForNavigation,
+                    timeInterval: 1000,
+                    distanceInterval: 1,
+                },
+                (location) => {
+                    const { latitude, longitude, accuracy } = location.coords;
+                    console.log(`[GPS-Update] Accuracy: ${accuracy}m`);
+                    setDeliveryLocation({ latitude, longitude });
+                    setLocationAccuracy(accuracy);
 
+                    if (accuracy && accuracy <= 50) {
+                        setIsFetchingLocation(false);
+                        // On peut garder la surveillance active pour affiner encore plus
+                        // mais on considère l'état comme "prêt"
+                    }
+                }
+            );
 
         } catch (error) {
-            console.error('Error getting location:', error);
-            showError('Impossible de récupérer votre position');
-        } finally {
+            console.error('Error starting location watch:', error);
+            showError('Impossible de démarrer la localisation');
             setIsFetchingLocation(false);
         }
     };
@@ -115,8 +140,8 @@ export const DeliveryLocationScreen = () => {
             showError('Veuillez sélectionner votre commune');
             return;
         }
-        if (deliveryLocation.latitude === 0) {
-            showError('Veuillez activer votre position GPS pour la livraison');
+        if (deliveryLocation.latitude === 0 || !isAccuracyAcceptable) {
+            showError('Votre position n\'est pas assez précise (seuil: 50m). Veuillez patienter quelques instants.');
             return;
         }
 
@@ -290,15 +315,25 @@ export const DeliveryLocationScreen = () => {
 
                         {deliveryLocation.latitude !== 0 && (
                             <View style={styles.locationDetailContainer}>
-                                <Text style={[styles.locationText, { color: theme.colors.textSecondary }]}>
-                                    Lat: {deliveryLocation.latitude.toFixed(6)}, Lon: {deliveryLocation.longitude.toFixed(6)}
-                                </Text>
-                                {locationAccuracy && (
-                                    <Text style={[styles.accuracyText, {
-                                        color: locationAccuracy < 20 ? '#34C759' : '#FF9500'
-                                    }]}>
-                                        Précision: {locationAccuracy.toFixed(1)}m {locationAccuracy < 20 ? '(Excellente)' : '(Moyenne)'}
+                                <View style={{ flex: 1 }}>
+                                    <Text style={[styles.locationText, { color: theme.colors.textSecondary }]}>
+                                        Lat: {deliveryLocation.latitude.toFixed(6)}, Lon: {deliveryLocation.longitude.toFixed(6)}
                                     </Text>
+                                    {locationAccuracy && (
+                                        <Text style={[styles.accuracyText, {
+                                            color: isAccuracyAcceptable ? '#34C759' : '#FF9500'
+                                        }]}>
+                                            Précision: {locationAccuracy.toFixed(1)}m {isAccuracyAcceptable ? '(Acceptable)' : '(Optimisation en cours...)'}
+                                        </Text>
+                                    )}
+                                </View>
+                                {!isAccuracyAcceptable && deliveryLocation.latitude !== 0 && (
+                                    <View style={styles.waitingBadge}>
+                                        <ActivityIndicator size="small" color={theme.colors.primary} />
+                                        <Text style={[styles.waitingText, { color: theme.colors.primary }]}>
+                                            Affinage GPS...
+                                        </Text>
+                                    </View>
                                 )}
                             </View>
                         )}
@@ -346,10 +381,16 @@ export const DeliveryLocationScreen = () => {
                 <TouchableOpacity
                     style={[styles.button, { backgroundColor: theme.colors.primary }]}
                     onPress={handleSubmitOrder}
-                    disabled={createOrderMutation.isPending}
+                    disabled={createOrderMutation.isPending || !isAccuracyAcceptable}
+                    activeOpacity={0.8}
                 >
                     {createOrderMutation.isPending ? (
                         <ActivityIndicator color={theme.colors.white} />
+                    ) : !isAccuracyAcceptable ? (
+                        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                            <ActivityIndicator size="small" color={theme.colors.white} style={{ marginRight: 10 }} />
+                            <Text style={styles.buttonText}>Récupération position précise...</Text>
+                        </View>
                     ) : (
                         <Text style={styles.buttonText}>Confirmer la commande</Text>
                     )}
@@ -454,6 +495,20 @@ const styles = StyleSheet.create({
     accuracyText: {
         fontSize: 11,
         fontWeight: '600',
+        marginTop: 2,
+    },
+    waitingBadge: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: '#f0f0f0',
+        paddingHorizontal: 8,
+        paddingVertical: 4,
+        borderRadius: 12,
+    },
+    waitingText: {
+        fontSize: 10,
+        fontWeight: 'bold',
+        marginLeft: 4,
     },
     summaryRow: {
         flexDirection: 'row',
