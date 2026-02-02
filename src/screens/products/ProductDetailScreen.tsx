@@ -19,7 +19,7 @@ import { getProductUrl } from '../../utils/sharingUtils';
 import { ScreenHeader } from '../../components/ScreenHeader';
 import { ShareMenuModal } from '../../components/ShareMenuModal';
 import { getSafeUri } from '../../utils/imageUtils';
-import { useMemo } from 'react';
+import { useMemo, useRef } from 'react';
 
 export const ProductDetailScreen = () => {
     const navigation = useNavigation<any>();
@@ -37,8 +37,10 @@ export const ProductDetailScreen = () => {
     const [quantity, setQuantity] = useState(1);
     const [isShareModalVisible, setIsShareModalVisible] = useState(false);
     const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
+    const [currentImageIndex, setCurrentImageIndex] = useState(0);
+    const flatListRef = useRef<FlatList>(null);
 
-    const currentUserId = user?.userId || user?.id || user?._id || user?.user_id;
+    const currentUserId = user?.userId || user?.id || user?._id;
     const isOwner = isAuthenticated && !!user && !!vitrine && (
         String(currentUserId) === String(vitrine.ownerId) ||
         String(currentUserId) === String(vitrine.owner)
@@ -110,31 +112,88 @@ export const ProductDetailScreen = () => {
 
             <ScrollView style={styles.container}>
                 {/* Product Image Gallery */}
-                <View style={[styles.imageContainer, { backgroundColor: theme.colors.surfaceLight }]}>
-                    {product.images && product.images.length > 0 ? (
-                        <FlatList
-                            data={product.images}
-                            keyExtractor={(item, index) => `${item}-${index}`}
-                            horizontal
-                            pagingEnabled
-                            showsHorizontalScrollIndicator={false}
-                            renderItem={({ item }) => (
-                                <Image
-                                    source={{ uri: getSafeUri(item) }}
-                                    style={styles.image}
-                                    contentFit="cover"
-                                    transition={200}
+                <View style={styles.galleryContainer}>
+                    <View style={[styles.imageContainer, { backgroundColor: theme.colors.surfaceLight }]}>
+                        {product.images && product.images.length > 0 ? (
+                            <>
+                                <FlatList
+                                    ref={flatListRef}
+                                    data={product.images}
+                                    keyExtractor={(item, index) => `${item}-${index}`}
+                                    horizontal
+                                    pagingEnabled
+                                    showsHorizontalScrollIndicator={false}
+                                    onScroll={(e) => {
+                                        const offset = e.nativeEvent.contentOffset.x;
+                                        const index = Math.round(offset / (Dimensions.get('window').width - 32));
+                                        setCurrentImageIndex(index);
+                                    }}
+                                    scrollEventThrottle={16}
+                                    renderItem={({ item }) => (
+                                        <Image
+                                            source={{ uri: getSafeUri(item) }}
+                                            style={styles.image}
+                                            contentFit="cover"
+                                            transition={200}
+                                        />
+                                    )}
                                 />
-                            )}
-                        />
-                    ) : (
-                        <View style={styles.placeholderContainer}>
-                            <Ionicons name="image-outline" size={80} color={theme.colors.textTertiary} />
-                            <Text style={[styles.imagePlaceholderText, { color: theme.colors.textTertiary }]}>
-                                Pas d'image
-                            </Text>
-                        </View>
-                    )}
+
+                                {/* Navigation Arrows */}
+                                {product.images.length > 1 && (
+                                    <>
+                                        {currentImageIndex > 0 && (
+                                            <TouchableOpacity
+                                                style={[styles.navButton, styles.leftNavButton]}
+                                                onPress={() => {
+                                                    flatListRef.current?.scrollToIndex({
+                                                        index: currentImageIndex - 1,
+                                                        animated: true
+                                                    });
+                                                }}
+                                            >
+                                                <Ionicons name="chevron-back" size={24} color="#FFF" />
+                                            </TouchableOpacity>
+                                        )}
+
+                                        {currentImageIndex < product.images.length - 1 && (
+                                            <TouchableOpacity
+                                                style={[styles.navButton, styles.rightNavButton]}
+                                                onPress={() => {
+                                                    flatListRef.current?.scrollToIndex({
+                                                        index: currentImageIndex + 1,
+                                                        animated: true
+                                                    });
+                                                }}
+                                            >
+                                                <Ionicons name="chevron-forward" size={24} color="#FFF" />
+                                            </TouchableOpacity>
+                                        )}
+
+                                        {/* Pagination Dots */}
+                                        <View style={styles.paginationDots}>
+                                            {product.images.map((_, i) => (
+                                                <View
+                                                    key={i}
+                                                    style={[
+                                                        styles.dot,
+                                                        { backgroundColor: i === currentImageIndex ? theme.colors.primary : 'rgba(255,255,255,0.5)' }
+                                                    ]}
+                                                />
+                                            ))}
+                                        </View>
+                                    </>
+                                )}
+                            </>
+                        ) : (
+                            <View style={styles.placeholderContainer}>
+                                <Ionicons name="image-outline" size={80} color={theme.colors.textTertiary} />
+                                <Text style={[styles.imagePlaceholderText, { color: theme.colors.textTertiary }]}>
+                                    Pas d'image
+                                </Text>
+                            </View>
+                        )}
+                    </View>
                 </View>
 
                 {/* Product Info */}
@@ -272,13 +331,19 @@ const createStyles = (theme: any) => StyleSheet.create({
         fontSize: 16,
     },
     imageContainer: {
-        width: '100%',
+        width: Dimensions.get('window').width - 32,
         height: 350,
         justifyContent: 'center',
         alignItems: 'center',
+        borderRadius: 16,
+        overflow: 'hidden',
+    },
+    galleryContainer: {
+        paddingHorizontal: 16,
+        paddingTop: 16,
     },
     image: {
-        width: Dimensions.get('window').width,
+        width: Dimensions.get('window').width - 32,
         height: 350,
     },
     floatingShareButton: {
@@ -421,5 +486,38 @@ const createStyles = (theme: any) => StyleSheet.create({
         textAlign: 'center',
         marginTop: 12,
         fontStyle: 'italic',
+    },
+    navButton: {
+        position: 'absolute',
+        top: '50%',
+        marginTop: -20,
+        width: 40,
+        height: 40,
+        borderRadius: 20,
+        backgroundColor: 'rgba(0,0,0,0.3)',
+        justifyContent: 'center',
+        alignItems: 'center',
+        zIndex: 10,
+    },
+    leftNavButton: {
+        left: 10,
+    },
+    rightNavButton: {
+        right: 10,
+    },
+    paginationDots: {
+        position: 'absolute',
+        bottom: 15,
+        left: 0,
+        right: 0,
+        flexDirection: 'row',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    dot: {
+        width: 8,
+        height: 8,
+        borderRadius: 4,
+        marginHorizontal: 4,
     },
 });
