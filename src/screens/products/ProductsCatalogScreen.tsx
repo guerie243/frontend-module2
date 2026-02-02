@@ -16,6 +16,7 @@ import {
     ActivityIndicator,
     Dimensions,
     Image as RNImage,
+    Platform,
 } from 'react-native';
 import { Image } from 'expo-image';
 
@@ -226,68 +227,21 @@ export const ProductsCatalogScreen = () => {
         : (isAuthenticated ? isMyVitrinesLoading : false);
 
 
+    // Redirection si non authentifié et pas de slug (accès à la Home directe)
+    useEffect(() => {
+        if (!isLoading && !isAuthenticated && !slug) {
+            console.log('[ProductsCatalogScreen] No slug and not authenticated, redirecting to Login');
+            navigation.navigate('Login');
+        }
+    }, [isLoading, isAuthenticated, slug, navigation]);
+
     if (isOverallLoading && !displayedVitrine) {
         return <LoadingComponent />;
     }
 
     if (!displayedVitrine) {
-        if (!isAuthenticated && !slug) {
-            return (
-                <ScreenWrapper>
-                    <View style={{
-                        flexDirection: 'row',
-                        justifyContent: 'flex-end',
-                        paddingHorizontal: 16,
-                        paddingTop: 10,
-                        marginBottom: 20
-                    }}>
-                        <TouchableOpacity
-                            activeOpacity={0.7}
-                            onPress={() => navigation.navigate('Settings')} // Changed to SettingsTab as per AppTabs
-                            style={{
-                                padding: 8,
-                                borderRadius: 20,
-                                backgroundColor: theme.colors.border + '40',
-                                zIndex: 1000
-                            }}
-                        >
-                            <Ionicons name="settings-outline" size={24} color={theme.colors.text} />
-                        </TouchableOpacity>
-                    </View>
-                    <View style={{ flex: 1, justifyContent: 'center', paddingHorizontal: 20 }}>
-                        <GuestPrompt message="Connectez-vous pour voir votre vitrine" variant="card" />
-                    </View>
-                </ScreenWrapper>
-            );
-        }
-
-        if (isAuthenticated && !slug) {
-            return (
-                <ScreenWrapper>
-                    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20 }}>
-                        <Ionicons name="storefront-outline" size={80} color={theme.colors.border} style={{ marginBottom: 20 }} />
-                        <Text style={[styles.title, { textAlign: 'center', marginBottom: 12 }]}>
-                            Vous n'avez pas encore de vitrine
-                        </Text>
-                        <Text style={{ textAlign: 'center', color: theme.colors.textSecondary, marginBottom: 24, paddingHorizontal: 20 }}>
-                            Créez votre vitrine pour commencer à ajouter des produits et recevoir des commandes dès aujourd'hui !
-                        </Text>
-                        <CustomButton
-                            title="Créer ma Vitrine"
-                            onPress={() => navigation.navigate('CreateVitrine')}
-                            style={{ width: '100%' }}
-                        />
-                        <TouchableOpacity
-                            onPress={() => refetchMyVitrines()}
-                            style={{ marginTop: 20 }}
-                        >
-                            <Text style={{ color: theme.colors.primary }}>Actualiser</Text>
-                        </TouchableOpacity>
-                    </View>
-                </ScreenWrapper>
-            );
-        }
-
+        // Si on est ici, c'est qu'on a un slug mais la vitrine est introuvable 
+        // ou que le chargement est fini et qu'on n'a rien (cas invité avec slug incorrect)
         return (
             <ScreenWrapper>
                 <StateMessage

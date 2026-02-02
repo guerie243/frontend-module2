@@ -35,7 +35,7 @@ export const CreateProductScreen = () => {
     const route = useRoute<any>();
     const { theme } = useTheme();
     const { showSuccess, showError } = useAlertService();
-    const { isGuest, isAuthenticated } = useAuth();
+    const { isGuest, isAuthenticated, isLoading } = useAuth();
     const createProductMutation = useCreateProduct();
 
     // Get specific vitrine from params if coming from a specific vitrine management
@@ -125,17 +125,13 @@ export const CreateProductScreen = () => {
         }
     };
 
-    // 1. Show guest prompt if not logged in
-    if (isGuest) {
-        return (
-            <ScreenWrapper>
-                <GuestPrompt
-                    message="Vous devez être connecté pour créer une vitrine et ajouter des produits."
-                    onPress={() => navigation.navigate('Login')}
-                />
-            </ScreenWrapper>
-        );
-    }
+    // Redirection si non authentifié
+    useEffect(() => {
+        if (!isLoading && !isAuthenticated) {
+            console.log('[CreateProductScreen] Not authenticated, redirecting to Login');
+            navigation.navigate('Login');
+        }
+    }, [isLoading, isAuthenticated, navigation]);
 
     // 2. Show loading while fetching vitrines
     if (isVitrinesLoading) {

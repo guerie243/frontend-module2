@@ -25,7 +25,7 @@ export const OrdersListScreen = () => {
     const navigation = useNavigation<any>();
     const route = useRoute<any>();
     const { theme } = useTheme();
-    const { isAuthenticated, isGuest } = useAuth();
+    const { isAuthenticated, isGuest, isLoading } = useAuth();
 
     // Get specific vitrine from params if coming from a specific vitrine management
     const requestedVitrineId = route.params?.vitrineId;
@@ -169,17 +169,13 @@ export const OrdersListScreen = () => {
         </TouchableOpacity>
     );
 
-    // 1. Show guest prompt if not logged in
-    if (isGuest) {
-        return (
-            <ScreenWrapper>
-                <GuestPrompt
-                    message="Vous devez être connecté pour gérer vos commandes."
-                    onPress={() => navigation.navigate('Login')}
-                />
-            </ScreenWrapper>
-        );
-    }
+    // Redirection si non authentifié
+    useEffect(() => {
+        if (!isLoading && !isAuthenticated) {
+            console.log('[OrdersListScreen] Not authenticated, redirecting to Login');
+            navigation.navigate('Login');
+        }
+    }, [isLoading, isAuthenticated, navigation]);
 
     // 2. Show loading while fetching vitrines or orders (initial load)
     if (vitrinesLoading || (ordersLoading && orders.length === 0)) {
