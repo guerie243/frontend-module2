@@ -154,6 +154,7 @@ export const ProductsCatalogScreen = () => {
     });
     const [isShareModalVisible, setIsShareModalVisible] = useState(false);
     const [scrolled, setScrolled] = useState(false);
+    const [isExpanded, setIsExpanded] = useState(false);
 
     const handleScroll = (event: any) => {
         const offsetY = event.nativeEvent.contentOffset.y;
@@ -359,9 +360,9 @@ export const ProductsCatalogScreen = () => {
                 </View>
             </View>
 
-            <View style={styles.infoBlock}>
-                <Text style={styles.title}>{currentVitrine.name}</Text>
-                <Text style={styles.category}>
+            <View style={[styles.infoBlock, !isExpanded && styles.infoBlockCentered]}>
+                <Text style={[styles.title, !isExpanded && styles.textCentered]}>{currentVitrine.name}</Text>
+                <Text style={[styles.category, !isExpanded && styles.textCentered]}>
                     {(() => {
                         const rawType = currentVitrine.type;
                         const rawCategory = currentVitrine.category;
@@ -371,32 +372,44 @@ export const ProductsCatalogScreen = () => {
                     })()}
                 </Text>
 
-                <Text style={[styles.slug, { marginBottom: currentVitrine.description ? 16 : 24 }]}>
-                    {currentVitrine.slug}
-                </Text>
-
-                {currentVitrine.description && (
-                    <Text style={styles.description}>{currentVitrine.description}</Text>
+                {isExpanded && (
+                    <Text style={[styles.slug, { marginBottom: 16 }]}>
+                        {currentVitrine.slug}
+                    </Text>
                 )}
 
-                <View style={styles.separator} />
+                {currentVitrine.address && (
+                    <Text
+                        style={[styles.addressLine, !isExpanded && styles.textCentered]}
+                        numberOfLines={isExpanded ? undefined : 1}
+                    >
+                        {isExpanded && <Ionicons name="location-outline" size={14} color={theme.colors.textSecondary} />} {currentVitrine.address}
+                    </Text>
+                )}
 
-                {(currentVitrine.address || currentVitrine.contact?.email || currentVitrine.contact?.phone) && (
-                    <View style={styles.contactDetailsSection}>
-                        <Text style={styles.sectionTitle}>Infos </Text>
+                {currentVitrine.description && (
+                    <Text
+                        style={[styles.description, !isExpanded && styles.textCentered]}
+                        numberOfLines={isExpanded ? undefined : 3}
+                    >
+                        {currentVitrine.description}
+                    </Text>
+                )}
 
-                        {currentVitrine.address && (
-                            <View style={styles.infoItem}>
-                                <Ionicons name="location-outline" size={20} color={theme.colors.textSecondary} style={styles.infoIcon} />
-                                <View style={styles.infoContent}>
-                                    <Text style={styles.infoLabel}>Adresse</Text>
-                                    <Text style={styles.infoValue}>{currentVitrine.address}</Text>
-                                </View>
-                            </View>
-                        )}
+                <TouchableOpacity
+                    onPress={() => setIsExpanded(!isExpanded)}
+                    style={styles.expandLink}
+                >
+                    <Text style={styles.expandLinkText}>
+                        {isExpanded ? 'Voir moins' : 'Voir plus'}
+                    </Text>
+                </TouchableOpacity>
+
+                {isExpanded && (
+                    <View style={styles.expandedContent}>
                         {currentVitrine.contact?.email && (
                             <View style={styles.infoItem}>
-                                <Ionicons name="mail-outline" size={20} color={theme.colors.textSecondary} style={styles.infoIcon} />
+                                <Ionicons name="mail-outline" size={18} color={theme.colors.textSecondary} style={styles.infoIcon} />
                                 <View style={styles.infoContent}>
                                     <Text style={styles.infoLabel}>Email</Text>
                                     <Text style={styles.infoValue}>{currentVitrine.contact.email}</Text>
@@ -405,7 +418,7 @@ export const ProductsCatalogScreen = () => {
                         )}
                         {currentVitrine.contact?.phone && (
                             <View style={styles.infoItem}>
-                                <Ionicons name="call-outline" size={20} color={theme.colors.textSecondary} style={styles.infoIcon} />
+                                <Ionicons name="call-outline" size={18} color={theme.colors.textSecondary} style={styles.infoIcon} />
                                 <View style={styles.infoContent}>
                                     <Text style={styles.infoLabel}>Téléphone</Text>
                                     <Text style={styles.infoValue}>{currentVitrine.contact.phone}</Text>
@@ -415,34 +428,37 @@ export const ProductsCatalogScreen = () => {
                     </View>
                 )}
 
-                <View style={styles.mainActionsContainer}>
-                    {isOwner ? (
-                        <>
-                            <CustomButton
-                                title="Gérer ma Vitrine"
-                                onPress={() => {
-                                    navigation.navigate('VitrineModificationMain');
-                                }}
-                                style={styles.ownerActionButton}
-                            />
-                        </>
-                    ) : (
-                        <>
-                            {currentVitrine.contact?.phone ? (
-                                <WhatsAppButton
-                                    phoneNumber={currentVitrine.contact.phone}
-                                    message={whatsappMessage}
-                                    style={styles.visitorActionButton}
-                                />
-                            ) : (
-                                <View style={{ flex: 1, marginRight: 16 }}>
-                                    <Text style={{ color: theme.colors.textSecondary, fontStyle: 'italic' }}>Aucun contact WhatsApp</Text>
-                                </View>
-                            )}
-                        </>
-                    )}
-                </View>
+                {!isExpanded && <View style={styles.separator} />}
             </View>
+
+            <View style={styles.mainActionsContainer}>
+                {isOwner ? (
+                    <>
+                        <CustomButton
+                            title="Gérer ma Vitrine"
+                            onPress={() => {
+                                navigation.navigate('VitrineModificationMain');
+                            }}
+                            style={styles.ownerActionButton}
+                        />
+                    </>
+                ) : (
+                    <>
+                        {currentVitrine.contact?.phone ? (
+                            <WhatsAppButton
+                                phoneNumber={currentVitrine.contact.phone}
+                                message={whatsappMessage}
+                                style={styles.visitorActionButton}
+                            />
+                        ) : (
+                            <View style={{ flex: 1, marginRight: 16 }}>
+                                <Text style={{ color: theme.colors.textSecondary, fontStyle: 'italic' }}>Aucun contact WhatsApp</Text>
+                            </View>
+                        )}
+                    </>
+                )}
+            </View>
+        </View>
 
             <View style={styles.productsHeader}>
                 <Text style={styles.productsTitle}>Produits ({products.length})</Text>
@@ -450,89 +466,89 @@ export const ProductsCatalogScreen = () => {
         </>
     );
 
-    return (
-        <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
-            <ScreenHeader
-                title=""
-                showBack={false}
-                vitrineName={scrolled ? currentVitrine.name : undefined}
-                vitrineLogo={scrolled ? getSafeUri(currentVitrine.logo || currentVitrine.avatar) : undefined}
-                onVitrinePress={() => flatListRef.current?.scrollToOffset({ offset: 0, animated: true })}
-                onShare={() => setIsShareModalVisible(true)}
-                rightElement={isOwner ? (
-                    <TouchableOpacity
-                        activeOpacity={0.7}
-                        onPress={() => navigation.navigate('Settings')}
-                        style={styles.headerIconButton}
-                    >
-                        <Ionicons name="settings-outline" size={24} color={theme.colors.text} />
-                    </TouchableOpacity>
-                ) : undefined}
-            />
-            <FlatList
-                ref={flatListRef}
-                onScroll={handleScroll}
-                scrollEventThrottle={16}
+return (
+    <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
+        <ScreenHeader
+            title=""
+            showBack={false}
+            vitrineName={scrolled ? currentVitrine.name : undefined}
+            vitrineLogo={scrolled ? getSafeUri(currentVitrine.logo || currentVitrine.avatar) : undefined}
+            onVitrinePress={() => flatListRef.current?.scrollToOffset({ offset: 0, animated: true })}
+            onShare={() => setIsShareModalVisible(true)}
+            rightElement={isOwner ? (
+                <TouchableOpacity
+                    activeOpacity={0.7}
+                    onPress={() => navigation.navigate('Settings')}
+                    style={styles.headerIconButton}
+                >
+                    <Ionicons name="settings-outline" size={24} color={theme.colors.text} />
+                </TouchableOpacity>
+            ) : undefined}
+        />
+        <FlatList
+            ref={flatListRef}
+            onScroll={handleScroll}
+            scrollEventThrottle={16}
 
 
-                data={products}
-                renderItem={({ item }) => (
-                    <View style={{ width: (SCREEN_WIDTH / 2) - 24, marginBottom: 16 }}>
-                        <ProductCard
-                            product={item}
-                            onPress={() => handleProductPress(item)}
-                            showActions={true}
-                        />
+            data={products}
+            renderItem={({ item }) => (
+                <View style={{ width: (SCREEN_WIDTH / 2) - 24, marginBottom: 16 }}>
+                    <ProductCard
+                        product={item}
+                        onPress={() => handleProductPress(item)}
+                        showActions={true}
+                    />
+                </View>
+            )}
+            keyExtractor={(item) => item.id || item._id || item.slug}
+            numColumns={2}
+            columnWrapperStyle={styles.columnWrapper}
+            contentContainerStyle={styles.content}
+            ListHeaderComponent={ListHeader}
+            ListEmptyComponent={
+                productsLoading ? (
+                    <View style={{ paddingVertical: 40, alignItems: 'center' }}>
+                        <ActivityIndicator size="large" color={theme.colors.primary} />
+                        <Text style={{ marginTop: 16, color: theme.colors.textSecondary, fontSize: 14 }}>
+                            Chargement des produits...
+                        </Text>
                     </View>
-                )}
-                keyExtractor={(item) => item.id || item._id || item.slug}
-                numColumns={2}
-                columnWrapperStyle={styles.columnWrapper}
-                contentContainerStyle={styles.content}
-                ListHeaderComponent={ListHeader}
-                ListEmptyComponent={
-                    productsLoading ? (
-                        <View style={{ paddingVertical: 40, alignItems: 'center' }}>
-                            <ActivityIndicator size="large" color={theme.colors.primary} />
-                            <Text style={{ marginTop: 16, color: theme.colors.textSecondary, fontSize: 14 }}>
-                                Chargement des produits...
-                            </Text>
-                        </View>
-                    ) : (
-                        <StateMessage
-                            type="empty"
-                            title="Aucun produit"
-                            message={isOwner
-                                ? "Vous n'avez pas encore de produits. Donnez vie à votre vitrine en publiant votre premier article !"
-                                : "Cette vitrine n'a pas encore de produits disponibles."}
-                        />
-                    )
-                }
-                ListFooterComponent={
-                    productsLoading && products.length > 0 ? (
-                        <ActivityIndicator size="small" color={theme.colors.primary} style={{ marginVertical: 16 }} />
-                    ) : null
-                }
-                onEndReached={loadMoreProducts}
-                onEndReachedThreshold={0.5}
-                refreshControl={
-                    <RefreshControl refreshing={isRefetchingProducts || false} onRefresh={onRefresh} colors={[theme.colors.primary]} />
-                }
-            />
-            <ImagePreviewModal
-                visible={previewImage.visible}
-                imageUrl={previewImage.url}
-                onClose={() => setPreviewImage({ ...previewImage, visible: false })}
-            />
-            <ShareMenuModal
-                isVisible={isShareModalVisible}
-                onClose={() => setIsShareModalVisible(false)}
-                url={getVitrineUrl(currentVitrine.slug)}
-                title={`Vitrine de ${currentVitrine.name}`}
-                message={`Visitez la vitrine de ${currentVitrine.name} sur Andy Business !`}
-            />
-        </View>
-    );
+                ) : (
+                    <StateMessage
+                        type="empty"
+                        title="Aucun produit"
+                        message={isOwner
+                            ? "Vous n'avez pas encore de produits. Donnez vie à votre vitrine en publiant votre premier article !"
+                            : "Cette vitrine n'a pas encore de produits disponibles."}
+                    />
+                )
+            }
+            ListFooterComponent={
+                productsLoading && products.length > 0 ? (
+                    <ActivityIndicator size="small" color={theme.colors.primary} style={{ marginVertical: 16 }} />
+                ) : null
+            }
+            onEndReached={loadMoreProducts}
+            onEndReachedThreshold={0.5}
+            refreshControl={
+                <RefreshControl refreshing={isRefetchingProducts || false} onRefresh={onRefresh} colors={[theme.colors.primary]} />
+            }
+        />
+        <ImagePreviewModal
+            visible={previewImage.visible}
+            imageUrl={previewImage.url}
+            onClose={() => setPreviewImage({ ...previewImage, visible: false })}
+        />
+        <ShareMenuModal
+            isVisible={isShareModalVisible}
+            onClose={() => setIsShareModalVisible(false)}
+            url={getVitrineUrl(currentVitrine.slug)}
+            title={`Vitrine de ${currentVitrine.name}`}
+            message={`Visitez la vitrine de ${currentVitrine.name} sur Andy Business !`}
+        />
+    </View>
+);
 };
 
 const createStyles = (theme: any) => StyleSheet.create({
@@ -598,6 +614,13 @@ const createStyles = (theme: any) => StyleSheet.create({
     infoBlock: {
         paddingHorizontal: 16,
         marginTop: 0,
+        alignItems: 'flex-start',
+    },
+    infoBlockCentered: {
+        alignItems: 'center',
+    },
+    textCentered: {
+        textAlign: 'center',
     },
     title: {
         fontSize: 22,
@@ -621,9 +644,32 @@ const createStyles = (theme: any) => StyleSheet.create({
     },
     description: {
         fontSize: 14,
-        marginBottom: 16,
         lineHeight: 20,
         color: theme.colors.textSecondary,
+        marginBottom: 8,
+    },
+    addressLine: {
+        fontSize: 13,
+        color: theme.colors.textTertiary,
+        marginBottom: 12,
+        width: '100%',
+    },
+    expandLink: {
+        paddingVertical: 8,
+        marginBottom: 8,
+    },
+    expandLinkText: {
+        fontSize: 14,
+        fontWeight: '600',
+        color: theme.colors.primary,
+    },
+    expandedContent: {
+        width: '100%',
+        marginTop: 16,
+        marginBottom: 16,
+        paddingTop: 16,
+        borderTopWidth: 1,
+        borderTopColor: theme.colors.border,
     },
     separator: {
         height: 1,
