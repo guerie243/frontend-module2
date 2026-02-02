@@ -19,7 +19,6 @@ import { getProductUrl } from '../../utils/sharingUtils';
 import { ScreenHeader } from '../../components/ScreenHeader';
 import { ShareMenuModal } from '../../components/ShareMenuModal';
 import { getSafeUri } from '../../utils/imageUtils';
-import { getSafeUri } from '../../utils/imageUtils';
 import { useMemo, useRef } from 'react';
 
 const { width: screenWidth } = Dimensions.get('window');
@@ -262,6 +261,20 @@ export const ProductDetailScreen = () => {
                         </View>
                     )}
 
+                    {normalizedLocations.length > 0 && (
+                        <View style={styles.locationsContainer}>
+
+                            <View style={styles.locationBadges}>
+                                {normalizedLocations.map((loc, idx) => (
+                                    <View key={idx} style={[styles.locationBadge, { backgroundColor: theme.colors.background }]}>
+                                        <Ionicons name="location-sharp" size={14} color={theme.colors.primary} />
+                                        <Text style={[styles.locationText, { color: theme.colors.text }]}>{loc}</Text>
+                                    </View>
+                                ))}
+                            </View>
+                        </View>
+                    )}
+
                     {product.description && (
                         <View style={styles.descriptionContainer}>
                             <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>
@@ -286,21 +299,7 @@ export const ProductDetailScreen = () => {
                         </View>
                     )}
 
-                    {normalizedLocations.length > 0 && (
-                        <View style={styles.locationsContainer}>
-                            <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>
-                                Lieux de disponibilité
-                            </Text>
-                            <View style={styles.locationBadges}>
-                                {normalizedLocations.map((loc, idx) => (
-                                    <View key={idx} style={[styles.locationBadge, { backgroundColor: theme.colors.background }]}>
-                                        <Ionicons name="location-sharp" size={14} color={theme.colors.primary} />
-                                        <Text style={[styles.locationText, { color: theme.colors.text }]}>{loc}</Text>
-                                    </View>
-                                ))}
-                            </View>
-                        </View>
-                    )}
+
 
                     {product.stock !== undefined && (
                         <Text style={[styles.stock, { color: theme.colors.textTertiary }]}>
