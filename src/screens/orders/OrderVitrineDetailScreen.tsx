@@ -106,7 +106,7 @@ export const OrderVitrineDetailScreen = () => {
                 onShare={() => setIsShareModalVisible(true)}
                 vitrineName={vitrine?.name}
                 vitrineLogo={getSafeUri(vitrine?.logo || vitrine?.avatar)}
-                onVitrinePress={() => vitrine?.slug && navigation.navigate('ProductsCatalog', { slug: vitrine.slug })}
+                onVitrinePress={() => vitrine?.slug && navigation.navigate('VitrineDetail', { slug: vitrine.slug })}
             />
             <ScrollView style={styles.container}>
                 <View style={[styles.section, { backgroundColor: theme.colors.surface }]}>
@@ -250,7 +250,7 @@ export const OrderVitrineDetailScreen = () => {
                 title="Suivi de commande"
                 message={`Lien de suivi pour la commande #${order.id?.slice(-6) || order._id?.slice(-6)} sur Andy Business.`}
             />
-        </View>
+        </View >
     );
 };
 

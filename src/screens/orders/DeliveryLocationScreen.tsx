@@ -190,7 +190,7 @@ export const DeliveryLocationScreen = () => {
             // Si c'est un utilisateur connecté (vendeur), on peut le renvoyer vers les onglets principaux
             if (isGuest && vitrine?.slug) {
                 console.log('[DeliveryLocationScreen] Redirection invité vers la vitrine:', vitrine.slug);
-                navigation.navigate('ProductsCatalog', { slug: vitrine.slug });
+                navigation.navigate('VitrineDetail', { slug: vitrine.slug });
             } else {
                 console.log('[DeliveryLocationScreen] Redirection utilisateur connecté vers MainTabs');
                 navigation.navigate('MainTabs', { screen: 'ProductsTab' });
