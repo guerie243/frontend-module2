@@ -64,12 +64,12 @@ export const DeliveryLocationScreen = () => {
     const [deliveryLocation, setDeliveryLocation] = useState({ latitude: 0, longitude: 0 });
     const [locationAccuracy, setLocationAccuracy] = useState<number | null>(null);
     const [isFetchingLocation, setIsFetchingLocation] = useState(false);
-    const [canForceLocation, setCanForceLocation] = useState(false);
+    const [showRetryButton, setShowRetryButton] = useState(false);
     const locationSubscription = React.useRef<Location.LocationSubscription | null>(null);
     const timerRef = React.useRef<NodeJS.Timeout | null>(null);
 
     const isAccuracyAcceptable = locationAccuracy !== null && locationAccuracy <= 50;
-    const canSubmit = isAccuracyAcceptable || (deliveryLocation.latitude !== 0 && canForceLocation);
+    const canSubmit = isAccuracyAcceptable;
 
     useEffect(() => {
         // Automatically set city if only one is available
@@ -108,13 +108,15 @@ export const DeliveryLocationScreen = () => {
                 locationSubscription.current.remove();
             }
 
-            setCanForceLocation(false);
+            setShowRetryButton(false);
             if (timerRef.current) clearTimeout(timerRef.current);
 
-            // Après 15 secondes, on autorise l'utilisateur à forcer la position même si précision > 50m
+            // Après 15 secondes, si la précision n'est pas atteinte, on propose de réessayer
             timerRef.current = setTimeout(() => {
-                setCanForceLocation(true);
-                console.log('[GPS] Timeout reached, allowing forced location');
+                if (!isAccuracyAcceptable) {
+                    setShowRetryButton(true);
+                    console.log('[GPS] Timeout reached, showing retry button');
+                }
             }, 15000);
 
             // Surveillance en temps réel pour obtenir la meilleure précision possible
@@ -231,6 +233,14 @@ export const DeliveryLocationScreen = () => {
     };
 
 
+    const handleBack = () => {
+        if (navigation.canGoBack()) {
+            navigation.goBack();
+        } else {
+            navigation.navigate('MainTabs');
+        }
+    };
+
     const handleSelectLocation = () => {
         // In a real app, this would open a map picker
         console.log('Opening map picker (not implemented)');
@@ -246,6 +256,7 @@ export const DeliveryLocationScreen = () => {
                 vitrineName={vitrine?.name}
                 vitrineLogo={getSafeUri(vitrine?.logo || vitrine?.avatar)}
                 onVitrinePress={() => vitrine?.slug && navigation.navigate('VitrineDetail', { slug: vitrine.slug })}
+                onBackPress={handleBack}
             />
             <ScreenWrapper scrollable contentContainerStyle={styles.contentContainer}>
 
@@ -346,11 +357,23 @@ export const DeliveryLocationScreen = () => {
                                     <View style={styles.waitingBadge}>
                                         <ActivityIndicator size="small" color={theme.colors.primary} />
                                         <Text style={[styles.waitingText, { color: theme.colors.primary }]}>
-                                            {canForceLocation ? 'Précision moyenne' : 'Affinage...'}
+                                            Affinage GPS...
                                         </Text>
                                     </View>
                                 )}
                             </View>
+                        )}
+
+                        {showRetryButton && !isAccuracyAcceptable && (
+                            <TouchableOpacity
+                                style={[styles.retryButton, { borderColor: theme.colors.primary }]}
+                                onPress={handleGetCurrentLocation}
+                            >
+                                <Ionicons name="refresh-circle" size={20} color={theme.colors.primary} />
+                                <Text style={[styles.retryButtonText, { color: theme.colors.primary }]}>
+                                    La précision tarde ? Réessayer la capture
+                                </Text>
+                            </TouchableOpacity>
                         )}
                     </View>
                 </View>
@@ -395,24 +418,22 @@ export const DeliveryLocationScreen = () => {
 
                 <TouchableOpacity
                     style={[styles.button, {
-                        backgroundColor: canSubmit ? theme.colors.primary : '#A1A1A1',
-                        opacity: canSubmit ? 1 : 0.7
+                        backgroundColor: canSubmit ? theme.colors.primary : '#E0E0E0',
+                        opacity: canSubmit ? 1 : 0.8
                     }]}
                     onPress={handleSubmitOrder}
-                    disabled={createOrderMutation.isPending || (deliveryLocation.latitude !== 0 && !canSubmit)}
+                    disabled={createOrderMutation.isPending || !canSubmit}
                     activeOpacity={0.8}
                 >
                     {createOrderMutation.isPending ? (
                         <ActivityIndicator color={theme.colors.white} />
-                    ) : (deliveryLocation.latitude === 0 || (!isAccuracyAcceptable && !canForceLocation)) ? (
+                    ) : !isAccuracyAcceptable ? (
                         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                            <ActivityIndicator size="small" color={theme.colors.white} style={{ marginRight: 10 }} />
-                            <Text style={styles.buttonText}>Affinage GPS (max 15s)...</Text>
+                            <ActivityIndicator size="small" color={theme.colors.primary} style={{ marginRight: 10 }} />
+                            <Text style={[styles.buttonText, { color: theme.colors.primary }]}>Attente précision optimale (50m)...</Text>
                         </View>
                     ) : (
-                        <Text style={styles.buttonText}>
-                            {isAccuracyAcceptable ? 'Confirmer la commande' : 'Confirmer quand même'}
-                        </Text>
+                        <Text style={styles.buttonText}>Confirmer la commande</Text>
                     )}
                 </TouchableOpacity>
             </ScreenWrapper>
@@ -566,5 +587,20 @@ const styles = StyleSheet.create({
         color: '#FFFFFF',
         fontSize: 16,
         fontWeight: '600',
+    },
+    retryButton: {
+        marginTop: 12,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: 8,
+        borderWidth: 1,
+        borderRadius: 8,
+        borderStyle: 'dashed',
+    },
+    retryButtonText: {
+        fontSize: 13,
+        fontWeight: '600',
+        marginLeft: 6,
     },
 });

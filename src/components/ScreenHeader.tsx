@@ -22,6 +22,7 @@ interface ScreenHeaderProps {
     vitrineLogo?: string;
     vitrineName?: string;
     onVitrinePress?: () => void;
+    onBackPress?: () => void;
 }
 
 export const ScreenHeader: React.FC<ScreenHeaderProps> = ({
@@ -33,6 +34,7 @@ export const ScreenHeader: React.FC<ScreenHeaderProps> = ({
     vitrineLogo,
     vitrineName,
     onVitrinePress,
+    onBackPress,
 }) => {
     const { theme } = useTheme();
     const navigation = useNavigation();
@@ -52,7 +54,7 @@ export const ScreenHeader: React.FC<ScreenHeaderProps> = ({
                     {showBack && (
                         <TouchableOpacity
                             style={styles.iconButton}
-                            onPress={() => navigation.goBack()}
+                            onPress={onBackPress || (() => navigation.goBack())}
                         >
                             <Ionicons name="arrow-back" size={24} color={theme.colors.text} />
                         </TouchableOpacity>
