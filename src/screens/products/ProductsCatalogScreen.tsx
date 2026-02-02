@@ -167,8 +167,11 @@ export const ProductsCatalogScreen = () => {
 
     const styles = useMemo(() => createStyles(theme), [theme]);
 
-    const currentUserId = user ? (user.id || user._id || user.userId) : null;
-    const isOwner = isAuthenticated && user && displayedVitrine && (currentUserId == displayedVitrine.ownerId || currentUserId == displayedVitrine.owner);
+    const currentUserId = user?.userId || user?.id || user?._id || user?.user_id;
+    const isOwner = isAuthenticated && !!user && !!displayedVitrine && (
+        String(currentUserId) === String(displayedVitrine.ownerId) ||
+        String(currentUserId) === String(displayedVitrine.owner)
+    );
 
     // --- LOGIQUE REFRESH ---
     const onRefresh = useCallback(async () => {

@@ -38,9 +38,10 @@ export const ProductDetailScreen = () => {
     const [isShareModalVisible, setIsShareModalVisible] = useState(false);
     const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
 
-    const isOwner = isAuthenticated && product && (
-        user?.id === product.vitrineId ||
-        user?._id === product.vitrineId
+    const currentUserId = user?.userId || user?.id || user?._id || user?.user_id;
+    const isOwner = isAuthenticated && !!user && !!vitrine && (
+        String(currentUserId) === String(vitrine.ownerId) ||
+        String(currentUserId) === String(vitrine.owner)
     );
 
     const handleAddToCart = () => {
