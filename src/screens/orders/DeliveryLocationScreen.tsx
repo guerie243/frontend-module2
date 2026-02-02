@@ -15,6 +15,8 @@ import { AnimatedSelect } from '../../components/AnimatedSelect';
 import { Ionicons } from '@expo/vector-icons';
 import { MapWebView } from '../../components/MapWebView';
 import { ScreenWrapper } from '../../components/ScreenWrapper';
+import { getOrderUrl } from '../../utils/sharingUtils';
+import { Platform } from 'react-native';
 
 export const DeliveryLocationScreen = () => {
     const navigation = useNavigation<any>();
@@ -158,13 +160,13 @@ export const DeliveryLocationScreen = () => {
                     message += `- Commune: ${commune}\n`;
                     message += `- Adresse: ${deliveryAddress}\n`;
 
-                    if (deliveryLocation.latitude !== 0) {
-                        message += `- GPS: https://www.google.com/maps/search/?api=1&query=${deliveryLocation.latitude},${deliveryLocation.longitude}\n`;
-                    }
-
                     if (orderData.notes) {
                         message += `\n*Notes:* ${orderData.notes}\n`;
                     }
+
+                    // Utiliser l'orderId public pour le lien de suivi
+                    const publicOrderId = order.orderId || order.id || order._id;
+                    message += `\n*Lien de suivi de votre commande:* ${getOrderUrl(publicOrderId)}\n`;
 
                     const whatsappUrl = `whatsapp://send?phone=${cleanNumber}&text=${encodeURIComponent(message)}`;
 
@@ -185,16 +187,18 @@ export const DeliveryLocationScreen = () => {
 
             showSuccess('Commande créée avec succès !');
 
-            // Redirection conditionnelle :
-            // Si c'est un invité, on le renvoie vers le catalogue de la vitrine
-            // Si c'est un utilisateur connecté (vendeur), on peut le renvoyer vers les onglets principaux
-            if (isGuest && vitrine?.slug) {
-                console.log('[DeliveryLocationScreen] Redirection invité vers la vitrine:', vitrine.slug);
-                navigation.navigate('VitrineDetail', { slug: vitrine.slug });
-            } else {
-                console.log('[DeliveryLocationScreen] Redirection utilisateur connecté vers MainTabs');
-                navigation.navigate('MainTabs', { screen: 'ProductsTab' });
-            }
+            // Redirection conditionnelle avec un léger délai pour laisser le temps à WhatsApp de s'ouvrir
+            setTimeout(() => {
+                // Si c'est un invité, on le renvoie vers le catalogue de la vitrine
+                // Si c'est un utilisateur connecté (vendeur), on peut le renvoyer vers les onglets principaux
+                if (isGuest && vitrine?.slug) {
+                    console.log('[DeliveryLocationScreen] Redirection invité vers la vitrine:', vitrine.slug);
+                    navigation.navigate('VitrineDetail', { slug: vitrine.slug });
+                } else {
+                    console.log('[DeliveryLocationScreen] Redirection utilisateur connecté vers MainTabs');
+                    navigation.navigate('MainTabs', { screen: 'ProductsTab' });
+                }
+            }, Platform.OS === 'web' ? 1000 : 500);
         } catch (error: any) {
             console.error('Order creation failed:', error.message);
             showError(error.message || 'Échec de la création de la commande');
