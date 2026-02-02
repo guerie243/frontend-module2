@@ -113,7 +113,7 @@ const styles = StyleSheet.create({
         zIndex: 100,
     },
     content: {
-        height: 48,
+        height: 40, // Reduced from 48
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',

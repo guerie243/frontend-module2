@@ -554,14 +554,14 @@ const createStyles = (theme: any) => StyleSheet.create({
     loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
     content: { paddingBottom: 40, backgroundColor: theme.colors.background },
     coverSection: {
-        marginTop: 10,
-        marginBottom: 50,
+        marginTop: 5, // Reduced from 10
+        marginBottom: 65, // Increased slightly to prevent overlap with reduced cover
         width: '100%',
         paddingHorizontal: 16,
     },
     coverImage: {
         width: '100%',
-        height: 170,
+        height: 120, // Reduced from 140
         backgroundColor: theme.colors.surfaceLight,
         borderRadius: 20,
     },
@@ -650,12 +650,12 @@ const createStyles = (theme: any) => StyleSheet.create({
     addressLine: {
         fontSize: 13,
         color: theme.colors.textTertiary,
-        marginBottom: 12,
+        marginBottom: 8, // Reduced from 12
         width: '100%',
     },
     expandLink: {
-        paddingVertical: 8,
-        marginBottom: 8,
+        paddingVertical: 4, // Reduced from 8
+        marginBottom: 0, // Reduced from 8
     },
     expandLinkText: {
         fontSize: 14,
@@ -664,16 +664,16 @@ const createStyles = (theme: any) => StyleSheet.create({
     },
     expandedContent: {
         width: '100%',
-        marginTop: 16,
-        marginBottom: 16,
-        paddingTop: 16,
+        marginTop: 8, // Reduced from 16
+        marginBottom: 8, // Reduced from 16
+        paddingTop: 8, // Reduced from 16
         borderTopWidth: 1,
         borderTopColor: theme.colors.border,
     },
     separator: {
         height: 1,
         width: '100%',
-        marginVertical: 16,
+        marginVertical: 8, // Reduced from 16
         backgroundColor: theme.colors.border,
     },
     contactDetailsSection: {
@@ -711,8 +711,9 @@ const createStyles = (theme: any) => StyleSheet.create({
     mainActionsContainer: {
         flexDirection: 'row',
         alignItems: 'center',
-        justifyContent: 'flex-start',
-        marginBottom: 24,
+        justifyContent: 'center', // Changed from flex-start
+        marginBottom: 16, // Reduced from 24
+        marginTop: 8, // Added to control space above buttons
     },
     ownerActionButton: {
         flex: 1.5,
