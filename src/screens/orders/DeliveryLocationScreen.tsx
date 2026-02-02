@@ -64,12 +64,9 @@ export const DeliveryLocationScreen = () => {
     const [deliveryLocation, setDeliveryLocation] = useState({ latitude: 0, longitude: 0 });
     const [locationAccuracy, setLocationAccuracy] = useState<number | null>(null);
     const [isFetchingLocation, setIsFetchingLocation] = useState(false);
-    const [showRetryButton, setShowRetryButton] = useState(false);
     const locationSubscription = React.useRef<Location.LocationSubscription | null>(null);
-    const timerRef = React.useRef<NodeJS.Timeout | null>(null);
 
-    const isAccuracyAcceptable = locationAccuracy !== null && locationAccuracy <= 50;
-    const canSubmit = isAccuracyAcceptable;
+    const canSubmit = deliveryLocation.latitude !== 0;
 
     useEffect(() => {
         // Automatically set city if only one is available
@@ -86,9 +83,6 @@ export const DeliveryLocationScreen = () => {
             if (locationSubscription.current) {
                 locationSubscription.current.remove();
                 locationSubscription.current = null;
-            }
-            if (timerRef.current) {
-                clearTimeout(timerRef.current);
             }
         };
     }, []);
@@ -108,18 +102,7 @@ export const DeliveryLocationScreen = () => {
                 locationSubscription.current.remove();
             }
 
-            setShowRetryButton(false);
-            if (timerRef.current) clearTimeout(timerRef.current);
-
-            // Après 15 secondes, si la précision n'est pas atteinte, on propose de réessayer
-            timerRef.current = setTimeout(() => {
-                if (!isAccuracyAcceptable) {
-                    setShowRetryButton(true);
-                    console.log('[GPS] Timeout reached, showing retry button');
-                }
-            }, 15000);
-
-            // Surveillance en temps réel pour obtenir la meilleure précision possible
+            // Surveillance en temps réel pour obtenir la position
             locationSubscription.current = await Location.watchPositionAsync(
                 {
                     accuracy: Location.Accuracy.BestForNavigation,
@@ -132,10 +115,8 @@ export const DeliveryLocationScreen = () => {
                     setDeliveryLocation({ latitude, longitude });
                     setLocationAccuracy(accuracy);
 
-                    if (accuracy && accuracy <= 50) {
+                    if (accuracy) {
                         setIsFetchingLocation(false);
-                        // On peut garder la surveillance active pour affiner encore plus
-                        // mais on considère l'état comme "prêt"
                     }
                 }
             );
@@ -347,33 +328,13 @@ export const DeliveryLocationScreen = () => {
                                     </Text>
                                     {locationAccuracy && (
                                         <Text style={[styles.accuracyText, {
-                                            color: isAccuracyAcceptable ? '#34C759' : '#FF9500'
+                                            color: locationAccuracy <= 50 ? '#34C759' : '#FF9500'
                                         }]}>
-                                            Précision: {locationAccuracy.toFixed(1)}m {isAccuracyAcceptable ? '(Acceptable)' : '(Affinage...)'}
+                                            Précision: {locationAccuracy.toFixed(1)}m
                                         </Text>
                                     )}
                                 </View>
-                                {!isAccuracyAcceptable && deliveryLocation.latitude !== 0 && (
-                                    <View style={styles.waitingBadge}>
-                                        <ActivityIndicator size="small" color={theme.colors.primary} />
-                                        <Text style={[styles.waitingText, { color: theme.colors.primary }]}>
-                                            Affinage GPS...
-                                        </Text>
-                                    </View>
-                                )}
                             </View>
-                        )}
-
-                        {showRetryButton && !isAccuracyAcceptable && (
-                            <TouchableOpacity
-                                style={[styles.retryButton, { borderColor: theme.colors.primary }]}
-                                onPress={handleGetCurrentLocation}
-                            >
-                                <Ionicons name="refresh-circle" size={20} color={theme.colors.primary} />
-                                <Text style={[styles.retryButtonText, { color: theme.colors.primary }]}>
-                                    La précision tarde ? Réessayer la capture
-                                </Text>
-                            </TouchableOpacity>
                         )}
                     </View>
                 </View>
@@ -427,10 +388,10 @@ export const DeliveryLocationScreen = () => {
                 >
                     {createOrderMutation.isPending ? (
                         <ActivityIndicator color={theme.colors.white} />
-                    ) : !isAccuracyAcceptable ? (
+                    ) : !canSubmit ? (
                         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                             <ActivityIndicator size="small" color={theme.colors.primary} style={{ marginRight: 10 }} />
-                            <Text style={[styles.buttonText, { color: theme.colors.primary }]}>Attente précision optimale (50m)...</Text>
+                            <Text style={[styles.buttonText, { color: theme.colors.primary }]}>Récupération position...</Text>
                         </View>
                     ) : (
                         <Text style={styles.buttonText}>Confirmer la commande</Text>
@@ -538,19 +499,6 @@ const styles = StyleSheet.create({
         fontWeight: '600',
         marginTop: 2,
     },
-    waitingBadge: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        backgroundColor: '#f0f0f0',
-        paddingHorizontal: 8,
-        paddingVertical: 4,
-        borderRadius: 12,
-    },
-    waitingText: {
-        fontSize: 10,
-        fontWeight: 'bold',
-        marginLeft: 4,
-    },
     summaryRow: {
         flexDirection: 'row',
         justifyContent: 'space-between',
@@ -587,20 +535,5 @@ const styles = StyleSheet.create({
         color: '#FFFFFF',
         fontSize: 16,
         fontWeight: '600',
-    },
-    retryButton: {
-        marginTop: 12,
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: 8,
-        borderWidth: 1,
-        borderRadius: 8,
-        borderStyle: 'dashed',
-    },
-    retryButtonText: {
-        fontSize: 13,
-        fontWeight: '600',
-        marginLeft: 6,
     },
 });
