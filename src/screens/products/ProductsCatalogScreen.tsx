@@ -145,11 +145,23 @@ export const ProductsCatalogScreen = () => {
         }) || [];
     }, [productsData]);
 
+    const flatListRef = React.useRef<FlatList>(null);
+
     const [previewImage, setPreviewImage] = useState<{ visible: boolean; url?: string }>({
         visible: false,
         url: undefined
     });
     const [isShareModalVisible, setIsShareModalVisible] = useState(false);
+    const [scrolled, setScrolled] = useState(false);
+
+    const handleScroll = (event: any) => {
+        const offsetY = event.nativeEvent.contentOffset.y;
+        if (offsetY > 150 && !scrolled) {
+            setScrolled(true);
+        } else if (offsetY <= 150 && scrolled) {
+            setScrolled(false);
+        }
+    };
 
     const styles = useMemo(() => createStyles(theme), [theme]);
 
@@ -389,15 +401,7 @@ export const ProductsCatalogScreen = () => {
                 </View>
 
                 <View style={[styles.floatingHeader, { justifyContent: 'flex-end' }]}>
-                    {isOwner && (
-                        <TouchableOpacity
-                            activeOpacity={0.7}
-                            onPress={() => navigation.navigate('Settings')}
-                            style={styles.actionButton}
-                        >
-                            <Ionicons name="settings-outline" size={24} color={theme.colors.white} />
-                        </TouchableOpacity>
-                    )}
+                    {/* Les boutons d'action sont maintenant dans le ScreenHeader */}
                 </View>
             </View>
 
@@ -496,9 +500,24 @@ export const ProductsCatalogScreen = () => {
         <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
             <ScreenHeader
                 title={currentVitrine.name || 'Ma Vitrine'}
+                vitrineName={scrolled ? currentVitrine.name : undefined}
+                vitrineLogo={scrolled ? getSafeUri(currentVitrine.logo || currentVitrine.avatar) : undefined}
+                onVitrinePress={() => flatListRef.current?.scrollToOffset({ offset: 0, animated: true })}
                 onShare={() => setIsShareModalVisible(true)}
+                rightElement={isOwner ? (
+                    <TouchableOpacity
+                        activeOpacity={0.7}
+                        onPress={() => navigation.navigate('Settings')}
+                        style={styles.headerIconButton}
+                    >
+                        <Ionicons name="settings-outline" size={24} color={theme.colors.text} />
+                    </TouchableOpacity>
+                ) : undefined}
             />
             <FlatList
+                ref={flatListRef}
+                onScroll={handleScroll}
+                scrollEventThrottle={16}
 
 
                 data={products}
@@ -575,6 +594,9 @@ const createStyles = (theme: any) => StyleSheet.create({
         height: 170,
         backgroundColor: theme.colors.surfaceLight,
         borderRadius: 20,
+    },
+    headerIconButton: {
+        padding: 4,
     },
     floatingHeader: {
         position: 'absolute',
