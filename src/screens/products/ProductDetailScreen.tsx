@@ -172,7 +172,7 @@ export const ProductDetailScreen = () => {
                         </View>
                     )}
 
-                    {product.locations && product.locations.length > 0 && (
+                    {Array.isArray(product.locations) && product.locations.length > 0 && (
                         <View style={styles.locationsContainer}>
                             <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>
                                 Lieux de disponibilité
