@@ -453,7 +453,7 @@ export const ProductsCatalogScreen = () => {
     return (
         <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
             <ScreenHeader
-                title={currentVitrine.name || 'Ma Vitrine'}
+                title=""
                 showBack={false}
                 vitrineName={scrolled ? currentVitrine.name : undefined}
                 vitrineLogo={scrolled ? getSafeUri(currentVitrine.logo || currentVitrine.avatar) : undefined}

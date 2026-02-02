@@ -44,8 +44,7 @@ export const ScreenHeader: React.FC<ScreenHeaderProps> = ({
             {
                 paddingTop: Platform.OS === 'ios' ? insets.top : 10,
                 backgroundColor: transparent ? 'transparent' : theme.colors.surface,
-                borderBottomWidth: transparent ? 0 : 1,
-                borderBottomColor: theme.colors.border + '20'
+                borderBottomWidth: 0,
             }
         ]}>
             <View style={styles.content}>
@@ -112,7 +111,7 @@ const styles = StyleSheet.create({
         zIndex: 100,
     },
     content: {
-        height: 56,
+        height: 48,
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
