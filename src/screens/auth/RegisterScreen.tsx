@@ -88,6 +88,7 @@ export const RegisterScreen = () => {
                 password,
             });
             showSuccess('Inscription réussie');
+            navigation.replace('MainTabs');
         } catch (error: any) {
             showError(error.message || 'Échec de l\'inscription');
         } finally {

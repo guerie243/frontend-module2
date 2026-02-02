@@ -51,6 +51,7 @@ export const LoginScreen = () => {
         try {
             await login(identifier, password);
             showSuccess('Connexion réussie');
+            navigation.replace('MainTabs');
         } catch (error: any) {
             showError(error.message || 'Échec de la connexion');
         } finally {
