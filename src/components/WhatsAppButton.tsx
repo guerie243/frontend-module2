@@ -85,7 +85,7 @@ const createStyles = (theme: any) => StyleSheet.create({
         // Sinon, utilisez des styles standards comme: 
         // fontSize: 16, 
         // fontWeight: 'bold',
-        ...theme.typography.button,
+        ...(theme.typography?.button || { fontSize: 16, fontWeight: '600' }),
         color: theme.colors.white,
     },
 });

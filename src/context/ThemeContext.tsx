@@ -39,6 +39,14 @@ interface Theme {
         l: number;
         xl: number;
     };
+    typography: {
+        h1: any;
+        h2: any;
+        h3: any;
+        body: any;
+        caption: any;
+        button: any;
+    };
 }
 
 interface ThemeContextType {
@@ -79,6 +87,14 @@ const lightTheme: Theme = {
         l: 24,
         xl: 32,
     },
+    typography: {
+        h1: { fontSize: 32, fontWeight: 'bold' },
+        h2: { fontSize: 24, fontWeight: 'bold' },
+        h3: { fontSize: 18, fontWeight: '600' },
+        body: { fontSize: 16, fontWeight: 'normal' },
+        caption: { fontSize: 12, fontWeight: 'normal' },
+        button: { fontSize: 16, fontWeight: '600' },
+    },
 };
 
 const darkTheme: Theme = {
@@ -112,6 +128,14 @@ const darkTheme: Theme = {
         m: 16,
         l: 24,
         xl: 32,
+    },
+    typography: {
+        h1: { fontSize: 32, fontWeight: 'bold' },
+        h2: { fontSize: 24, fontWeight: 'bold' },
+        h3: { fontSize: 18, fontWeight: '600' },
+        body: { fontSize: 16, fontWeight: 'normal' },
+        caption: { fontSize: 12, fontWeight: 'normal' },
+        button: { fontSize: 16, fontWeight: '600' },
     },
 };
 
