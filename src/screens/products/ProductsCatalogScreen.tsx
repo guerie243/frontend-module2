@@ -476,15 +476,6 @@ export const ProductsCatalogScreen = () => {
                 onShare={() => setIsShareModalVisible(true)}
                 rightElement={
                     <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                        {/* Bouton Mes Commandes (Pour Tous) */}
-                        <TouchableOpacity
-                            activeOpacity={0.7}
-                            onPress={() => navigation.navigate('OrdersList')}
-                            style={[styles.headerIconButton, { marginRight: 8 }]}
-                        >
-                            <Ionicons name="receipt-outline" size={24} color={theme.colors.text} />
-                        </TouchableOpacity>
-
                         {isOwner && (
                             <TouchableOpacity
                                 activeOpacity={0.7}

@@ -18,7 +18,7 @@ import { CartItem } from '../../types';
 import { getProductUrl } from '../../utils/sharingUtils';
 import { ScreenHeader } from '../../components/ScreenHeader';
 import { getSafeUri } from '../../utils/imageUtils';
-import { useMemo, useRef, useState } from 'react';
+import { useMemo, useRef } from 'react';
 import { ProductCarousel } from '../../components/ProductCarousel';
 
 const CAROUSEL_HEIGHT = 350;
