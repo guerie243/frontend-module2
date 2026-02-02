@@ -714,18 +714,17 @@ const createStyles = (theme: any) => StyleSheet.create({
     mainActionsContainer: {
         flexDirection: 'row',
         alignItems: 'center',
-        justifyContent: 'center', // Changed from flex-start
-        marginBottom: 16, // Reduced from 24
-        marginTop: 8, // Added to control space above buttons
+        justifyContent: 'center',
+        marginBottom: 16,
+        marginTop: 8,
+        paddingHorizontal: 20, // Évite que les boutons ne touchent les bords
     },
     ownerActionButton: {
-        flex: 1.5,
-        marginRight: 12,
+        flex: 1,
         marginVertical: 0,
     },
     visitorActionButton: {
         flex: 1,
-        marginRight: 16,
     },
     shareBtnText: {
         fontSize: 16,
