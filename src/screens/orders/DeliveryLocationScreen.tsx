@@ -1,17 +1,12 @@
-/**
- * Delivery Location Screen
- * 
- * Delivery address and location selection screen
- * Final step before order creation
- */
-
 import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator, Linking } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { useTheme } from '../../context/ThemeContext';
 import { useAlertService } from '../../utils/alertService';
-import { useCreateOrder } from '../../hooks/useCommandes';
+import { ScreenHeader } from '../../components/ScreenHeader';
 import { useVitrineDetail } from '../../hooks/useVitrines';
+import { getSafeUri } from '../../utils/imageUtils';
+import { useCreateOrder } from '../../hooks/useCommandes';
 import { useAuth } from '../../hooks/useAuth';
 import * as Location from 'expo-location';
 import { Image } from 'expo-image';
@@ -216,157 +211,162 @@ export const DeliveryLocationScreen = () => {
     };
 
     return (
-        <ScreenWrapper scrollable contentContainerStyle={styles.contentContainer}>
-            <Text style={[styles.title, { color: theme.colors.text }]}>
-                Adresse de livraison
-            </Text>
+        <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
+            <ScreenHeader
+                title="Adresse de livraison"
+                vitrineName={vitrine?.name}
+                vitrineLogo={getSafeUri(vitrine?.logo || vitrine?.avatar)}
+                onVitrinePress={() => vitrine?.slug && navigation.navigate('VitrineDetail', { slug: vitrine.slug })}
+            />
+            <ScreenWrapper scrollable contentContainerStyle={styles.contentContainer}>
 
-            <View style={[styles.section, { backgroundColor: theme.colors.surface }]}>
-                <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>
-                    Détails de localisation
-                </Text>
-
-                <AnimatedSelect
-                    label="Ville *"
-                    value={city || (availableCities.length === 1 ? availableCities[0].value : '')}
-                    onChange={(val) => {
-                        setCity(val);
-                        setCommune('');
-                    }}
-                    options={availableCities.map(l => ({ label: l.label, value: l.value }))}
-                    placeholder="Sélectionner une ville"
-                />
-
-                {(city !== '' || availableCities.length === 1) && (
-                    <AnimatedSelect
-                        label="Commune *"
-                        value={commune}
-                        onChange={setCommune}
-                        options={ALGERIA_CITIES.find(c => c.value === (city || (availableCities.length === 1 ? availableCities[0].value : '')))?.communes.map(com => ({ label: com.label, value: com.value })) || []}
-                        placeholder="Sélectionner une commune"
-                    />
-                )}
-
-                <TextInput
-                    style={[styles.textArea, {
-                        backgroundColor: theme.colors.background,
-                        borderColor: theme.colors.border,
-                        color: theme.colors.text,
-                        marginTop: 10
-                    }]}
-                    placeholder="Adresse complète (Rue, bât, n° porte...)"
-                    placeholderTextColor={theme.colors.textTertiary}
-                    value={deliveryAddress}
-                    onChangeText={setDeliveryAddress}
-                    multiline
-                    numberOfLines={4}
-                />
-
-                <View style={styles.gpsSection}>
-                    <Text style={[styles.gpsLabel, { color: theme.colors.textSecondary }]}>
-                        Votre position GPS
+                <View style={[styles.section, { backgroundColor: theme.colors.surface }]}>
+                    <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>
+                        Détails de localisation
                     </Text>
-                    {isFetchingLocation ? (
-                        <View style={styles.mapLoading}>
-                            <ActivityIndicator color={theme.colors.primary} />
-                            <Text style={{ marginTop: 8, color: theme.colors.textSecondary }}>Localisation en cours...</Text>
-                        </View>
-                    ) : deliveryLocation.latitude !== 0 ? (
-                        <View style={styles.mapContainer}>
-                            <MapWebView
-                                height={200}
-                                lat={deliveryLocation.latitude}
-                                lon={deliveryLocation.longitude}
-                                zoom={15}
-                            />
+
+                    <AnimatedSelect
+                        label="Ville *"
+                        value={city || (availableCities.length === 1 ? availableCities[0].value : '')}
+                        onChange={(val) => {
+                            setCity(val);
+                            setCommune('');
+                        }}
+                        options={availableCities.map(l => ({ label: l.label, value: l.value }))}
+                        placeholder="Sélectionner une ville"
+                    />
+
+                    {(city !== '' || availableCities.length === 1) && (
+                        <AnimatedSelect
+                            label="Commune *"
+                            value={commune}
+                            onChange={setCommune}
+                            options={ALGERIA_CITIES.find(c => c.value === (city || (availableCities.length === 1 ? availableCities[0].value : '')))?.communes.map(com => ({ label: com.label, value: com.value })) || []}
+                            placeholder="Sélectionner une commune"
+                        />
+                    )}
+
+                    <TextInput
+                        style={[styles.textArea, {
+                            backgroundColor: theme.colors.background,
+                            borderColor: theme.colors.border,
+                            color: theme.colors.text,
+                            marginTop: 10
+                        }]}
+                        placeholder="Adresse complète (Rue, bât, n° porte...)"
+                        placeholderTextColor={theme.colors.textTertiary}
+                        value={deliveryAddress}
+                        onChangeText={setDeliveryAddress}
+                        multiline
+                        numberOfLines={4}
+                    />
+
+                    <View style={styles.gpsSection}>
+                        <Text style={[styles.gpsLabel, { color: theme.colors.textSecondary }]}>
+                            Votre position GPS
+                        </Text>
+                        {isFetchingLocation ? (
+                            <View style={styles.mapLoading}>
+                                <ActivityIndicator color={theme.colors.primary} />
+                                <Text style={{ marginTop: 8, color: theme.colors.textSecondary }}>Localisation en cours...</Text>
+                            </View>
+                        ) : deliveryLocation.latitude !== 0 ? (
+                            <View style={styles.mapContainer}>
+                                <MapWebView
+                                    height={200}
+                                    lat={deliveryLocation.latitude}
+                                    lon={deliveryLocation.longitude}
+                                    zoom={15}
+                                />
+                                <TouchableOpacity
+                                    style={[styles.refreshGps, { backgroundColor: theme.colors.primary }]}
+                                    onPress={handleGetCurrentLocation}
+                                >
+                                    <Ionicons name="refresh" size={20} color="#FFFFFF" />
+                                </TouchableOpacity>
+                            </View>
+                        ) : (
                             <TouchableOpacity
-                                style={[styles.refreshGps, { backgroundColor: theme.colors.primary }]}
+                                style={[styles.locationButton, {
+                                    backgroundColor: theme.colors.background,
+                                    borderColor: theme.colors.border
+                                }]}
                                 onPress={handleGetCurrentLocation}
                             >
-                                <Ionicons name="refresh" size={20} color="#FFFFFF" />
-                            </TouchableOpacity>
-                        </View>
-                    ) : (
-                        <TouchableOpacity
-                            style={[styles.locationButton, {
-                                backgroundColor: theme.colors.background,
-                                borderColor: theme.colors.border
-                            }]}
-                            onPress={handleGetCurrentLocation}
-                        >
-                            <Text style={[styles.locationButtonText, { color: theme.colors.primary }]}>
-                                📍 Activer la localisation GPS
-                            </Text>
-                        </TouchableOpacity>
-                    )}
-
-                    {deliveryLocation.latitude !== 0 && (
-                        <View style={styles.locationDetailContainer}>
-                            <Text style={[styles.locationText, { color: theme.colors.textSecondary }]}>
-                                Lat: {deliveryLocation.latitude.toFixed(6)}, Lon: {deliveryLocation.longitude.toFixed(6)}
-                            </Text>
-                            {locationAccuracy && (
-                                <Text style={[styles.accuracyText, {
-                                    color: locationAccuracy < 20 ? '#34C759' : '#FF9500'
-                                }]}>
-                                    Précision: {locationAccuracy.toFixed(1)}m {locationAccuracy < 20 ? '(Excellente)' : '(Moyenne)'}
+                                <Text style={[styles.locationButtonText, { color: theme.colors.primary }]}>
+                                    📍 Activer la localisation GPS
                                 </Text>
-                            )}
-                        </View>
+                            </TouchableOpacity>
+                        )}
+
+                        {deliveryLocation.latitude !== 0 && (
+                            <View style={styles.locationDetailContainer}>
+                                <Text style={[styles.locationText, { color: theme.colors.textSecondary }]}>
+                                    Lat: {deliveryLocation.latitude.toFixed(6)}, Lon: {deliveryLocation.longitude.toFixed(6)}
+                                </Text>
+                                {locationAccuracy && (
+                                    <Text style={[styles.accuracyText, {
+                                        color: locationAccuracy < 20 ? '#34C759' : '#FF9500'
+                                    }]}>
+                                        Précision: {locationAccuracy.toFixed(1)}m {locationAccuracy < 20 ? '(Excellente)' : '(Moyenne)'}
+                                    </Text>
+                                )}
+                            </View>
+                        )}
+                    </View>
+                </View>
+
+                {/* Order Summary */}
+                <View style={[styles.section, { backgroundColor: theme.colors.surface }]}>
+                    <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>
+                        Récapitulatif
+                    </Text>
+                    <View style={styles.summaryRow}>
+                        <Text style={[styles.summaryLabel, { color: theme.colors.textSecondary }]}>
+                            Client:
+                        </Text>
+                        <Text style={[styles.summaryValue, { color: theme.colors.text }]}>
+                            {orderData?.clientName}
+                        </Text>
+                    </View>
+                    <View style={styles.summaryRow}>
+                        <Text style={[styles.summaryLabel, { color: theme.colors.textSecondary }]}>
+                            Téléphone:
+                        </Text>
+                        <Text style={[styles.summaryValue, { color: theme.colors.text }]}>
+                            {orderData?.clientPhone}
+                        </Text>
+                    </View>
+                    <View style={styles.summaryRow}>
+                        <Text style={[styles.summaryLabel, { color: theme.colors.textSecondary }]}>
+                            Articles:
+                        </Text>
+                        <Text style={[styles.summaryValue, { color: theme.colors.text }]}>
+                            {orderData?.products?.length} produit(s)
+                        </Text>
+                    </View>
+                    <View style={[styles.divider, { backgroundColor: theme.colors.border }]} />
+                    <View style={styles.summaryRow}>
+                        <Text style={[styles.totalLabel, { color: theme.colors.text }]}>Total:</Text>
+                        <Text style={[styles.totalValue, { color: theme.colors.primary }]}>
+                            {orderData?.totalPrice?.toFixed(2)} {orderData?.products?.[0]?.currency || 'USD'}
+                        </Text>
+                    </View>
+                </View>
+
+                <TouchableOpacity
+                    style={[styles.button, { backgroundColor: theme.colors.primary }]}
+                    onPress={handleSubmitOrder}
+                    disabled={createOrderMutation.isPending}
+                >
+                    {createOrderMutation.isPending ? (
+                        <ActivityIndicator color={theme.colors.white} />
+                    ) : (
+                        <Text style={styles.buttonText}>Confirmer la commande</Text>
                     )}
-                </View>
-            </View>
-
-            {/* Order Summary */}
-            <View style={[styles.section, { backgroundColor: theme.colors.surface }]}>
-                <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>
-                    Récapitulatif
-                </Text>
-                <View style={styles.summaryRow}>
-                    <Text style={[styles.summaryLabel, { color: theme.colors.textSecondary }]}>
-                        Client:
-                    </Text>
-                    <Text style={[styles.summaryValue, { color: theme.colors.text }]}>
-                        {orderData?.clientName}
-                    </Text>
-                </View>
-                <View style={styles.summaryRow}>
-                    <Text style={[styles.summaryLabel, { color: theme.colors.textSecondary }]}>
-                        Téléphone:
-                    </Text>
-                    <Text style={[styles.summaryValue, { color: theme.colors.text }]}>
-                        {orderData?.clientPhone}
-                    </Text>
-                </View>
-                <View style={styles.summaryRow}>
-                    <Text style={[styles.summaryLabel, { color: theme.colors.textSecondary }]}>
-                        Articles:
-                    </Text>
-                    <Text style={[styles.summaryValue, { color: theme.colors.text }]}>
-                        {orderData?.products?.length} produit(s)
-                    </Text>
-                </View>
-                <View style={[styles.divider, { backgroundColor: theme.colors.border }]} />
-                <View style={styles.summaryRow}>
-                    <Text style={[styles.totalLabel, { color: theme.colors.text }]}>Total:</Text>
-                    <Text style={[styles.totalValue, { color: theme.colors.primary }]}>
-                        {orderData?.totalPrice?.toFixed(2)} {orderData?.products?.[0]?.currency || 'USD'}
-                    </Text>
-                </View>
-            </View>
-
-            <TouchableOpacity
-                style={[styles.button, { backgroundColor: theme.colors.primary }]}
-                onPress={handleSubmitOrder}
-                disabled={createOrderMutation.isPending}
-            >
-                {createOrderMutation.isPending ? (
-                    <ActivityIndicator color={theme.colors.white} />
-                ) : (
-                    <Text style={styles.buttonText}>Confirmer la commande</Text>
-                )}
-            </TouchableOpacity>
-        </ScreenWrapper>
+                </TouchableOpacity>
+            </ScreenWrapper>
+        </View>
     );
 };
 

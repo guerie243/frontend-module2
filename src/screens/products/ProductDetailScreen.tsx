@@ -11,6 +11,7 @@ import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../context/ThemeContext';
 import { useProductDetail, useDeleteProduct } from '../../hooks/useProducts';
+import { useVitrineDetail } from '../../hooks/useVitrines';
 import { useAuth } from '../../hooks/useAuth';
 import { useAlertService } from '../../utils/alertService';
 import { CartItem } from '../../types';
@@ -28,6 +29,7 @@ export const ProductDetailScreen = () => {
 
     const { slug } = route.params || {};
     const { data: product, isLoading } = useProductDetail(slug);
+    const { data: vitrine } = useVitrineDetail(product?.vitrineId || '', !!product?.vitrineId);
     const deleteProductMutation = useDeleteProduct();
 
     const [quantity, setQuantity] = useState(1);
@@ -91,6 +93,9 @@ export const ProductDetailScreen = () => {
         <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
             <ScreenHeader
                 title={product.name}
+                vitrineName={vitrine?.name}
+                vitrineLogo={getSafeUri(vitrine?.logo || vitrine?.avatar)}
+                onVitrinePress={() => vitrine?.slug && navigation.navigate('VitrineDetail', { slug: vitrine.slug })}
                 onShare={() => setIsShareModalVisible(true)}
             />
 

@@ -9,6 +9,10 @@ import { View, Text, TouchableOpacity, StyleSheet, Linking, Platform } from 'rea
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { useTheme } from '../../context/ThemeContext';
 import { useAlertService } from '../../utils/alertService';
+import { ScreenHeader } from '../../components/ScreenHeader';
+import { useOrderDetail } from '../../hooks/useCommandes';
+import { useVitrineDetail } from '../../hooks/useVitrines';
+import { getSafeUri } from '../../utils/imageUtils';
 
 export const OrderCallScreen = () => {
     const route = useRoute<any>();
@@ -17,6 +21,8 @@ export const OrderCallScreen = () => {
     const { showError } = useAlertService();
 
     const { clientName, clientPhone, orderId } = route.params || {};
+    const { data: order } = useOrderDetail(orderId);
+    const { data: vitrine } = useVitrineDetail(order?.vitrineId || '', !!order?.vitrineId);
 
     const handlePhoneCall = () => {
         const phoneUrl = `tel:${clientPhone}`;
@@ -85,53 +91,58 @@ export const OrderCallScreen = () => {
     };
 
     return (
-        <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
-            <View style={[styles.header, { backgroundColor: theme.colors.surface }]}>
-                <Text style={[styles.title, { color: theme.colors.text }]}>
-                    Contacter le client
-                </Text>
-                <Text style={[styles.clientName, { color: theme.colors.textSecondary }]}>
-                    {clientName}
-                </Text>
-                <Text style={[styles.clientPhone, { color: theme.colors.primary }]}>
-                    {clientPhone}
-                </Text>
+        <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
+            <ScreenHeader
+                title="Contacter le client"
+                vitrineName={vitrine?.name}
+                vitrineLogo={getSafeUri(vitrine?.logo || vitrine?.avatar)}
+                onVitrinePress={() => vitrine?.slug && navigation.navigate('VitrineDetail', { slug: vitrine.slug })}
+            />
+            <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
+                <View style={[styles.header, { backgroundColor: theme.colors.surface }]}>
+                    <Text style={[styles.clientName, { color: theme.colors.textSecondary }]}>
+                        {clientName}
+                    </Text>
+                    <Text style={[styles.clientPhone, { color: theme.colors.primary }]}>
+                        {clientPhone}
+                    </Text>
+                </View>
+
+                <View style={styles.buttonsContainer}>
+                    <TouchableOpacity
+                        style={[styles.button, { backgroundColor: '#34C759' }]}
+                        onPress={handlePhoneCall}
+                    >
+                        <Text style={styles.buttonIcon}>📞</Text>
+                        <Text style={styles.buttonText}>Appeler</Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                        style={[styles.button, { backgroundColor: '#25D366' }]}
+                        onPress={handleWhatsApp}
+                    >
+                        <Text style={styles.buttonIcon}>💬</Text>
+                        <Text style={styles.buttonText}>WhatsApp</Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                        style={[styles.button, { backgroundColor: '#007AFF' }]}
+                        onPress={handleSMS}
+                    >
+                        <Text style={styles.buttonIcon}>✉️</Text>
+                        <Text style={styles.buttonText}>SMS</Text>
+                    </TouchableOpacity>
+                </View>
+
+                <TouchableOpacity
+                    style={[styles.backButton, { borderColor: theme.colors.border }]}
+                    onPress={() => navigation.goBack()}
+                >
+                    <Text style={[styles.backButtonText, { color: theme.colors.text }]}>
+                        Retour
+                    </Text>
+                </TouchableOpacity>
             </View>
-
-            <View style={styles.buttonsContainer}>
-                <TouchableOpacity
-                    style={[styles.button, { backgroundColor: '#34C759' }]}
-                    onPress={handlePhoneCall}
-                >
-                    <Text style={styles.buttonIcon}>📞</Text>
-                    <Text style={styles.buttonText}>Appeler</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                    style={[styles.button, { backgroundColor: '#25D366' }]}
-                    onPress={handleWhatsApp}
-                >
-                    <Text style={styles.buttonIcon}>💬</Text>
-                    <Text style={styles.buttonText}>WhatsApp</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                    style={[styles.button, { backgroundColor: '#007AFF' }]}
-                    onPress={handleSMS}
-                >
-                    <Text style={styles.buttonIcon}>✉️</Text>
-                    <Text style={styles.buttonText}>SMS</Text>
-                </TouchableOpacity>
-            </View>
-
-            <TouchableOpacity
-                style={[styles.backButton, { borderColor: theme.colors.border }]}
-                onPress={() => navigation.goBack()}
-            >
-                <Text style={[styles.backButtonText, { color: theme.colors.text }]}>
-                    Retour
-                </Text>
-            </TouchableOpacity>
         </View>
     );
 };

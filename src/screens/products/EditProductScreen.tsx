@@ -9,6 +9,8 @@ import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator } from 'rea
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { useTheme } from '../../context/ThemeContext';
 import { useAlertService } from '../../utils/alertService';
+import { ScreenHeader } from '../../components/ScreenHeader';
+import { getSafeUri } from '../../utils/imageUtils';
 import { useProductDetail, useUpdateProduct, useDeleteProduct } from '../../hooks/useProducts';
 import { useMyVitrines } from '../../hooks/useVitrines';
 import ImagePictureUploader from '../../components/ImagePictureUploader';
@@ -148,132 +150,137 @@ export const EditProductScreen = () => {
     }
 
     return (
-        <ScreenWrapper scrollable contentContainerStyle={styles.contentContainer}>
-            <View style={styles.container}>
-                <Text style={[styles.title, { color: theme.colors.text }]}>
-                    Modifier le produit
-                </Text>
+        <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
+            <ScreenHeader
+                title="Modifier le produit"
+                vitrineName={activeVitrine?.name}
+                vitrineLogo={getSafeUri(activeVitrine?.logo || activeVitrine?.avatar)}
+                onVitrinePress={() => activeVitrine?.slug && navigation.navigate('VitrineDetail', { slug: activeVitrine.slug })}
+            />
+            <ScreenWrapper scrollable contentContainerStyle={styles.contentContainer}>
+                <View style={styles.container}>
 
-                {activeVitrine && (
-                    <Text style={[styles.subtitle, { color: theme.colors.textSecondary }]}>
-                        Vitrine : {activeVitrine.name}
-                    </Text>
-                )}
-
-                <View style={[styles.section, { backgroundColor: theme.colors.surface, borderRadius: theme.borderRadius.m }]}>
-                    <CustomInput
-                        label="Nom du produit *"
-                        value={name}
-                        onChangeText={setName}
-                        placeholder="Ex: T-shirt rouge"
-                    />
-
-                    <CustomInput
-                        label="Description"
-                        value={description}
-                        onChangeText={setDescription}
-                        placeholder="Description détaillée du produit"
-                        multiline
-                        numberOfLines={4}
-                        style={{ minHeight: 100, textAlignVertical: 'top' }}
-                    />
-
-                    <AnimatedSelect
-                        label="Catégorie *"
-                        value={category}
-                        onChange={setCategory}
-                        options={PRODUCT_CATEGORIES.filter(c => c.id !== '').map(c => ({ label: c.label, value: c.id }))}
-                        placeholder="Sélectionner une catégorie"
-                    />
-
-                    <View style={styles.row}>
-                        <View style={{ flex: 2, marginRight: 8 }}>
-                            <CustomInput
-                                label="Prix *"
-                                value={price}
-                                onChangeText={setPrice}
-                                placeholder="0.00"
-                                keyboardType="decimal-pad"
-                            />
-                        </View>
-                        <View style={{ flex: 1 }}>
-                            <AnimatedSelect
-                                label="Devise"
-                                value={currency}
-                                onChange={setCurrency}
-                                options={CURRENCY_OPTIONS.map(c => ({ label: c.label, value: c.value }))}
-                            />
-                        </View>
-                    </View>
-
-                    <AnimatedSelect
-                        label="Lieu de disponibilité"
-                        value={locations[0] || ''}
-                        onChange={(val) => setLocations([val])}
-                        options={LOCATION_OPTIONS.map(l => ({ label: l.label, value: l.value }))}
-                        placeholder="Sélectionner une ville"
-                    />
-
-                    <View style={styles.toggleContainer}>
-                        <Text style={[styles.toggleLabel, { color: theme.colors.textSecondary }]}>
-                            La livraison est payante ?
+                    {activeVitrine && (
+                        <Text style={[styles.subtitle, { color: theme.colors.textSecondary }]}>
+                            Vitrine : {activeVitrine.name}
                         </Text>
-                        <TouchableOpacity
-                            onPress={() => setIsDeliveryPaid(!isDeliveryPaid)}
-                            style={[
-                                styles.toggle,
-                                {
-                                    backgroundColor: isDeliveryPaid ? theme.colors.primary : theme.colors.background,
-                                    borderColor: isDeliveryPaid ? theme.colors.primary : theme.colors.border
-                                }
-                            ]}
-                        >
-                            <View style={[
-                                styles.toggleCircle,
-                                {
-                                    backgroundColor: '#FFFFFF',
-                                    transform: [{ translateX: isDeliveryPaid ? 20 : 0 }]
-                                }
-                            ]} />
-                        </TouchableOpacity>
-                    </View>
-
-                    {isDeliveryPaid && (
-                        <CustomInput
-                            label="Frais de livraison"
-                            value={deliveryFee}
-                            onChangeText={setDeliveryFee}
-                            placeholder="0.00"
-                            keyboardType="decimal-pad"
-                            icon="car-outline"
-                        />
                     )}
 
-                    <Text style={[styles.imageLabel, { color: theme.colors.textSecondary }]}>
-                        Images du produit (Max 5)
-                    </Text>
-                    <ImagePictureUploader images={images} setImages={setImages} />
-                </View>
+                    <View style={[styles.section, { backgroundColor: theme.colors.surface, borderRadius: theme.borderRadius.m }]}>
+                        <CustomInput
+                            label="Nom du produit *"
+                            value={name}
+                            onChangeText={setName}
+                            placeholder="Ex: T-shirt rouge"
+                        />
 
-                <View style={styles.footer}>
-                    <CustomButton
-                        title="Enregistrer les modifications"
-                        onPress={handleUpdateProduct}
-                        isLoading={updateProductMutation.isPending}
-                        style={{ marginBottom: 12 }}
-                    />
+                        <CustomInput
+                            label="Description"
+                            value={description}
+                            onChangeText={setDescription}
+                            placeholder="Description détaillée du produit"
+                            multiline
+                            numberOfLines={4}
+                            style={{ minHeight: 100, textAlignVertical: 'top' }}
+                        />
 
-                    <CustomButton
-                        title="Supprimer le produit"
-                        onPress={handleDeleteProduct}
-                        variant="secondary"
-                        style={{ borderColor: theme.colors.error }}
-                        textStyle={{ color: theme.colors.error }}
-                        disabled={deleteProductMutation.isPending}
-                    />
+                        <AnimatedSelect
+                            label="Catégorie *"
+                            value={category}
+                            onChange={setCategory}
+                            options={PRODUCT_CATEGORIES.filter(c => c.id !== '').map(c => ({ label: c.label, value: c.id }))}
+                            placeholder="Sélectionner une catégorie"
+                        />
+
+                        <View style={styles.row}>
+                            <View style={{ flex: 2, marginRight: 8 }}>
+                                <CustomInput
+                                    label="Prix *"
+                                    value={price}
+                                    onChangeText={setPrice}
+                                    placeholder="0.00"
+                                    keyboardType="decimal-pad"
+                                />
+                            </View>
+                            <View style={{ flex: 1 }}>
+                                <AnimatedSelect
+                                    label="Devise"
+                                    value={currency}
+                                    onChange={setCurrency}
+                                    options={CURRENCY_OPTIONS.map(c => ({ label: c.label, value: c.value }))}
+                                />
+                            </View>
+                        </View>
+
+                        <AnimatedSelect
+                            label="Lieu de disponibilité"
+                            value={locations[0] || ''}
+                            onChange={(val) => setLocations([val])}
+                            options={LOCATION_OPTIONS.map(l => ({ label: l.label, value: l.value }))}
+                            placeholder="Sélectionner une ville"
+                        />
+
+                        <View style={styles.toggleContainer}>
+                            <Text style={[styles.toggleLabel, { color: theme.colors.textSecondary }]}>
+                                La livraison est payante ?
+                            </Text>
+                            <TouchableOpacity
+                                onPress={() => setIsDeliveryPaid(!isDeliveryPaid)}
+                                style={[
+                                    styles.toggle,
+                                    {
+                                        backgroundColor: isDeliveryPaid ? theme.colors.primary : theme.colors.background,
+                                        borderColor: isDeliveryPaid ? theme.colors.primary : theme.colors.border
+                                    }
+                                ]}
+                            >
+                                <View style={[
+                                    styles.toggleCircle,
+                                    {
+                                        backgroundColor: '#FFFFFF',
+                                        transform: [{ translateX: isDeliveryPaid ? 20 : 0 }]
+                                    }
+                                ]} />
+                            </TouchableOpacity>
+                        </View>
+
+                        {isDeliveryPaid && (
+                            <CustomInput
+                                label="Frais de livraison"
+                                value={deliveryFee}
+                                onChangeText={setDeliveryFee}
+                                placeholder="0.00"
+                                keyboardType="decimal-pad"
+                                icon="car-outline"
+                            />
+                        )}
+
+                        <Text style={[styles.imageLabel, { color: theme.colors.textSecondary }]}>
+                            Images du produit (Max 5)
+                        </Text>
+                        <ImagePictureUploader images={images} setImages={setImages} />
+                    </View>
+
+                    <View style={styles.footer}>
+                        <CustomButton
+                            title="Enregistrer les modifications"
+                            onPress={handleUpdateProduct}
+                            isLoading={updateProductMutation.isPending}
+                            style={{ marginBottom: 12 }}
+                        />
+
+                        <CustomButton
+                            title="Supprimer le produit"
+                            onPress={handleDeleteProduct}
+                            variant="secondary"
+                            style={{ borderColor: theme.colors.error }}
+                            textStyle={{ color: theme.colors.error }}
+                            disabled={deleteProductMutation.isPending}
+                        />
+                    </View>
                 </View>
-            </View>
-        </ScreenWrapper>
+            </ScreenWrapper>
+        </View>
     );
 };
 
