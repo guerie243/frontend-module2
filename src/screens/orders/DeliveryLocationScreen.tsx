@@ -166,39 +166,33 @@ export const DeliveryLocationScreen = () => {
 
                     // Utiliser l'orderId public pour le lien de suivi
                     const publicOrderId = order.orderId || order.id || order._id;
-                    message += `\n*Lien de suivi de votre commande:* ${getOrderUrl(publicOrderId)}\n`;
+                    message += `\n*Lien de suivi de votre commande:* ${getOrderUrl(publicOrderId)}`;
 
-                    const whatsappUrl = `whatsapp://send?phone=${cleanNumber}&text=${encodeURIComponent(message)}`;
+                    const whatsappUrl = `https://wa.me/${cleanNumber}?text=${encodeURIComponent(message)}`;
 
                     try {
-                        const canOpen = await Linking.canOpenURL(whatsappUrl);
-                        if (canOpen) {
-                            await Linking.openURL(whatsappUrl);
+                        if (Platform.OS === 'web') {
+                            window.open(whatsappUrl, '_blank');
                         } else {
-                            // Fallback web si l'app n'est pas installée
-                            const webUrl = `https://wa.me/${cleanNumber}?text=${encodeURIComponent(message)}`;
-                            await Linking.openURL(webUrl);
+                            await Linking.openURL(whatsappUrl);
                         }
                     } catch (err) {
                         console.error('Erreur ouverture WhatsApp:', err);
+                        // Fallback simple si Linking échoue
+                        const fallbackUrl = `https://wa.me/${cleanNumber}?text=${encodeURIComponent(message)}`;
+                        Linking.openURL(fallbackUrl).catch(() => { });
                     }
                 }
             }
 
             showSuccess('Commande créée avec succès !');
 
-            // Redirection conditionnelle avec un léger délai pour laisser le temps à WhatsApp de s'ouvrir
+            // Redirection vers le détail de la commande pour le client
+            const orderIdForNav = order.orderId || order.id || order._id;
+
             setTimeout(() => {
-                // Si c'est un invité, on le renvoie vers le catalogue de la vitrine
-                // Si c'est un utilisateur connecté (vendeur), on peut le renvoyer vers les onglets principaux
-                if (isGuest && vitrine?.slug) {
-                    console.log('[DeliveryLocationScreen] Redirection invité vers la vitrine:', vitrine.slug);
-                    navigation.navigate('VitrineDetail', { slug: vitrine.slug });
-                } else {
-                    console.log('[DeliveryLocationScreen] Redirection utilisateur connecté vers MainTabs');
-                    navigation.navigate('MainTabs', { screen: 'ProductsTab' });
-                }
-            }, Platform.OS === 'web' ? 1000 : 500);
+                navigation.navigate('OrderClientDetail', { orderId: orderIdForNav });
+            }, 1000);
         } catch (error: any) {
             console.error('Order creation failed:', error.message);
             showError(error.message || 'Échec de la création de la commande');
