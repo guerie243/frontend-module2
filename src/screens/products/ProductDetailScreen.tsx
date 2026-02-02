@@ -121,8 +121,16 @@ export const ProductDetailScreen = () => {
                                     data={product.images}
                                     keyExtractor={(item, index) => `${item}-${index}`}
                                     horizontal
-                                    pagingEnabled
                                     showsHorizontalScrollIndicator={false}
+                                    snapToInterval={Dimensions.get('window').width - 32}
+                                    decelerationRate="fast"
+                                    snapToAlignment="center"
+                                    disableIntervalMomentum={true}
+                                    getItemLayout={(data, index) => ({
+                                        length: Dimensions.get('window').width - 32,
+                                        offset: (Dimensions.get('window').width - 32) * index,
+                                        index,
+                                    })}
                                     onScroll={(e) => {
                                         const offset = e.nativeEvent.contentOffset.x;
                                         const index = Math.round(offset / (Dimensions.get('window').width - 32));
