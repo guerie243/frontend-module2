@@ -165,16 +165,24 @@ export const DeliveryLocationScreen = () => {
 
                     message += `\n*Lien de suivi de votre commande:* ${getOrderUrl(publicOrderId)}`;
 
-                    const whatsappUrl = `https://wa.me/${cleanNumber}?text=${encodeURIComponent(message)}`;
+                    const whatsappUrl = `whatsapp://send?phone=${cleanNumber}&text=${encodeURIComponent(message)}`;
 
                     if (webWindow) {
-                        webWindow.location.href = whatsappUrl;
+                        webWindow.location.assign(whatsappUrl);
                     } else {
-                        await Linking.openURL(whatsappUrl).catch(async () => {
-                            // Fallback si Linking échoue sur mobile
-                            const fallbackUrl = `https://wa.me/${cleanNumber}?text=${encodeURIComponent(message)}`;
-                            await Linking.openURL(fallbackUrl).catch(() => { });
-                        });
+                        try {
+                            const supported = await Linking.canOpenURL(whatsappUrl);
+                            if (supported) {
+                                await Linking.openURL(whatsappUrl);
+                            } else {
+                                const webUrl = `https://wa.me/${cleanNumber}?text=${encodeURIComponent(message)}`;
+                                await Linking.openURL(webUrl);
+                            }
+                        } catch (err) {
+                            console.error('Erreur ouverture WhatsApp:', err);
+                            const webUrl = `https://wa.me/${cleanNumber}?text=${encodeURIComponent(message)}`;
+                            Linking.openURL(webUrl).catch(() => { });
+                        }
                     }
                 } else if (webWindow) {
                     webWindow.close();
