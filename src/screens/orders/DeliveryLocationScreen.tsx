@@ -138,6 +138,10 @@ export const DeliveryLocationScreen = () => {
             showError('Veuillez sélectionner votre commune');
             return;
         }
+        if (!deliveryAddress.trim()) {
+            showError('Veuillez entrer votre adresse de livraison');
+            return;
+        }
         if (deliveryLocation.latitude === 0 || !canSubmit) {
             showError('Votre position n\'est pas encore détectée ou manque de précision. Veuillez patienter.');
             return;
@@ -274,7 +278,7 @@ export const DeliveryLocationScreen = () => {
                             color: theme.colors.text,
                             marginTop: 10
                         }]}
-                        placeholder="Adresse complète (Rue, bât, n° porte...)"
+                        placeholder="Adresse complète (Rue, bât, n° porte...) *"
                         placeholderTextColor={theme.colors.textTertiary}
                         value={deliveryAddress}
                         onChangeText={setDeliveryAddress}
