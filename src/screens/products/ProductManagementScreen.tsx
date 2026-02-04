@@ -4,17 +4,25 @@
  * List of owner's products with management actions
  */
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, FlatList, ActivityIndicator, ScrollView } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../context/ThemeContext';
-import { useProductsByVitrine, useProductDetail } from '../../hooks/useProducts';
+import { useProductsByVitrine, useProductDetail, useUpdateProduct } from '../../hooks/useProducts';
 import { useMyVitrines, useVitrineDetail } from '../../hooks/useVitrines';
 import { Product } from '../../types';
 import { ScreenHeader } from '../../components/ScreenHeader';
 import { getSafeUri } from '../../utils/imageUtils';
+import ImagePictureUploader from '../../components/ImagePictureUploader';
+import { useAlertService } from '../../utils/alertService';
+import { CustomButton } from '../../components/CustomButton';
+
+interface ImageItem {
+    uri: string;
+    id: string;
+}
 
 export const ProductManagementScreen = () => {
     const navigation = useNavigation<any>();
@@ -42,6 +50,34 @@ export const ProductManagementScreen = () => {
             return (page as any).data || [];
         }) || [];
     }, [productsData]);
+
+    // Image management state
+    const [images, setImages] = useState<ImageItem[]>([]);
+    const updateProductMutation = useUpdateProduct();
+    const { showSuccess, showError } = useAlertService();
+
+    // Prefill images when product loads
+    useEffect(() => {
+        if (product && product.images) {
+            setImages(product.images.map((url: string) => ({
+                uri: url,
+                id: Math.random().toString(36).substring(2, 9)
+            })));
+        }
+    }, [product]);
+
+    const handleSaveImages = async () => {
+        if (!product) return;
+        try {
+            await updateProductMutation.mutateAsync({
+                id: product.id || product._id,
+                data: { images: images.map(img => img.uri) }
+            });
+            showSuccess('Images mises à jour');
+        } catch (error: any) {
+            showError(error.message || 'Échec de la mise à jour des images');
+        }
+    };
 
     const handleCreateProduct = () => {
         console.log('Navigating to CreateProduct');
@@ -126,6 +162,21 @@ export const ProductManagementScreen = () => {
                     vitrineLogo={getSafeUri(vitrine?.logo || vitrine?.avatar)}
                 />
                 <ScrollView contentContainerStyle={styles.scrollContent}>
+                    <View style={styles.imageManagementSection}>
+                        <Text style={[styles.sectionTitle, { color: theme.colors.textSecondary }]}>
+                            Images du produit
+                        </Text>
+                        <ImagePictureUploader images={images} setImages={setImages} />
+                        <View style={styles.saveImagesButtonContainer}>
+                            <CustomButton
+                                title="Sauvegarder les images"
+                                onPress={handleSaveImages}
+                                isLoading={updateProductMutation.isPending}
+                                style={{ marginTop: 10 }}
+                            />
+                        </View>
+                    </View>
+
                     <View style={styles.section}>
                         {renderFieldItem('Nom du produit', product.name, 'name')}
                         {renderFieldItem('Catégorie', product.category, 'category')}
@@ -133,7 +184,6 @@ export const ProductManagementScreen = () => {
                         {renderFieldItem('Devise', product.currency || 'USD', 'currency')}
                         {renderFieldItem('Lieux', Array.isArray(product.locations) ? product.locations.join(', ') : product.locations, 'locations')}
                         {renderFieldItem('Description', product.description || '', 'description', { multiline: true })}
-                        {renderFieldItem('Images', `${product.images?.length || 0} image(s)`, 'images', { isImageManagement: true })}
                     </View>
 
                     <TouchableOpacity
@@ -308,5 +358,20 @@ const styles = StyleSheet.create({
     },
     emptyText: {
         fontSize: 16,
+    },
+    imageManagementSection: {
+        marginTop: 20,
+        paddingHorizontal: 16,
+        marginBottom: 10,
+    },
+    saveImagesButtonContainer: {
+        alignItems: 'center',
+        marginTop: 10,
+    },
+    sectionTitle: {
+        fontSize: 14,
+        fontWeight: '600',
+        marginBottom: 12,
+        textTransform: 'uppercase',
     },
 });

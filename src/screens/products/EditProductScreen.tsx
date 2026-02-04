@@ -14,7 +14,6 @@ import { ScreenHeader } from '../../components/ScreenHeader';
 import { getSafeUri } from '../../utils/imageUtils';
 import { useProductDetail, useUpdateProduct, useDeleteProduct } from '../../hooks/useProducts';
 import { useMyVitrines } from '../../hooks/useVitrines';
-import ImagePictureUploader from '../../components/ImagePictureUploader';
 import { CustomInput } from '../../components/CustomInput';
 import { CustomButton } from '../../components/CustomButton';
 import { ScreenWrapper } from '../../components/ScreenWrapper';
@@ -37,23 +36,23 @@ export const EditProductScreen = () => {
     const deleteProductMutation = useDeleteProduct();
 
     // Params from ProductManagementScreen
-    const { productId, field, label, currentValue, multiline, keyboardType, isImageManagement } = route.params || {};
+    const { productId, field, label, currentValue, multiline, keyboardType } = route.params || {};
 
     const { data: product, isLoading } = useProductDetail(productId);
 
     const [value, setValue] = useState(currentValue || '');
-    const [images, setImages] = useState<ImageItem[]>([]);
     const [isDeleting, setIsDeleting] = useState(false);
+    const [countdown, setCountdown] = useState(0);
+    const deleteTimerRef = React.useRef<any>(null);
+    const countdownIntervalRef = React.useRef<any>(null);
 
-    // Set images from product if we are in image management mode
+    // Cleanup timers on unmount
     useEffect(() => {
-        if (product && isImageManagement) {
-            setImages(product.images.map((url: string) => ({
-                uri: url,
-                id: Math.random().toString(36).substring(2, 9)
-            })));
-        }
-    }, [product, isImageManagement]);
+        return () => {
+            if (deleteTimerRef.current) clearTimeout(deleteTimerRef.current);
+            if (countdownIntervalRef.current) clearInterval(countdownIntervalRef.current);
+        };
+    }, []);
 
     const handleSave = async () => {
         if (!product) return;
@@ -61,9 +60,7 @@ export const EditProductScreen = () => {
         try {
             let updateData: any = {};
 
-            if (isImageManagement) {
-                updateData.images = images.map(img => img.uri);
-            } else if (field === 'price') {
+            if (field === 'price') {
                 updateData[field] = parseFloat(value);
             } else if (field === 'locations') {
                 updateData[field] = value.split(',').map((s: string) => s.trim()).filter(Boolean);
@@ -79,18 +76,52 @@ export const EditProductScreen = () => {
         }
     };
 
+    const handleCancelDeletion = () => {
+        if (deleteTimerRef.current) {
+            clearTimeout(deleteTimerRef.current);
+            deleteTimerRef.current = null;
+        }
+        if (countdownIntervalRef.current) {
+            clearInterval(countdownIntervalRef.current);
+            countdownIntervalRef.current = null;
+        }
+        setCountdown(0);
+        setIsDeleting(false);
+    };
+
     const handleDeleteProduct = () => {
+        if (countdown > 0) {
+            handleCancelDeletion();
+            return;
+        }
+
         showConfirm(
             'Êtes-vous sûr de vouloir supprimer ce produit ? Cette action est irréversible.',
             () => {
-                setIsDeleting(true);
-                setTimeout(async () => {
+                setCountdown(3);
+
+                // Interval to update countdown visual
+                countdownIntervalRef.current = setInterval(() => {
+                    setCountdown(prev => {
+                        if (prev <= 1) {
+                            clearInterval(countdownIntervalRef.current);
+                            return 0;
+                        }
+                        return prev - 1;
+                    });
+                }, 1000);
+
+                // Timeout for actual deletion
+                deleteTimerRef.current = setTimeout(async () => {
+                    clearInterval(countdownIntervalRef.current);
+                    setIsDeleting(true);
                     try {
                         await deleteProductMutation.mutateAsync(productId);
                         showSuccess('Produit supprimé');
                         navigation.navigate('ProductManagement', { productId: undefined }); // Go back to list
                     } catch (error: any) {
                         setIsDeleting(false);
+                        setCountdown(0);
                         showError(error.message || 'Échec de la suppression');
                     }
                 }, 3000);
@@ -121,10 +152,15 @@ export const EditProductScreen = () => {
                     <TouchableOpacity
                         onPress={handleDeleteProduct}
                         disabled={isDeleting}
-                        style={[styles.deleteButtonLarge, { backgroundColor: theme.colors.error }]}
+                        style={[
+                            styles.deleteButtonLarge,
+                            { backgroundColor: countdown > 0 ? theme.colors.secondary : theme.colors.error }
+                        ]}
                     >
                         {isDeleting ? (
                             <ActivityIndicator size="small" color="#FFF" />
+                        ) : countdown > 0 ? (
+                            <Text style={styles.deleteButtonTextLarge}>Annuler la suppression ({countdown}s)</Text>
                         ) : (
                             <Text style={styles.deleteButtonTextLarge}>Confirmer la suppression</Text>
                         )}
@@ -141,14 +177,7 @@ export const EditProductScreen = () => {
                 <View style={styles.container}>
 
                     <View style={[styles.section, { backgroundColor: theme.colors.surface, borderRadius: theme.borderRadius.m }]}>
-                        {isImageManagement ? (
-                            <View>
-                                <Text style={[styles.imageLabel, { color: theme.colors.textSecondary }]}>
-                                    Gérer les images du produit
-                                </Text>
-                                <ImagePictureUploader images={images} setImages={setImages} />
-                            </View>
-                        ) : field === 'category' ? (
+                        {field === 'category' ? (
                             <AnimatedSelect
                                 label={label}
                                 value={value}
@@ -241,6 +270,10 @@ const styles = StyleSheet.create({
         marginTop: 32,
         marginBottom: 40,
         alignItems: 'center',
+    },
+    section: {
+        marginTop: 10,
+        padding: 16,
     },
     deleteLink: {
         paddingVertical: 12,

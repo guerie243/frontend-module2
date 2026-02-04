@@ -88,6 +88,9 @@ export const OrderClientDetailScreen = () => {
             />
             <ScrollView style={styles.container}>
                 <View style={[styles.section, { backgroundColor: theme.colors.surface }]}>
+                    <Text style={[styles.sectionTitle, { color: theme.colors.text, marginBottom: 12 }]}>
+                        La commande est :
+                    </Text>
                     <View style={[styles.statusBadge, { backgroundColor: getStatusColor(order.status) + '20' }]}>
                         <Text style={[styles.statusText, { color: getStatusColor(order.status) }]}>
                             {getStatusLabel(order.status)}

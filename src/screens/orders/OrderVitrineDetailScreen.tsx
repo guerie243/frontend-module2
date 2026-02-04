@@ -199,6 +199,9 @@ export const OrderVitrineDetailScreen = () => {
                     <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>
                         Gestion du statut
                     </Text>
+                    <Text style={[styles.sectionTitle, { color: theme.colors.text, marginBottom: 8 }]}>
+                        La commande est :
+                    </Text>
                     <Text style={[styles.currentStatus, { color: theme.colors.textSecondary }]}>
                         Statut actuel: <Text style={{ color: theme.colors.primary }}>{order.status}</Text>
                     </Text>

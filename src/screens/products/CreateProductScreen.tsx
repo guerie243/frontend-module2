@@ -86,6 +86,16 @@ export const CreateProductScreen = () => {
             return;
         }
 
+        if (images.length === 0) {
+            showError('Veuillez ajouter au moins une image');
+            return;
+        }
+
+        if (selectedCities.length === 0) {
+            showError('Veuillez sélectionner au moins une ville');
+            return;
+        }
+
         console.log('Creating product:', name, 'for vitrine:', vitrineId);
 
         console.log('[CreateProductScreen] Submitting product creation');
@@ -274,7 +284,7 @@ export const CreateProductScreen = () => {
                         )}
 
                         <Text style={[styles.imageLabel, { color: theme.colors.textSecondary }]}>
-                            Images du produit (Max 5)
+                            Images du produit (Max 5) *
                         </Text>
                         <ImagePictureUploader images={images} setImages={setImages} />
                     </View>
