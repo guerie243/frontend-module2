@@ -240,7 +240,6 @@ export const OrdersListScreen = () => {
     return (
         <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
             <ScreenHeader
-                <ScreenHeader
                 title={isSellerMode ? "Commandes Reçues" : "Mes Achats"}
                 showBack={true} // Allow back navigation
             />

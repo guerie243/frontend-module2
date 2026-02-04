@@ -6,7 +6,7 @@
  */
 
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator, Platform } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { useTheme } from '../../context/ThemeContext';
 import { useAlertService } from '../../utils/alertService';
@@ -99,95 +99,113 @@ export const OrderInfoScreen = () => {
                 vitrineLogo={getSafeUri(vitrine?.logo || vitrine?.avatar)}
                 onVitrinePress={() => vitrine?.slug && navigation.navigate('VitrineDetail', { slug: vitrine.slug })}
             />
-            <ScreenWrapper scrollable contentContainerStyle={styles.contentContainer}>
-
-                {/* Cart Summary */}
-                <View style={[styles.section, { backgroundColor: theme.colors.surface }]}>
-                    <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>
-                        Résumé du panier
-                    </Text>
-                    {cart.map((item: CartItem, index: number) => (
-                        <View key={index} style={styles.cartItem}>
-                            <Text style={[styles.cartItemName, { color: theme.colors.text }]}>
-                                {item.product.name} x {item.quantity}
+            <ScreenWrapper>
+                <View style={{ flex: 1 }}>
+                    <ScrollView
+                        style={{ flex: 1 }}
+                        contentContainerStyle={[styles.contentContainer, { paddingBottom: 100 }]}
+                    >
+                        {/* Cart Summary */}
+                        <View style={[styles.section, { backgroundColor: theme.colors.surface }]}>
+                            <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>
+                                Résumé du panier
                             </Text>
-                            <Text style={[styles.cartItemPrice, { color: theme.colors.textSecondary }]}>
-                                {(item.product.price * item.quantity).toFixed(2)} {item.product.currency || 'USD'}
-                            </Text>
+                            {cart.map((item: CartItem, index: number) => (
+                                <View key={index} style={styles.cartItem}>
+                                    <Text style={[styles.cartItemName, { color: theme.colors.text }]}>
+                                        {item.product.name} x {item.quantity}
+                                    </Text>
+                                    <Text style={[styles.cartItemPrice, { color: theme.colors.textSecondary }]}>
+                                        {(item.product.price * item.quantity).toFixed(2)} {item.product.currency || 'USD'}
+                                    </Text>
+                                </View>
+                            ))}
+                            <View style={[styles.divider, { backgroundColor: theme.colors.border }]} />
+                            <View style={styles.totalRow}>
+                                <Text style={[styles.totalLabel, { color: theme.colors.text }]}>Total</Text>
+                                <Text style={[styles.totalPrice, { color: theme.colors.primary }]}>
+                                    {totalPrice.toFixed(2)} {cart[0]?.product?.currency || 'USD'}
+                                </Text>
+                            </View>
                         </View>
-                    ))}
-                    <View style={[styles.divider, { backgroundColor: theme.colors.border }]} />
-                    <View style={styles.totalRow}>
-                        <Text style={[styles.totalLabel, { color: theme.colors.text }]}>Total</Text>
-                        <Text style={[styles.totalPrice, { color: theme.colors.primary }]}>
-                            {totalPrice.toFixed(2)} {cart[0]?.product?.currency || 'USD'}
-                        </Text>
+
+                        {/* Client Information */}
+                        <View style={[styles.section, { backgroundColor: theme.colors.surface }]}>
+                            <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>
+                                Vos informations
+                            </Text>
+
+                            <TextInput
+                                style={[styles.input, {
+                                    backgroundColor: theme.colors.background,
+                                    borderColor: theme.colors.border,
+                                    color: theme.colors.text
+                                }]}
+                                placeholder="Nom complet"
+                                placeholderTextColor={theme.colors.textTertiary}
+                                value={clientName}
+                                onChangeText={setClientName}
+                            />
+
+                            <View style={[styles.phoneInputContainer, {
+                                backgroundColor: theme.colors.background,
+                                borderColor: theme.colors.border
+                            }]}>
+                                <Text style={[styles.phonePrefix, { color: theme.colors.text }]}>+243</Text>
+                                <View style={[styles.phoneSeparator, { backgroundColor: theme.colors.border }]} />
+                                <TextInput
+                                    style={[styles.phoneInput, { color: theme.colors.text }]}
+                                    placeholder="9770*******"
+                                    placeholderTextColor={theme.colors.textTertiary}
+                                    value={clientPhone}
+                                    onChangeText={setClientPhone}
+                                    keyboardType="phone-pad"
+                                    maxLength={9}
+                                />
+                            </View>
+
+                            <TextInput
+                                style={[styles.textArea, {
+                                    backgroundColor: theme.colors.background,
+                                    borderColor: theme.colors.border,
+                                    color: theme.colors.text,
+                                    minHeight: 120
+                                }]}
+                                placeholder="Notes (optionnel)"
+                                placeholderTextColor={theme.colors.textTertiary}
+                                value={notes}
+                                onChangeText={setNotes}
+                                multiline
+                                numberOfLines={8}
+                            />
+                        </View>
+                    </ScrollView>
+
+                    <View style={[styles.footer, { backgroundColor: theme.colors.surface, borderTopColor: theme.colors.border }]}>
+                        <TouchableOpacity
+                            style={[styles.button, { backgroundColor: theme.colors.primary, marginTop: 0 }]}
+                            onPress={handleContinue}
+                        >
+                            <Text style={styles.buttonText}>Continuer vers la livraison</Text>
+                        </TouchableOpacity>
                     </View>
                 </View>
-
-                {/* Client Information */}
-                <View style={[styles.section, { backgroundColor: theme.colors.surface }]}>
-                    <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>
-                        Vos informations
-                    </Text>
-
-                    <TextInput
-                        style={[styles.input, {
-                            backgroundColor: theme.colors.background,
-                            borderColor: theme.colors.border,
-                            color: theme.colors.text
-                        }]}
-                        placeholder="Nom complet"
-                        placeholderTextColor={theme.colors.textTertiary}
-                        value={clientName}
-                        onChangeText={setClientName}
-                    />
-
-                    <View style={[styles.phoneInputContainer, {
-                        backgroundColor: theme.colors.background,
-                        borderColor: theme.colors.border
-                    }]}>
-                        <Text style={[styles.phonePrefix, { color: theme.colors.text }]}>+243</Text>
-                        <View style={[styles.phoneSeparator, { backgroundColor: theme.colors.border }]} />
-                        <TextInput
-                            style={[styles.phoneInput, { color: theme.colors.text }]}
-                            placeholder="9770*******"
-                            placeholderTextColor={theme.colors.textTertiary}
-                            value={clientPhone}
-                            onChangeText={setClientPhone}
-                            keyboardType="phone-pad"
-                            maxLength={9}
-                        />
-                    </View>
-
-                    <TextInput
-                        style={[styles.textArea, {
-                            backgroundColor: theme.colors.background,
-                            borderColor: theme.colors.border,
-                            color: theme.colors.text,
-                            minHeight: 120
-                        }]}
-                        placeholder="Notes (optionnel)"
-                        placeholderTextColor={theme.colors.textTertiary}
-                        value={notes}
-                        onChangeText={setNotes}
-                        multiline
-                        numberOfLines={8}
-                    />
-                </View>
-
-                <TouchableOpacity
-                    style={[styles.button, { backgroundColor: theme.colors.primary }]}
-                    onPress={handleContinue}
-                >
-                    <Text style={styles.buttonText}>Continuer vers la livraison</Text>
-                </TouchableOpacity>
             </ScreenWrapper>
         </View>
     );
 };
 
 const styles = StyleSheet.create({
+    footer: {
+        padding: 16,
+        paddingBottom: Platform.OS === 'ios' ? 34 : 16,
+        borderTopWidth: 1,
+        elevation: 10,
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: -4 },
+        shadowOpacity: 0.1,
+        shadowRadius: 8,
+    },
     contentContainer: {
         padding: 16,
     },

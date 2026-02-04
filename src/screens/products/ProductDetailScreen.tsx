@@ -5,7 +5,7 @@
  */
 
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator, FlatList, Dimensions } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator, FlatList, Dimensions, Platform } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
@@ -117,133 +117,138 @@ export const ProductDetailScreen = () => {
                 onShare={() => setIsShareModalVisible(true)}
             />
 
-            <ScrollView style={styles.container}>
-                {/* Product Image Gallery using ProductCarousel */}
-                <View style={styles.galleryContainer}>
-                    <ProductCarousel
-                        height={carouselHeight}
-                        images={normalizedImages}
-                    // onImagePress={handleImagePress} // Add handleImagePress if we want preview
-                    />
-                </View>
+            <View style={{ flex: 1 }}>
+                <ScrollView
+                    style={styles.container}
+                    contentContainerStyle={{ paddingBottom: 100 }}
+                >
+                    {/* Product Image Gallery using ProductCarousel */}
+                    <View style={styles.galleryContainer}>
+                        <ProductCarousel
+                            height={carouselHeight}
+                            images={normalizedImages}
+                        // onImagePress={handleImagePress} // Add handleImagePress if we want preview
+                        />
+                    </View>
 
-                {/* Product Info */}
-                <View style={[
-                    styles.infoContainer,
-                    {
-                        backgroundColor: theme.colors.surface,
-                        borderTopLeftRadius: 30,
-                        borderTopRightRadius: 30,
-                        marginTop: -20, // Overlap effect
-                        paddingTop: 30,
-                    }
-                ]}>
-                    <Text style={[styles.productName, { color: theme.colors.text }]}>
-                        {product.name}
-                    </Text>
-                    <Text style={[styles.productPrice, { color: theme.colors.primary }]}>
-                        {product.price.toFixed(2)} {product.currency || 'USD'}
-                    </Text>
-
-                    {product.category && (
-                        <View style={[styles.categoryBadge, { backgroundColor: theme.colors.primary + '20' }]}>
-                            <Text style={[styles.categoryText, { color: theme.colors.primary }]}>
-                                {product.category}
-                            </Text>
-                        </View>
-                    )}
-
-                    {normalizedLocations.length > 0 && (
-                        <View style={styles.locationsContainer}>
-
-                            <View style={styles.locationBadges}>
-                                {normalizedLocations.map((loc, idx) => (
-                                    <View key={idx} style={[styles.locationBadge, { backgroundColor: theme.colors.background }]}>
-                                        <Ionicons name="location-sharp" size={14} color={theme.colors.primary} />
-                                        <Text style={[styles.locationText, { color: theme.colors.text }]}>{loc}</Text>
-                                    </View>
-                                ))}
-                            </View>
-                        </View>
-                    )}
-
-                    {product.description && (
-                        <View style={styles.descriptionContainer}>
-                            <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>
-                                Description
-                            </Text>
-                            <Text
-                                style={[styles.description, { color: theme.colors.textSecondary }]}
-                                numberOfLines={isDescriptionExpanded ? undefined : 5}
-                            >
-                                {product.description}
-                            </Text>
-                            {product.description.length > 200 && ( // Threshold for toggle
-                                <TouchableOpacity
-                                    onPress={() => setIsDescriptionExpanded(!isDescriptionExpanded)}
-                                    style={styles.expandLink}
-                                >
-                                    <Text style={styles.expandLinkText}>
-                                        {isDescriptionExpanded ? 'Voir moins' : 'Voir plus'}
-                                    </Text>
-                                </TouchableOpacity>
-                            )}
-                        </View>
-                    )}
-
-
-
-                    {product.stock !== undefined && (
-                        <Text style={[styles.stock, { color: theme.colors.textTertiary }]}>
-                            Stock: {product.stock} disponible(s)
+                    {/* Product Info */}
+                    <View style={[
+                        styles.infoContainer,
+                        {
+                            backgroundColor: theme.colors.surface,
+                            borderTopLeftRadius: 30,
+                            borderTopRightRadius: 30,
+                            marginTop: -20, // Overlap effect
+                            paddingTop: 30,
+                        }
+                    ]}>
+                        <Text style={[styles.productName, { color: theme.colors.text }]}>
+                            {product.name}
                         </Text>
-                    )}
-                </View>
+                        <Text style={[styles.productPrice, { color: theme.colors.primary }]}>
+                            {product.price.toFixed(2)} {product.currency || 'USD'}
+                        </Text>
 
-                {/* Owner Actions */}
-                {isOwner && (
-                    <View style={styles.ownerActionsContainer}>
+                        {product.category && (
+                            <View style={[styles.categoryBadge, { backgroundColor: theme.colors.primary + '20' }]}>
+                                <Text style={[styles.categoryText, { color: theme.colors.primary }]}>
+                                    {product.category}
+                                </Text>
+                            </View>
+                        )}
+
+                        {normalizedLocations.length > 0 && (
+                            <View style={styles.locationsContainer}>
+
+                                <View style={styles.locationBadges}>
+                                    {normalizedLocations.map((loc, idx) => (
+                                        <View key={idx} style={[styles.locationBadge, { backgroundColor: theme.colors.background }]}>
+                                            <Ionicons name="location-sharp" size={14} color={theme.colors.primary} />
+                                            <Text style={[styles.locationText, { color: theme.colors.text }]}>{loc}</Text>
+                                        </View>
+                                    ))}
+                                </View>
+                            </View>
+                        )}
+
+                        {product.description && (
+                            <View style={styles.descriptionContainer}>
+                                <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>
+                                    Description
+                                </Text>
+                                <Text
+                                    style={[styles.description, { color: theme.colors.textSecondary }]}
+                                    numberOfLines={isDescriptionExpanded ? undefined : 5}
+                                >
+                                    {product.description}
+                                </Text>
+                                {product.description.length > 200 && ( // Threshold for toggle
+                                    <TouchableOpacity
+                                        onPress={() => setIsDescriptionExpanded(!isDescriptionExpanded)}
+                                        style={styles.expandLink}
+                                    >
+                                        <Text style={styles.expandLinkText}>
+                                            {isDescriptionExpanded ? 'Voir moins' : 'Voir plus'}
+                                        </Text>
+                                    </TouchableOpacity>
+                                )}
+                            </View>
+                        )}
+
+
+
+                        {product.stock !== undefined && (
+                            <Text style={[styles.stock, { color: theme.colors.textTertiary }]}>
+                                Stock: {product.stock} disponible(s)
+                            </Text>
+                        )}
+                    </View>
+                </ScrollView>
+
+                {/* Sticky Footer for Actions */}
+                <View style={[styles.footer, { backgroundColor: theme.colors.surface, borderTopColor: theme.colors.border }]}>
+                    {/* Owner Actions */}
+                    {isOwner && (
                         <TouchableOpacity
-                            style={[styles.button, { backgroundColor: theme.colors.primary }]}
+                            style={[styles.button, { backgroundColor: theme.colors.primary, marginTop: 0 }]}
                             onPress={handleEdit}
                         >
                             <Ionicons name="settings-outline" size={20} color="#FFF" style={{ marginRight: 8 }} />
                             <Text style={styles.buttonText}>Gérer mon produit</Text>
                         </TouchableOpacity>
+                    )}
 
-                    </View>
-                )}
+                    {/* Add to Cart - For non-owners */}
+                    {!isOwner && (
+                        <View>
+                            <View style={styles.quantityContainer}>
+                                <TouchableOpacity
+                                    style={[styles.quantityButton, { backgroundColor: theme.colors.background }]}
+                                    onPress={() => setQuantity(Math.max(1, quantity - 1))}
+                                >
+                                    <Text style={[styles.quantityButtonText, { color: theme.colors.text }]}>-</Text>
+                                </TouchableOpacity>
+                                <Text style={[styles.quantityText, { color: theme.colors.text }]}>{quantity}</Text>
+                                <TouchableOpacity
+                                    style={[styles.quantityButton, { backgroundColor: theme.colors.background }]}
+                                    onPress={() => setQuantity(quantity + 1)}
+                                >
+                                    <Text style={[styles.quantityButtonText, { color: theme.colors.text }]}>+</Text>
+                                </TouchableOpacity>
+                            </View>
 
-                {/* Add to Cart - For non-owners */}
-                {!isOwner && (
-                    <View style={[styles.section, { backgroundColor: theme.colors.surface }]}>
-                        <View style={styles.quantityContainer}>
                             <TouchableOpacity
-                                style={[styles.quantityButton, { backgroundColor: theme.colors.background }]}
-                                onPress={() => setQuantity(Math.max(1, quantity - 1))}
+                                style={[styles.button, { backgroundColor: theme.colors.primary, marginTop: 0 }]}
+                                onPress={handleAddToCart}
                             >
-                                <Text style={[styles.quantityButtonText, { color: theme.colors.text }]}>-</Text>
-                            </TouchableOpacity>
-                            <Text style={[styles.quantityText, { color: theme.colors.text }]}>{quantity}</Text>
-                            <TouchableOpacity
-                                style={[styles.quantityButton, { backgroundColor: theme.colors.background }]}
-                                onPress={() => setQuantity(quantity + 1)}
-                            >
-                                <Text style={[styles.quantityButtonText, { color: theme.colors.text }]}>+</Text>
+                                <Text style={styles.buttonText}>
+                                    Ajouter au panier • {(product.price * quantity).toFixed(2)} {product.currency || 'USD'}
+                                </Text>
                             </TouchableOpacity>
                         </View>
-
-                        <TouchableOpacity
-                            style={[styles.button, { backgroundColor: theme.colors.primary }]}
-                            onPress={handleAddToCart}
-                        >
-                            <Text style={styles.buttonText}>
-                                Ajouter au panier • {(product.price * quantity).toFixed(2)} {product.currency || 'USD'}
-                            </Text>
-                        </TouchableOpacity>
-                    </View>
-                )}
-            </ScrollView>
+                    )}
+                </View>
+            </View>
 
             <ShareMenuModal
                 isVisible={isShareModalVisible}
@@ -257,6 +262,17 @@ export const ProductDetailScreen = () => {
 };
 
 const createStyles = (theme: any) => StyleSheet.create({
+    footer: {
+        padding: 16,
+        paddingBottom: Platform.OS === 'ios' ? 34 : 16, // Safe area for iOS
+        borderTopWidth: 1,
+        elevation: 10,
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: -4 },
+        shadowOpacity: 0.1,
+        shadowRadius: 8,
+    },
+
     container: {
         flex: 1,
     },
