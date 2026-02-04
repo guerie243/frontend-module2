@@ -44,6 +44,7 @@ export const RootNavigator = () => {
                     },
                 },
                 OrderClientDetail: 'order/:orderId',
+                MyPurchases: 'my-purchases',
 
                 // Nested screens in AppStack
                 MainTabs: {

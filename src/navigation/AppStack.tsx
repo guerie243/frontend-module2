@@ -16,6 +16,7 @@ import { DeliveryLocationScreen } from '../screens/orders/DeliveryLocationScreen
 import { OrderVitrineDetailScreen } from '../screens/orders/OrderVitrineDetailScreen';
 import { OrderClientDetailScreen } from '../screens/orders/OrderClientDetailScreen';
 import { OrderCallScreen } from '../screens/orders/OrderCallScreen';
+import { MyPurchasesScreen } from '../screens/orders/MyPurchasesScreen';
 
 // Product Screens
 import { ProductDetailScreen } from '../screens/products/ProductDetailScreen';
@@ -53,6 +54,7 @@ export const AppStack = () => {
             <Stack.Screen name="OrderVitrineDetail" component={OrderVitrineDetailScreen} />
             <Stack.Screen name="OrderClientDetail" component={OrderClientDetailScreen} />
             <Stack.Screen name="OrderCall" component={OrderCallScreen} />
+            <Stack.Screen name="MyPurchases" component={MyPurchasesScreen} />
 
             {/* Product Routes */}
             <Stack.Screen name="ProductDetail" component={ProductDetailScreen} />

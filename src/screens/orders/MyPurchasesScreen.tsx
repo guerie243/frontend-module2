@@ -1,70 +1,62 @@
 /**
- * Orders List Screen
+ * My Purchases Screen (Acheteur)
  * 
- * Display all orders for vitrine owner with filtering
+ * Display all orders passed by the user (stored locally in AsyncStorage)
  */
 
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, FlatList, ActivityIndicator, RefreshControl, ScrollView } from 'react-native';
-import { useNavigation, useRoute } from '@react-navigation/native';
+import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
-import { ScreenWrapper } from '../../components/ScreenWrapper';
 import { useTheme } from '../../context/ThemeContext';
-import { useOrdersByVitrine } from '../../hooks/useCommandes';
-import { useMyVitrines } from '../../hooks/useVitrines';
-import { useAuth } from '../../hooks/useAuth';
+import { useGuestOrders } from '../../hooks/useCommandes';
 import { getOrderUrl } from '../../utils/sharingUtils';
 import { ShareMenuModal } from '../../components/ShareMenuModal';
-import { GuestPrompt } from '../../components/GuestPrompt';
 import { LoadingComponent } from '../../components/LoadingComponent';
-import { CustomButton } from '../../components/CustomButton';
 import { Order } from '../../types';
 import { ScreenHeader } from '../../components/ScreenHeader';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useGuestOrders } from '../../hooks/useCommandes';
 import { useFocusEffect } from '@react-navigation/native';
 
-export const OrdersListScreen = () => {
+export const MyPurchasesScreen = () => {
     const navigation = useNavigation<any>();
-    const route = useRoute<any>();
     const { theme } = useTheme();
-    const { isAuthenticated, isLoading: authLoading } = useAuth();
 
-    // Get specific vitrine from params if coming from a specific vitrine management
-    const requestedVitrineId = route.params?.vitrineId;
+    const [guestOrderIds, setGuestOrderIds] = useState<string[]>([]);
+    const [isRefreshing, setIsRefreshing] = useState(false);
 
-    // Get user's vitrine
-    const { data: myVitrines = [], isLoading: vitrinesLoading, refetch: refetchVitrines } = useMyVitrines({
-        enabled: isAuthenticated
-    });
+    const loadGuestOrders = async () => {
+        try {
+            const savedOrdersJson = await AsyncStorage.getItem('GUEST_ORDERS');
+            if (savedOrdersJson) {
+                const ids = JSON.parse(savedOrdersJson);
+                setGuestOrderIds(ids);
+            }
+        } catch (e) {
+            console.error('Failed to load guest orders:', e);
+        }
+    };
 
-    // Determine active vitrine
-    const activeVitrine = requestedVitrineId
-        ? (myVitrines.find(v => v.id === requestedVitrineId || v._id === requestedVitrineId) || myVitrines[0])
-        : myVitrines[0];
+    useFocusEffect(
+        React.useCallback(() => {
+            loadGuestOrders();
+        }, [])
+    );
 
-    const vitrineId = activeVitrine?.vitrineId || activeVitrine?.id || activeVitrine?._id || '';
-
-    // --- MODE VENDEUR : Commandes reçues ---
     const {
-        data: sellerOrders = [],
-        isLoading: sellerOrdersLoading,
-        refetch: refetchSellerOrders
-    } = useOrdersByVitrine(vitrineId, !!vitrineId);
-
-    const orders = sellerOrders || [];
-    const ordersLoading = sellerOrdersLoading;
-
-    console.log('[OrdersListScreen] Seller Mode, Count:', orders?.length);
+        data: guestOrders = [],
+        isLoading: guestOrdersLoading,
+        refetch: refetchGuestOrders
+    } = useGuestOrders(guestOrderIds, guestOrderIds.length > 0);
 
     const [statusFilter, setStatusFilter] = useState<Order['status'] | 'all'>('all');
     const [selectedOrderForShare, setSelectedOrderForShare] = useState<Order | null>(null);
 
     // Filter and sort orders
     const filteredOrders = useMemo(() => {
-        let result = orders;
+        let result = guestOrders || [];
         if (statusFilter !== 'all') {
-            result = orders.filter(order => order.status === statusFilter);
+            result = result.filter(order => order.status === statusFilter);
         }
 
         // Sort by newest first
@@ -73,15 +65,18 @@ export const OrdersListScreen = () => {
             const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
             return dateB - dateA;
         });
-    }, [orders, statusFilter]);
+    }, [guestOrders, statusFilter]);
 
     const onRefresh = async () => {
-        console.log('Refreshing orders list');
-        await Promise.all([refetchVitrines(), refetchSellerOrders()]);
+        setIsRefreshing(true);
+        await loadGuestOrders();
+        await refetchGuestOrders();
+        setIsRefreshing(false);
     };
 
     const handleOrderPress = (order: Order) => {
-        navigation.navigate('OrderVitrineDetail', { orderId: order.id || order._id });
+        const orderId = order.id || order._id;
+        navigation.navigate('OrderClientDetail', { orderId });
     };
 
     const getStatusColor = (status: Order['status']) => {
@@ -136,9 +131,6 @@ export const OrdersListScreen = () => {
             <Text style={[styles.clientName, { color: theme.colors.textSecondary }]}>
                 {item.clientName}
             </Text>
-            <Text style={[styles.clientPhone, { color: theme.colors.textSecondary }]}>
-                📞 {item.clientPhone}
-            </Text>
 
             <View style={styles.orderFooter}>
                 <Text style={[styles.itemCount, { color: theme.colors.textSecondary }]}>
@@ -172,44 +164,17 @@ export const OrdersListScreen = () => {
         </TouchableOpacity>
     );
 
-    if (!isAuthenticated && !authLoading) {
-        return (
-            <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
-                <ScreenHeader title="Commandes Reçues" showBack={false} />
-                <View style={styles.centerContainer}>
-                    <Ionicons name="lock-closed" size={64} color={theme.colors.textTertiary} />
-                    <Text style={[styles.emptyText, { color: theme.colors.textSecondary, marginTop: 16, textAlign: 'center', paddingHorizontal: 32 }]}>
-                        Veuillez vous connecter pour gérer les commandes de votre vitrine.
-                    </Text>
-                    <TouchableOpacity
-                        style={[styles.loginButton, { backgroundColor: theme.colors.primary, marginTop: 24 }]}
-                        onPress={() => navigation.navigate('Login')}
-                    >
-                        <Text style={{ color: '#FFF', fontWeight: 'bold' }}>Se connecter</Text>
-                    </TouchableOpacity>
-                </View>
-            </View>
-        );
-    }
-
-    if (vitrinesLoading || (ordersLoading && orders.length === 0)) {
-        return <LoadingComponent message="Chargement des commandes reçues..." />;
+    if (guestOrdersLoading && guestOrders.length === 0) {
+        return <LoadingComponent message="Chargement de vos achats..." />;
     }
 
     return (
         <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
             <ScreenHeader
-                title="Commandes Reçues"
-                showBack={false}
+                title="Mes Achats"
+                showBack={true}
             />
 
-            {activeVitrine && (
-                <Text style={[styles.subtitle, { color: theme.colors.textSecondary, marginTop: 8 }]}>
-                    Vitrine : {activeVitrine.name}
-                </Text>
-            )}
-
-            {/* Filter Buttons */}
             <View style={styles.filterContainer}>
                 <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
                     {renderFilterButton('all', 'Toutes')}
@@ -229,7 +194,7 @@ export const OrdersListScreen = () => {
                 contentContainerStyle={styles.listContainer}
                 refreshControl={
                     <RefreshControl
-                        refreshing={false}
+                        refreshing={isRefreshing}
                         onRefresh={onRefresh}
                         colors={[theme.colors.primary]}
                     />
@@ -237,7 +202,7 @@ export const OrdersListScreen = () => {
                 ListEmptyComponent={
                     <View style={styles.emptyContainer}>
                         <Text style={[styles.emptyText, { color: theme.colors.textSecondary }]}>
-                            Aucune commande reçue pour le moment.
+                            Vous n'avez pas encore passé de commande.
                         </Text>
                     </View>
                 }
@@ -257,18 +222,6 @@ export const OrdersListScreen = () => {
 };
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-    },
-    centerContainer: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    loadingText: {
-        marginTop: 16,
-        fontSize: 14,
-    },
     filterContainer: {
         flexDirection: 'row',
         padding: 16,
@@ -283,29 +236,18 @@ const styles = StyleSheet.create({
         fontSize: 14,
         fontWeight: '500',
     },
-    header: {
-        paddingTop: 20,
-        paddingBottom: 8,
-        paddingHorizontal: 16,
-    },
-    title: {
-        fontSize: 24,
-        fontWeight: 'bold',
-        textAlign: 'center',
-        marginBottom: 8,
-    },
-    subtitle: {
-        fontSize: 14,
-        textAlign: 'center',
-        marginBottom: 8,
-    },
     listContainer: {
         padding: 16,
     },
     orderCard: {
         padding: 16,
-        borderRadius: 12,
+        borderRadius: 16,
         marginBottom: 12,
+        elevation: 2,
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
     },
     orderHeader: {
         flexDirection: 'row',
@@ -327,10 +269,6 @@ const styles = StyleSheet.create({
         fontWeight: '600',
     },
     clientName: {
-        fontSize: 14,
-        marginBottom: 4,
-    },
-    clientPhone: {
         fontSize: 14,
         marginBottom: 12,
     },
@@ -356,12 +294,5 @@ const styles = StyleSheet.create({
     },
     emptyText: {
         fontSize: 16,
-    },
-    loginButton: {
-        height: 44,
-        paddingHorizontal: 24,
-        borderRadius: 22,
-        justifyContent: 'center',
-        alignItems: 'center',
     },
 });
