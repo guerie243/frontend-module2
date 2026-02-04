@@ -37,19 +37,18 @@ export const StaticMapImage: React.FC<StaticMapImageProps> = ({
 
     const handleOpenMaps = async () => {
         const url = Platform.select({
-            ios: `maps:0,0?q=${latitude},${longitude}`,
-            android: `google.navigation:q=${latitude},${longitude}`
-        });
+            ios: `maps://app?daddr=${latitude},${longitude}&dirflg=d`,
+            android: `google.navigation:q=${latitude},${longitude}&mode=d`,
+            web: `https://www.google.com/maps/dir/?api=1&destination=${latitude},${longitude}&travelmode=driving`
+        }) || `https://www.google.com/maps/dir/?api=1&destination=${latitude},${longitude}&travelmode=driving`;
 
-        if (url) {
-            const supported = await Linking.canOpenURL(url);
-            if (supported) {
-                await Linking.openURL(url);
-            } else {
-                // Fallback to browser URL if native app link fails
-                const browserUrl = `https://www.google.com/maps/search/?api=1&query=${latitude},${longitude}`;
-                await Linking.openURL(browserUrl);
-            }
+        const supported = await Linking.canOpenURL(url);
+        if (supported) {
+            await Linking.openURL(url);
+        } else {
+            // Fallback to browser URL if native app link fails
+            const browserUrl = `https://www.google.com/maps/dir/?api=1&destination=${latitude},${longitude}&travelmode=driving`;
+            await Linking.openURL(browserUrl);
         }
     };
 

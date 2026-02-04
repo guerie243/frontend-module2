@@ -26,14 +26,12 @@ export const ProductOrderItem: React.FC<ProductOrderItemProps> = ({
 }) => {
     const { theme } = useTheme();
     const navigation = useNavigation<any>();
-
     const handlePress = () => {
-        if (slug) {
-            navigation.navigate('ProductDetail', { slug });
-        } else if (productId) {
-            // If we only have productId, the backend controller/service 
-            // is being updated to handle ID in the slug parameter
-            navigation.navigate('ProductDetail', { slug: productId });
+        // Prefer productId as it is immutable and unique
+        // The backend handles productId passed in the slug parameter
+        const identifier = productId || slug;
+        if (identifier) {
+            navigation.navigate('ProductDetail', { slug: identifier });
         }
     };
 

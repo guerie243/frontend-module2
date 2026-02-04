@@ -64,10 +64,10 @@ export const OrderVitrineDetailScreen = () => {
         const { latitude, longitude } = coords;
 
         const url = Platform.select({
-            ios: `http://maps.apple.com/?daddr=${latitude},${longitude}`,
-            android: `https://www.google.com/maps/dir/?api=1&destination=${latitude},${longitude}`,
-            web: `https://www.google.com/maps/dir/?api=1&destination=${latitude},${longitude}`
-        }) || `https://www.google.com/maps/dir/?api=1&destination=${latitude},${longitude}`;
+            ios: `maps://app?daddr=${latitude},${longitude}&dirflg=d`,
+            android: `google.navigation:q=${latitude},${longitude}&mode=d`,
+            web: `https://www.google.com/maps/dir/?api=1&destination=${latitude},${longitude}&travelmode=driving`
+        }) || `https://www.google.com/maps/dir/?api=1&destination=${latitude},${longitude}&travelmode=driving`;
 
         Linking.openURL(url);
     };
