@@ -212,10 +212,11 @@ export const DeliveryLocationScreen = () => {
 
             // Stockage local de la commande pour l'historique visiteur/invité
             try {
+                const publicOrderId = order.orderId || order._id;
                 const savedOrdersJson = await AsyncStorage.getItem('GUEST_ORDERS');
                 const savedOrders = savedOrdersJson ? JSON.parse(savedOrdersJson) : [];
 
-                if (!savedOrders.includes(publicOrderId)) {
+                if (publicOrderId && !savedOrders.includes(publicOrderId)) {
                     const newOrders = [publicOrderId, ...savedOrders];
                     await AsyncStorage.setItem('GUEST_ORDERS', JSON.stringify(newOrders));
                     console.log('Order ID saved locally:', publicOrderId);

@@ -95,7 +95,7 @@ export const ScreenHeader: React.FC<ScreenHeaderProps> = ({
                     {/* Bouton Global Commandes */}
                     <TouchableOpacity
                         style={styles.iconButton}
-                        onPress={() => navigation.navigate('OrdersList')}
+                        onPress={() => navigation.navigate('OrdersTab')}
                     >
                         <Ionicons name="receipt-outline" size={22} color={theme.colors.text} />
                     </TouchableOpacity>

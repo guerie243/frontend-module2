@@ -121,8 +121,13 @@ export const OrdersListScreen = () => {
     };
 
     const handleOrderPress = (order: Order) => {
-        console.log('Opening order detail:', order.id);
-        navigation.navigate('OrderVitrineDetail', { orderId: order.id || order._id });
+        const orderId = order.id || order._id;
+        console.log('Opening order detail:', orderId);
+        if (isSellerMode) {
+            navigation.navigate('OrderVitrineDetail', { orderId });
+        } else {
+            navigation.navigate('OrderClientDetail', { orderId });
+        }
     };
 
     const getStatusColor = (status: Order['status']) => {
