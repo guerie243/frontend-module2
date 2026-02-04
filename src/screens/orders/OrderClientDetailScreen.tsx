@@ -20,6 +20,7 @@ import { useState } from 'react';
 import { useVitrineDetail } from '../../hooks/useVitrines';
 import { getSafeUri } from '../../utils/imageUtils';
 import { useNavigation } from '@react-navigation/native';
+import { ProductOrderItem } from '../../components/ProductOrderItem';
 
 export const OrderClientDetailScreen = () => {
     const route = useRoute<any>();
@@ -100,14 +101,16 @@ export const OrderClientDetailScreen = () => {
                         Vos produits
                     </Text>
                     {order.products.map((product, index) => (
-                        <View key={index} style={styles.productRow}>
-                            <Text style={[styles.productName, { color: theme.colors.text }]}>
-                                {product.productName} x {product.quantity}
-                            </Text>
-                            <Text style={[styles.productPrice, { color: theme.colors.textSecondary }]}>
-                                {(product.price * product.quantity).toFixed(2)} {product.currency || 'USD'}
-                            </Text>
-                        </View>
+                        <ProductOrderItem
+                            key={index}
+                            name={product.productName}
+                            image={product.productImage}
+                            quantity={product.quantity}
+                            price={product.price}
+                            currency={product.currency}
+                            slug={product.productSlug}
+                            productId={product.productId}
+                        />
                     ))}
                     <View style={[styles.divider, { backgroundColor: theme.colors.border }]} />
                     <View style={styles.totalRow}>

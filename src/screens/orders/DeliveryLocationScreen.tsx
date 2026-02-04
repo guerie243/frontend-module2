@@ -18,6 +18,7 @@ import { MapWebView } from '../../components/MapWebView';
 import { ScreenWrapper } from '../../components/ScreenWrapper';
 import { getOrderUrl } from '../../utils/sharingUtils';
 import { Platform } from 'react-native';
+import { ProductOrderItem } from '../../components/ProductOrderItem';
 
 export const DeliveryLocationScreen = () => {
     const navigation = useNavigation<any>();
@@ -392,13 +393,22 @@ export const DeliveryLocationScreen = () => {
                                 </Text>
                             </View>
                             <View style={styles.summaryRow}>
-                                <Text style={[styles.summaryLabel, { color: theme.colors.textSecondary }]}>
+                                <Text style={[styles.summaryLabel, { color: theme.colors.textSecondary, marginBottom: 8 }]}>
                                     Articles:
                                 </Text>
-                                <Text style={[styles.summaryValue, { color: theme.colors.text }]}>
-                                    {orderData?.products?.length} produit(s)
-                                </Text>
                             </View>
+                            {orderData?.products?.map((product: any, index: number) => (
+                                <ProductOrderItem
+                                    key={index}
+                                    name={product.productName}
+                                    image={product.productImage}
+                                    quantity={product.quantity}
+                                    price={product.price}
+                                    currency={product.currency}
+                                    slug={product.productSlug}
+                                    productId={product.productId}
+                                />
+                            ))}
                             <View style={[styles.divider, { backgroundColor: theme.colors.border }]} />
                             <View style={styles.summaryRow}>
                                 <Text style={[styles.totalLabel, { color: theme.colors.text }]}>Total:</Text>

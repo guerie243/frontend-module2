@@ -15,6 +15,7 @@ import { ScreenWrapper } from '../../components/ScreenWrapper';
 import { ScreenHeader } from '../../components/ScreenHeader';
 import { useVitrineDetail } from '../../hooks/useVitrines';
 import { getSafeUri } from '../../utils/imageUtils';
+import { ProductOrderItem } from '../../components/ProductOrderItem';
 
 export const OrderInfoScreen = () => {
     const navigation = useNavigation<any>();
@@ -71,6 +72,7 @@ export const OrderInfoScreen = () => {
         const orderProducts: OrderProduct[] = cart.map((item: CartItem) => ({
             productId: item.product.id || item.product._id || '',
             productName: item.product.name,
+            productSlug: item.product.slug,
             productImage: item.product.images?.[0],
             quantity: item.quantity,
             price: item.product.price,
@@ -111,14 +113,15 @@ export const OrderInfoScreen = () => {
                                 Résumé du panier
                             </Text>
                             {cart.map((item: CartItem, index: number) => (
-                                <View key={index} style={styles.cartItem}>
-                                    <Text style={[styles.cartItemName, { color: theme.colors.text }]}>
-                                        {item.product.name} x {item.quantity}
-                                    </Text>
-                                    <Text style={[styles.cartItemPrice, { color: theme.colors.textSecondary }]}>
-                                        {(item.product.price * item.quantity).toFixed(2)} {item.product.currency || 'USD'}
-                                    </Text>
-                                </View>
+                                <ProductOrderItem
+                                    key={index}
+                                    name={item.product.name}
+                                    image={item.product.images?.[0]}
+                                    quantity={item.quantity}
+                                    price={item.product.price}
+                                    currency={item.product.currency}
+                                    slug={item.product.slug}
+                                />
                             ))}
                             <View style={[styles.divider, { backgroundColor: theme.colors.border }]} />
                             <View style={styles.totalRow}>

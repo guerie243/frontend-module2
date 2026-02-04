@@ -43,6 +43,7 @@ export interface Product {
 export interface OrderProduct {
     productId: string;
     productName: string;
+    productSlug?: string;
     productImage?: string;
     quantity: number;
     price: number;
