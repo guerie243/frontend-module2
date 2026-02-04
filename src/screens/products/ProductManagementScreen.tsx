@@ -5,11 +5,12 @@
  */
 
 import React, { useMemo } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, FlatList, ActivityIndicator } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { View, Text, TouchableOpacity, StyleSheet, FlatList, ActivityIndicator, ScrollView } from 'react-native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import { Image } from 'expo-image';
+import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../context/ThemeContext';
-import { useProductsByVitrine } from '../../hooks/useProducts';
+import { useProductsByVitrine, useProductDetail } from '../../hooks/useProducts';
 import { useMyVitrines, useVitrineDetail } from '../../hooks/useVitrines';
 import { Product } from '../../types';
 import { ScreenHeader } from '../../components/ScreenHeader';
@@ -17,14 +18,19 @@ import { getSafeUri } from '../../utils/imageUtils';
 
 export const ProductManagementScreen = () => {
     const navigation = useNavigation<any>();
+    const route = useRoute<any>();
     const { theme } = useTheme();
+    const { productId } = route.params || {};
 
     // Get user's vitrine
     const { data: myVitrines = [] } = useMyVitrines();
     const vitrineId = myVitrines?.[0]?.vitrineId || myVitrines?.[0]?.id || myVitrines?.[0]?._id || '';
 
-    // Get products for this vitrine
-    const { data: productsData, isLoading } = useProductsByVitrine(vitrineId, !!vitrineId);
+    // If we have a productId, we manage that specific product
+    const { data: product, isLoading: isLoadingProduct } = useProductDetail(productId, !!productId);
+
+    // Get products for this vitrine (for the list view)
+    const { data: productsData, isLoading: isLoadingList } = useProductsByVitrine(vitrineId, !productId && !!vitrineId);
 
     // Get full vitrine details for the header
     const { data: vitrine } = useVitrineDetail(vitrineId, !!vitrineId);
@@ -42,9 +48,8 @@ export const ProductManagementScreen = () => {
         navigation.navigate('CreateProduct');
     };
 
-    const handleEditProduct = (product: Product) => {
-        console.log('Navigating to EditProduct for:', product.name);
-        navigation.navigate('EditProduct', { productId: product.id || product._id });
+    const handleEditProduct = (prod: Product) => {
+        navigation.navigate('ProductManagement', { productId: prod.id || prod._id });
     };
 
     const renderProduct = ({ item }: { item: Product }) => (
@@ -72,23 +77,38 @@ export const ProductManagementScreen = () => {
                 <Text style={[styles.productPrice, { color: theme.colors.primary }]}>
                     {item.price.toFixed(2)} {item.currency || 'USD'}
                 </Text>
-                {item.stock !== undefined && (
-                    <Text style={[styles.stock, { color: theme.colors.textSecondary }]}>
-                        Stock: {item.stock}
-                    </Text>
-                )}
             </View>
 
-            <TouchableOpacity
-                style={[styles.editButton, { backgroundColor: theme.colors.primary }]}
-                onPress={() => handleEditProduct(item)}
-            >
-                <Text style={styles.editButtonText}>✏️</Text>
-            </TouchableOpacity>
+            <View style={[styles.editCircle, { backgroundColor: theme.colors.primary }]}>
+                <Ionicons name="chevron-forward" size={18} color="#FFF" />
+            </View>
         </TouchableOpacity>
     );
 
-    if (isLoading) {
+    const renderFieldItem = (label: string, value: string, field: string, options: any = {}) => (
+        <TouchableOpacity
+            style={[styles.fieldItem, { borderBottomColor: theme.colors.border }]}
+            onPress={() => {
+                navigation.navigate('EditProduct', {
+                    field,
+                    label,
+                    currentValue: value,
+                    productId: product.id || product._id,
+                    ...options
+                });
+            }}
+        >
+            <View style={styles.fieldContent}>
+                <Text style={[styles.fieldLabel, { color: theme.colors.textSecondary }]}>{label}</Text>
+                <Text style={[styles.fieldValue, { color: value ? theme.colors.text : theme.colors.textTertiary }]} numberOfLines={1}>
+                    {value || 'Non renseigné'}
+                </Text>
+            </View>
+            <Ionicons name="chevron-forward" size={20} color={theme.colors.textSecondary} />
+        </TouchableOpacity>
+    );
+
+    if (isLoadingList || (productId && isLoadingProduct)) {
         return (
             <View style={[styles.centerContainer, { backgroundColor: theme.colors.background }]}>
                 <ActivityIndicator size="large" color={theme.colors.primary} />
@@ -96,6 +116,43 @@ export const ProductManagementScreen = () => {
         );
     }
 
+    // --- REPURPOSED VIEW: SINGLE PRODUCT MANAGEMENT (CHAMP PAR CHAMP) ---
+    if (productId && product) {
+        return (
+            <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
+                <ScreenHeader
+                    title={`Gestion: ${product.name}`}
+                    vitrineName={vitrine?.name}
+                    vitrineLogo={getSafeUri(vitrine?.logo || vitrine?.avatar)}
+                />
+                <ScrollView contentContainerStyle={styles.scrollContent}>
+                    <View style={styles.section}>
+                        {renderFieldItem('Nom du produit', product.name, 'name')}
+                        {renderFieldItem('Catégorie', product.category, 'category')}
+                        {renderFieldItem('Prix', `${product.price}`, 'price', { keyboardType: 'decimal-pad' })}
+                        {renderFieldItem('Devise', product.currency || 'USD', 'currency')}
+                        {renderFieldItem('Lieux', Array.isArray(product.locations) ? product.locations.join(', ') : product.locations, 'locations')}
+                        {renderFieldItem('Description', product.description || '', 'description', { multiline: true })}
+                        {renderFieldItem('Images', `${product.images?.length || 0} image(s)`, 'images', { isImageManagement: true })}
+                    </View>
+
+                    <TouchableOpacity
+                        style={styles.deleteLinkContainer}
+                        onPress={() => navigation.navigate('EditProduct', {
+                            field: 'delete',
+                            label: 'Suppression',
+                            currentValue: '',
+                            productId: product.id || product._id
+                        })}
+                    >
+                        <Text style={[styles.deleteText, { color: theme.colors.error }]}>Supprimer mon produit</Text>
+                    </TouchableOpacity>
+                </ScrollView>
+            </View>
+        );
+    }
+
+    // --- ORIGINAL VIEW: PRODUCT LIST ---
     return (
         <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
             <ScreenHeader
@@ -202,19 +259,48 @@ const styles = StyleSheet.create({
         fontSize: 14,
         fontWeight: 'bold',
     },
-    stock: {
-        fontSize: 12,
-        marginTop: 2,
-    },
-    editButton: {
-        width: 40,
-        height: 40,
-        borderRadius: 20,
+    editCircle: {
+        width: 32,
+        height: 32,
+        borderRadius: 16,
         justifyContent: 'center',
         alignItems: 'center',
     },
-    editButtonText: {
-        fontSize: 18,
+    scrollContent: {
+        paddingBottom: 40,
+    },
+    section: {
+        marginTop: 20,
+        paddingHorizontal: 16,
+    },
+    fieldItem: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        paddingVertical: 16,
+        borderBottomWidth: 1,
+    },
+    fieldContent: {
+        flex: 1,
+        marginRight: 16,
+    },
+    fieldLabel: {
+        fontSize: 14,
+        marginBottom: 4,
+    },
+    fieldValue: {
+        fontSize: 16,
+        fontWeight: '500',
+    },
+    deleteLinkContainer: {
+        marginTop: 40,
+        marginBottom: 20,
+        alignItems: 'center',
+        padding: 16,
+    },
+    deleteText: {
+        fontSize: 16,
+        fontWeight: '600',
     },
     emptyContainer: {
         paddingVertical: 40,

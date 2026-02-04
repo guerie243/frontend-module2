@@ -73,8 +73,8 @@ export const ProductDetailScreen = () => {
     };
 
     const handleEdit = () => {
-        console.log('Navigating to EditProduct');
-        navigation.navigate('EditProduct', { productId: product?.id || product?._id });
+        console.log('Navigating to ProductManagement for editing');
+        navigation.navigate('ProductManagement', { productId: product?.id || product?._id });
     };
 
     const handleDelete = () => {
