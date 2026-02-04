@@ -66,6 +66,13 @@ export const ProductManagementScreen = () => {
         }
     }, [product]);
 
+    // Check if images have changed compared to original product images
+    const hasImageChanges = useMemo(() => {
+        if (!product || !product.images) return false;
+        if (images.length !== product.images.length) return true;
+        return images.some((img, index) => img.uri !== product.images[index]);
+    }, [images, product?.images]);
+
     const handleSaveImages = async () => {
         if (!product) return;
         try {
@@ -167,14 +174,16 @@ export const ProductManagementScreen = () => {
                             Images du produit
                         </Text>
                         <ImagePictureUploader images={images} setImages={setImages} />
-                        <View style={styles.saveImagesButtonContainer}>
-                            <CustomButton
-                                title="Sauvegarder les images"
-                                onPress={handleSaveImages}
-                                isLoading={updateProductMutation.isPending}
-                                style={{ marginTop: 10 }}
-                            />
-                        </View>
+                        {hasImageChanges && (
+                            <View style={styles.saveImagesButtonContainer}>
+                                <CustomButton
+                                    title="Sauvegarder les images"
+                                    onPress={handleSaveImages}
+                                    isLoading={updateProductMutation.isPending}
+                                    style={{ marginTop: 10 }}
+                                />
+                            </View>
+                        )}
                     </View>
 
                     <View style={styles.section}>

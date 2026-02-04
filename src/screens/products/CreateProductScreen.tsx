@@ -185,11 +185,7 @@ export const CreateProductScreen = () => {
             <ScreenWrapper scrollable contentContainerStyle={styles.contentContainer}>
                 <View style={styles.container}>
 
-                    {activeVitrine && (
-                        <Text style={[styles.subtitle, { color: theme.colors.textSecondary }]}>
-                            Vitrine : {activeVitrine.name}
-                        </Text>
-                    )}
+
 
                     <View style={[styles.section, { backgroundColor: theme.colors.surface, borderRadius: theme.borderRadius.m }]}>
                         <CustomInput

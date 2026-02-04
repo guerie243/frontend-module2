@@ -8,6 +8,7 @@ import { useTheme } from '../../context/ThemeContext';
 import { useUpdateVitrine } from '../../hooks/useVitrines';
 import { AnimatedSelect } from '../../components/AnimatedSelect';
 import { useAlertService } from '../../utils/alertService';
+import { ALGERIA_CITIES } from '../../constants/locations';
 
 // Categories for vitrine (matching Module 1)
 const CATEGORIES_VITRINE = [
@@ -158,6 +159,14 @@ export const EditVitrineFieldScreen = () => {
                         options={CATEGORIES_VITRINE}
                         value={value}
                         onChange={setValue}
+                    />
+                ) : field === 'city' ? (
+                    <AnimatedSelect
+                        label={displayLabel}
+                        options={ALGERIA_CITIES.map(c => ({ label: c.label, value: c.value }))}
+                        value={value}
+                        onChange={setValue}
+                        placeholder="Sélectionner une ville"
                     />
                 ) : field === 'phone' ? (
                     <View style={styles.phoneContainer}>

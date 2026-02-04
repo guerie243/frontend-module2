@@ -20,7 +20,7 @@ import { ScreenWrapper } from '../../components/ScreenWrapper';
 import { AnimatedSelect } from '../../components/AnimatedSelect';
 import { PRODUCT_CATEGORIES } from '../../constants/productCategories';
 import { CURRENCY_OPTIONS } from '../../constants/currencies';
-import { LOCATION_OPTIONS } from '../../constants/locations';
+import { ALGERIA_CITIES, LOCATION_OPTIONS } from '../../constants/locations';
 
 interface ImageItem {
     uri: string;
@@ -63,7 +63,7 @@ export const EditProductScreen = () => {
             if (field === 'price') {
                 updateData[field] = parseFloat(value);
             } else if (field === 'locations') {
-                updateData[field] = value.split(',').map((s: string) => s.trim()).filter(Boolean);
+                updateData[field] = Array.isArray(value) ? value : value.split(',').map((s: string) => s.trim()).filter(Boolean);
             } else {
                 updateData[field] = value;
             }
@@ -191,6 +191,15 @@ export const EditProductScreen = () => {
                                 value={value}
                                 onChange={setValue}
                                 options={CURRENCY_OPTIONS.map(c => ({ label: c.label, value: c.value }))}
+                            />
+                        ) : field === 'locations' ? (
+                            <AnimatedSelect
+                                label={label}
+                                value={value}
+                                onChange={setValue}
+                                options={ALGERIA_CITIES.map(l => ({ label: l.label, value: l.value }))}
+                                placeholder="Sélectionner une ou plusieurs villes"
+                                multiple={true}
                             />
                         ) : (
                             <CustomInput

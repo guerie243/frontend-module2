@@ -92,6 +92,7 @@ export interface Vitrine {
     type?: string;
     category?: string;
     address?: string;
+    city?: string;
     contact?: {
         email?: string;
         phone?: string;

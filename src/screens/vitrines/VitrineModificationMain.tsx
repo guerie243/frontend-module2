@@ -101,7 +101,7 @@ export const VitrineModificationMain = () => {
         return (
             <ScreenWrapper>
                 <View style={styles.center}>
-                    <Ionicons name="alert-circle-outline" size={48} color={theme.colors.danger} />
+                    <Ionicons name="alert-circle-outline" size={48} color={theme.colors.error} />
                     <Text style={[styles.errorText, { color: theme.colors.text }]}>
                         {error || 'Aucune vitrine trouvée'}
                     </Text>
@@ -139,6 +139,7 @@ export const VitrineModificationMain = () => {
                 <View style={styles.section}>
                     <Text style={[styles.sectionTitle, { color: theme.colors.primary }]}>Localisation</Text>
 
+                    {renderFieldItem('Ville', vitrine.city || '', 'city')}
                     {renderFieldItem('Adresse', vitrine.address || '', 'address', { multiline: true })}
                 </View>
 

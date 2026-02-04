@@ -15,6 +15,7 @@ interface CustomInputProps extends TextInputProps {
     error?: string;
     icon?: keyof typeof Ionicons.glyphMap;
     containerStyle?: StyleProp<ViewStyle>;
+    LeftComponent?: React.ReactNode;
     RightComponent?: React.ReactNode;
 }
 
@@ -24,6 +25,7 @@ export const CustomInput: React.FC<CustomInputProps> = ({
     icon,
     containerStyle,
     style,
+    LeftComponent,
     RightComponent,
     secureTextEntry,
     ...textInputProps
@@ -55,6 +57,7 @@ export const CustomInput: React.FC<CustomInputProps> = ({
                         style={styles.icon}
                     />
                 )}
+                {LeftComponent}
                 <TextInput
                     style={[
                         styles.input,
