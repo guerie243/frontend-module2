@@ -45,7 +45,6 @@ export const ProductDetailScreen = () => {
     const [showCartControls, setShowCartControls] = useState(false);
     const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
-    const [isDeleting, setIsDeleting] = useState(false);
 
     const currentUserId = user?.userId || user?.id || user?._id;
     const isOwner = isAuthenticated && !!user && !!vitrine && (
