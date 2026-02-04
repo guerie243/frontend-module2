@@ -79,6 +79,8 @@ export const EditProductScreen = () => {
         }
     }, [product]);
 
+    const [isDeleting, setIsDeleting] = useState(false);
+
     const handleUpdateProduct = async () => {
         // Validation
         if (!name.trim()) {
@@ -123,14 +125,19 @@ export const EditProductScreen = () => {
     const handleDeleteProduct = () => {
         showConfirm(
             'Êtes-vous sûr de vouloir supprimer ce produit ? Cette action est irréversible.',
-            async () => {
-                try {
-                    await deleteProductMutation.mutateAsync(productId);
-                    showSuccess('Produit supprimé');
-                    navigation.goBack();
-                } catch (error: any) {
-                    showError(error.message || 'Échec de la suppression');
-                }
+            () => {
+                setIsDeleting(true);
+                // 3 seconds delay as requested
+                setTimeout(async () => {
+                    try {
+                        await deleteProductMutation.mutateAsync(productId);
+                        showSuccess('Produit supprimé');
+                        navigation.goBack();
+                    } catch (error: any) {
+                        setIsDeleting(false);
+                        showError(error.message || 'Échec de la suppression');
+                    }
+                }, 3000);
             }
         );
     };
@@ -270,17 +277,22 @@ export const EditProductScreen = () => {
                             title="Enregistrer les modifications"
                             onPress={handleUpdateProduct}
                             isLoading={updateProductMutation.isPending}
-                            style={{ marginBottom: 12 }}
+                            style={{ marginBottom: 24 }}
                         />
 
-                        <CustomButton
-                            title="Supprimer le produit"
+                        <TouchableOpacity
                             onPress={handleDeleteProduct}
-                            variant="secondary"
-                            style={{ borderColor: theme.colors.error }}
-                            textStyle={{ color: theme.colors.error }}
-                            disabled={deleteProductMutation.isPending}
-                        />
+                            disabled={deleteProductMutation.isPending || isDeleting}
+                            style={styles.deleteLink}
+                        >
+                            {isDeleting ? (
+                                <ActivityIndicator size="small" color={theme.colors.error} />
+                            ) : (
+                                <Text style={[styles.deleteLinkText, { color: theme.colors.error }]}>
+                                    Supprimer mon produit
+                                </Text>
+                            )}
+                        </TouchableOpacity>
                     </View>
                 </View>
             </ScreenWrapper>
@@ -373,5 +385,15 @@ const styles = StyleSheet.create({
     footer: {
         marginTop: 32,
         marginBottom: 40,
+        alignItems: 'center',
+    },
+    deleteLink: {
+        paddingVertical: 12,
+        paddingHorizontal: 20,
+    },
+    deleteLinkText: {
+        fontSize: 16,
+        fontWeight: '600',
+        textDecorationLine: 'none',
     },
 });
