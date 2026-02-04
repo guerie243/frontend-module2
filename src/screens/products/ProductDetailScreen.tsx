@@ -43,6 +43,7 @@ export const ProductDetailScreen = () => {
     const carouselHeight = useRef(new Animated.Value(CAROUSEL_HEIGHT)).current;
     const [quantity, setQuantity] = useState(1);
     const [showCartControls, setShowCartControls] = useState(false);
+    const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
 
     const currentUserId = user?.userId || user?.id || user?._id;
