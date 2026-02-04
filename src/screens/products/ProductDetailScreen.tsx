@@ -138,7 +138,7 @@ export const ProductDetailScreen = () => {
                         styles.infoContainer,
                         {
                             backgroundColor: theme.colors.surface,
-                            borderRadius: 24,
+                            borderRadius: 20,
                             marginTop: 16,
                             paddingTop: 24,
                         }
@@ -368,7 +368,7 @@ const createStyles = (theme: any) => StyleSheet.create({
     },
     button: {
         height: 54,
-        borderRadius: 27,
+        borderRadius: 12,
         justifyContent: 'center',
         alignItems: 'center',
         elevation: 4,

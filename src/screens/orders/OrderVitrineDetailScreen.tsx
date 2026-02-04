@@ -269,7 +269,7 @@ const styles = StyleSheet.create({
     section: {
         padding: 16,
         margin: 16,
-        borderRadius: 20,
+        borderRadius: 16,
     },
     title: {
         fontSize: 24,
@@ -294,7 +294,7 @@ const styles = StyleSheet.create({
     },
     callButton: {
         height: 54,
-        borderRadius: 27,
+        borderRadius: 12,
         justifyContent: 'center',
         alignItems: 'center',
         marginTop: 16,
@@ -311,7 +311,7 @@ const styles = StyleSheet.create({
     },
     itineraryButton: {
         height: 54,
-        borderRadius: 27,
+        borderRadius: 12,
         flexDirection: 'row',
         justifyContent: 'center',
         alignItems: 'center',
@@ -362,7 +362,7 @@ const styles = StyleSheet.create({
     },
     statusButton: {
         height: 54,
-        borderRadius: 27,
+        borderRadius: 12,
         justifyContent: 'center',
         alignItems: 'center',
         elevation: 2,

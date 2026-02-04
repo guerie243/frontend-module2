@@ -460,7 +460,7 @@ const styles = StyleSheet.create({
     },
     section: {
         padding: 16,
-        borderRadius: 20,
+        borderRadius: 16,
         marginBottom: 16,
     },
     sectionTitle: {
@@ -569,7 +569,7 @@ const styles = StyleSheet.create({
     },
     button: {
         height: 54,
-        borderRadius: 27,
+        borderRadius: 12,
         justifyContent: 'center',
         alignItems: 'center',
         elevation: 4,
