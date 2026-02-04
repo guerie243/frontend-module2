@@ -269,7 +269,7 @@ const styles = StyleSheet.create({
     section: {
         padding: 16,
         margin: 16,
-        borderRadius: 12,
+        borderRadius: 20,
     },
     title: {
         fontSize: 24,
@@ -293,11 +293,16 @@ const styles = StyleSheet.create({
         fontSize: 16,
     },
     callButton: {
-        height: 50,
-        borderRadius: 8,
+        height: 54,
+        borderRadius: 27,
         justifyContent: 'center',
         alignItems: 'center',
         marginTop: 16,
+        elevation: 2,
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 3,
     },
     callButtonText: {
         color: '#FFFFFF',
@@ -305,8 +310,8 @@ const styles = StyleSheet.create({
         fontWeight: '600',
     },
     itineraryButton: {
-        height: 50,
-        borderRadius: 8,
+        height: 54,
+        borderRadius: 27,
         flexDirection: 'row',
         justifyContent: 'center',
         alignItems: 'center',
@@ -356,10 +361,15 @@ const styles = StyleSheet.create({
         gap: 8,
     },
     statusButton: {
-        height: 50,
-        borderRadius: 8,
+        height: 54,
+        borderRadius: 27,
         justifyContent: 'center',
         alignItems: 'center',
+        elevation: 2,
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 3,
     },
     statusButtonText: {
         color: '#FFFFFF',

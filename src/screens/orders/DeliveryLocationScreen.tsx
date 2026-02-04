@@ -408,12 +408,11 @@ export const DeliveryLocationScreen = () => {
                         </View>
                     </ScrollView>
 
-                    <View style={[styles.footer, { backgroundColor: theme.colors.surface, borderTopColor: theme.colors.border }]}>
+                    <View style={styles.floatingFooter}>
                         <TouchableOpacity
                             style={[styles.button, {
                                 backgroundColor: canSubmit ? theme.colors.primary : '#E0E0E0',
                                 opacity: canSubmit ? 1 : 0.8,
-                                marginTop: 0
                             }]}
                             onPress={handleSubmitOrder}
                             disabled={createOrderMutation.isPending || !canSubmit}
@@ -439,15 +438,14 @@ export const DeliveryLocationScreen = () => {
 
 
 const styles = StyleSheet.create({
-    footer: {
+    floatingFooter: {
+        position: 'absolute',
+        bottom: 0,
+        left: 0,
+        right: 0,
         padding: 16,
         paddingBottom: Platform.OS === 'ios' ? 34 : 16,
-        borderTopWidth: 1,
-        elevation: 10,
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: -4 },
-        shadowOpacity: 0.1,
-        shadowRadius: 8,
+        backgroundColor: 'transparent',
     },
     container: {
         flex: 1,
@@ -462,7 +460,7 @@ const styles = StyleSheet.create({
     },
     section: {
         padding: 16,
-        borderRadius: 12,
+        borderRadius: 20,
         marginBottom: 16,
     },
     sectionTitle: {
@@ -570,12 +568,15 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
     },
     button: {
-        height: 50,
-        borderRadius: 8,
+        height: 54,
+        borderRadius: 27,
         justifyContent: 'center',
         alignItems: 'center',
-        marginTop: 8,
-        marginBottom: 20,
+        elevation: 4,
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.2,
+        shadowRadius: 5,
     },
     buttonText: {
         color: '#FFFFFF',

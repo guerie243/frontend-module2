@@ -138,10 +138,9 @@ export const ProductDetailScreen = () => {
                         styles.infoContainer,
                         {
                             backgroundColor: theme.colors.surface,
-                            borderTopLeftRadius: 30,
-                            borderTopRightRadius: 30,
-                            marginTop: -20, // Overlap effect
-                            paddingTop: 30,
+                            borderRadius: 24,
+                            marginTop: 16,
+                            paddingTop: 24,
                         }
                     ]}>
                         <Text style={[styles.productName, { color: theme.colors.text }]}>
@@ -207,12 +206,12 @@ export const ProductDetailScreen = () => {
                     </View>
                 </ScrollView>
 
-                {/* Sticky Footer for Actions */}
-                <View style={[styles.footer, { backgroundColor: theme.colors.surface, borderTopColor: theme.colors.border }]}>
+                {/* Floating Action Bar */}
+                <View style={styles.floatingFooter}>
                     {/* Owner Actions */}
                     {isOwner && (
                         <TouchableOpacity
-                            style={[styles.button, { backgroundColor: theme.colors.primary, marginTop: 0 }]}
+                            style={[styles.button, { backgroundColor: theme.colors.primary }]}
                             onPress={handleEdit}
                         >
                             <Ionicons name="settings-outline" size={20} color="#FFF" style={{ marginRight: 8 }} />
@@ -240,7 +239,7 @@ export const ProductDetailScreen = () => {
                             </View>
 
                             <TouchableOpacity
-                                style={[styles.button, { backgroundColor: theme.colors.primary, marginTop: 0 }]}
+                                style={[styles.button, { backgroundColor: theme.colors.primary }]}
                                 onPress={handleAddToCart}
                             >
                                 <Text style={styles.buttonText}>
@@ -264,15 +263,14 @@ export const ProductDetailScreen = () => {
 };
 
 const createStyles = (theme: any) => StyleSheet.create({
-    footer: {
+    floatingFooter: {
+        position: 'absolute',
+        bottom: 0,
+        left: 0,
+        right: 0,
         padding: 16,
-        paddingBottom: Platform.OS === 'ios' ? 34 : 16, // Safe area for iOS
-        borderTopWidth: 1,
-        elevation: 10,
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: -4 },
-        shadowOpacity: 0.1,
-        shadowRadius: 8,
+        paddingBottom: Platform.OS === 'ios' ? 34 : 16,
+        backgroundColor: 'transparent',
     },
 
     container: {
@@ -369,11 +367,15 @@ const createStyles = (theme: any) => StyleSheet.create({
         marginHorizontal: 24,
     },
     button: {
-        height: 50,
-        borderRadius: 12,
+        height: 54,
+        borderRadius: 27,
         justifyContent: 'center',
         alignItems: 'center',
-        marginTop: 8,
+        elevation: 4,
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.2,
+        shadowRadius: 5,
     },
     buttonText: {
         color: '#FFFFFF',

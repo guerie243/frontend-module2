@@ -188,7 +188,7 @@ const styles = StyleSheet.create({
     section: {
         padding: 16,
         margin: 16,
-        borderRadius: 12,
+        borderRadius: 20,
     },
     title: {
         fontSize: 24,

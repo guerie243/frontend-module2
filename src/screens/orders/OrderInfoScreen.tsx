@@ -181,7 +181,7 @@ export const OrderInfoScreen = () => {
                         </View>
                     </ScrollView>
 
-                    <View style={[styles.footer, { backgroundColor: theme.colors.surface, borderTopColor: theme.colors.border }]}>
+                    <View style={styles.floatingFooter}>
                         <TouchableOpacity
                             style={[styles.button, { backgroundColor: theme.colors.primary, marginTop: 0 }]}
                             onPress={handleContinue}
@@ -196,22 +196,21 @@ export const OrderInfoScreen = () => {
 };
 
 const styles = StyleSheet.create({
-    footer: {
+    floatingFooter: {
+        position: 'absolute',
+        bottom: 0,
+        left: 0,
+        right: 0,
         padding: 16,
         paddingBottom: Platform.OS === 'ios' ? 34 : 16,
-        borderTopWidth: 1,
-        elevation: 10,
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: -4 },
-        shadowOpacity: 0.1,
-        shadowRadius: 8,
+        backgroundColor: 'transparent',
     },
     contentContainer: {
         padding: 16,
     },
     section: {
         padding: 16,
-        borderRadius: 12,
+        borderRadius: 20,
         marginBottom: 16,
     },
     sectionTitle: {
@@ -289,11 +288,15 @@ const styles = StyleSheet.create({
         textAlignVertical: 'top',
     },
     button: {
-        height: 50,
-        borderRadius: 8,
+        height: 54,
+        borderRadius: 27,
         justifyContent: 'center',
         alignItems: 'center',
-        marginTop: 8,
+        elevation: 4,
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.2,
+        shadowRadius: 5,
     },
     buttonText: {
         color: '#FFFFFF',
