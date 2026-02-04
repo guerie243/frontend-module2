@@ -63,11 +63,12 @@ export const OrderVitrineDetailScreen = () => {
 
         const { latitude, longitude } = coords;
 
+        // URLs pour démarrer la navigation automatiquement en mode conduite
         const url = Platform.select({
-            ios: `maps://app?daddr=${latitude},${longitude}&dirflg=d`,
+            ios: `maps://?daddr=${latitude},${longitude}&dirflg=d&navigate=1`,
             android: `google.navigation:q=${latitude},${longitude}&mode=d`,
-            web: `https://www.google.com/maps/dir/?api=1&destination=${latitude},${longitude}&travelmode=driving`
-        }) || `https://www.google.com/maps/dir/?api=1&destination=${latitude},${longitude}&travelmode=driving`;
+            web: `https://www.google.com/maps/dir/?api=1&destination=${latitude},${longitude}&travelmode=driving&dir_action=navigate`
+        }) || `https://www.google.com/maps/dir/?api=1&destination=${latitude},${longitude}&travelmode=driving&dir_action=navigate`;
 
         Linking.openURL(url);
     };
