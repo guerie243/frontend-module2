@@ -5,7 +5,7 @@
  */
 
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator, FlatList, Dimensions, Platform } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator, FlatList, Dimensions, Platform, Animated } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
@@ -20,6 +20,7 @@ import { ScreenHeader } from '../../components/ScreenHeader';
 import { getSafeUri } from '../../utils/imageUtils';
 import { useMemo, useRef } from 'react';
 import { ProductCarousel } from '../../components/ProductCarousel';
+import { ShareMenuModal } from '../../components/ShareMenuModal';
 
 const CAROUSEL_HEIGHT = 350;
 
@@ -40,6 +41,7 @@ export const ProductDetailScreen = () => {
 
     // Height fixe pour le ProductCarousel dans ce contexte (pas d'animation complexe de parallaxe pour l'instant sauf si demandé)
     const carouselHeight = useRef(new Animated.Value(CAROUSEL_HEIGHT)).current;
+    const [quantity, setQuantity] = useState(1);
     const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
 
     const currentUserId = user?.userId || user?.id || user?._id;
