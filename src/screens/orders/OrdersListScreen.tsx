@@ -87,7 +87,7 @@ export const OrdersListScreen = () => {
 
 
     // Fusion / Sélection des commandes à afficher
-    const orders = isSellerMode ? sellerOrders : guestOrders;
+    const orders = (isSellerMode ? sellerOrders : guestOrders) || [];
     const ordersLoading = isSellerMode ? sellerOrdersLoading : guestOrdersLoading;
 
     console.log('[OrdersListScreen] Mode:', isSellerMode ? 'SELLER' : 'BUYER', 'Count:', orders?.length);
