@@ -87,3 +87,14 @@ export const useUpdateOrder = () => {
         },
     });
 };
+
+/**
+ * Get guest orders by IDs
+ */
+export const useGuestOrders = (ids: string[], enabled = true) => {
+    return useQuery({
+        queryKey: ['guestOrders', ids],
+        queryFn: () => orderService.getGuestOrders(ids),
+        enabled: enabled && ids.length > 0,
+    });
+};

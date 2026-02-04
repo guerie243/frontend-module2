@@ -38,6 +38,34 @@ export const orderService = {
     },
 
     /**
+     * Get multiple orders by IDs (for guest users)
+     */
+    getGuestOrders: async (ids: string[]) => {
+        if (!ids || ids.length === 0) return [];
+
+        console.log(`[orderService] Fetching ${ids.length} guest orders`);
+
+        try {
+            const promises = ids.map(id =>
+                api.get<{ success: boolean; data: Order }>(`/orders/${id}`)
+                    .then(res => res.data.data)
+                    .catch(err => {
+                        console.warn(`[orderService] Failed to fetch order ${id}:`, err.message);
+                        return null;
+                    })
+            );
+
+            const results = await Promise.all(promises);
+            // Filter out nulls
+            const validOrders = results.filter((order): order is Order => order !== null);
+            return validOrders;
+        } catch (error) {
+            console.error('[orderService] Error fetching guest orders:', error);
+            throw error;
+        }
+    },
+
+    /**
      * Update order status
      */
     updateOrderStatus: async (id: string, status: Order['status']) => {
