@@ -42,7 +42,8 @@ export const ProductDetailScreen = () => {
     // Height fixe pour le ProductCarousel dans ce contexte (pas d'animation complexe de parallaxe pour l'instant sauf si demandé)
     const carouselHeight = useRef(new Animated.Value(CAROUSEL_HEIGHT)).current;
     const [quantity, setQuantity] = useState(1);
-    const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
+    const [showCartControls, setShowCartControls] = useState(false);
+    const [isDeleting, setIsDeleting] = useState(false);
 
     const currentUserId = user?.userId || user?.id || user?._id;
     const isOwner = isAuthenticated && !!user && !!vitrine && (
@@ -219,33 +220,47 @@ export const ProductDetailScreen = () => {
                         </TouchableOpacity>
                     )}
 
-                    {/* Add to Cart - For non-owners */}
+                    {/* Visitor Actions */}
                     {!isOwner && (
                         <View>
-                            <View style={styles.quantityContainer}>
+                            {!showCartControls ? (
                                 <TouchableOpacity
-                                    style={[styles.quantityButton, { backgroundColor: theme.colors.background }]}
-                                    onPress={() => setQuantity(Math.max(1, quantity - 1))}
+                                    style={[styles.button, { backgroundColor: theme.colors.primary }]}
+                                    onPress={() => setShowCartControls(true)}
                                 >
-                                    <Text style={[styles.quantityButtonText, { color: theme.colors.text }]}>-</Text>
+                                    <Text style={styles.buttonText}>Commander</Text>
                                 </TouchableOpacity>
-                                <Text style={[styles.quantityText, { color: theme.colors.text }]}>{quantity}</Text>
-                                <TouchableOpacity
-                                    style={[styles.quantityButton, { backgroundColor: theme.colors.background }]}
-                                    onPress={() => setQuantity(quantity + 1)}
-                                >
-                                    <Text style={[styles.quantityButtonText, { color: theme.colors.text }]}>+</Text>
-                                </TouchableOpacity>
-                            </View>
+                            ) : (
+                                <View style={[styles.cartControlsContainer, { backgroundColor: theme.colors.surface }]}>
+                                    <View style={styles.quantitySection}>
+                                        <Text style={[styles.quantityLabel, { color: theme.colors.text }]}>Quantité</Text>
+                                        <View style={styles.quantitySelector}>
+                                            <TouchableOpacity
+                                                onPress={() => setQuantity(Math.max(1, quantity - 1))}
+                                                style={[styles.quantityBtn, { borderColor: theme.colors.border }]}
+                                            >
+                                                <Ionicons name="remove" size={20} color={theme.colors.text} />
+                                            </TouchableOpacity>
+                                            <Text style={[styles.quantityText, { color: theme.colors.text }]}>{quantity}</Text>
+                                            <TouchableOpacity
+                                                onPress={() => setQuantity(quantity + 1)}
+                                                style={[styles.quantityBtn, { borderColor: theme.colors.border }]}
+                                            >
+                                                <Ionicons name="add" size={20} color={theme.colors.text} />
+                                            </TouchableOpacity>
+                                        </View>
+                                    </View>
 
-                            <TouchableOpacity
-                                style={[styles.button, { backgroundColor: theme.colors.primary }]}
-                                onPress={handleAddToCart}
-                            >
-                                <Text style={styles.buttonText}>
-                                    Ajouter au panier • {(product.price * quantity).toFixed(2)} {product.currency || 'USD'}
-                                </Text>
-                            </TouchableOpacity>
+                                    <TouchableOpacity
+                                        style={[styles.button, { backgroundColor: theme.colors.primary, marginTop: 12 }]}
+                                        onPress={handleAddToCart}
+                                    >
+                                        <Text style={styles.buttonText}>
+                                            Ajouter au panier • {(product.price * quantity).toFixed(2)} {product.currency || 'USD'}
+                                        </Text>
+                                    </TouchableOpacity>
+                                </View>
+                            )}
                         </View>
                     )}
                 </View>
@@ -376,6 +391,7 @@ const createStyles = (theme: any) => StyleSheet.create({
         shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.2,
         shadowRadius: 5,
+        flexDirection: 'row', // Added for icon
     },
     buttonText: {
         color: '#FFFFFF',
@@ -443,6 +459,37 @@ const createStyles = (theme: any) => StyleSheet.create({
     },
     rightNavButton: {
         right: 10,
+    },
+    cartControlsContainer: {
+        padding: 16,
+        borderRadius: 20,
+        elevation: 8,
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.15,
+        shadowRadius: 10,
+    },
+    quantitySection: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: 16,
+    },
+    quantityLabel: {
+        fontSize: 18,
+        fontWeight: '600',
+    },
+    quantitySelector: {
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+    quantityBtn: {
+        width: 40,
+        height: 40,
+        borderRadius: 20,
+        borderWidth: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
     },
     paginationDots: {
         position: 'absolute',
