@@ -64,4 +64,15 @@ export const userService = {
         );
         return response.data.user;
     },
+
+    /**
+     * Delete user account
+     */
+    deleteAccount: async (password: string) => {
+        const response = await module1Api.delete<{ success: boolean; message: string }>(
+            '/users/',
+            { data: { password } }
+        );
+        return response.data;
+    },
 };

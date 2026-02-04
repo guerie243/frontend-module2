@@ -31,6 +31,14 @@ import { VitrineModificationMain } from '../screens/vitrines/VitrineModification
 import { EditVitrineFieldScreen } from '../screens/vitrines/EditVitrineFieldScreen';
 import { SettingsScreen } from '../screens/settings/SettingsScreen';
 
+// Settings Screens
+import { ProfileDetailScreen } from '../screens/settings/ProfileDetailScreen';
+import { CompteModificationMain } from '../screens/settings/CompteModificationMain';
+import { EditCompteFieldScreen } from '../screens/settings/EditCompteFieldScreen';
+import { TermsOfServiceScreen } from '../screens/settings/TermsOfServiceScreen';
+import { PrivacyPolicyScreen } from '../screens/settings/PrivacyPolicyScreen';
+import { ContactUsScreen } from '../screens/settings/ContactUsScreen';
+
 // Auth Screens
 import { LoginScreen } from '../screens/auth/LoginScreen';
 import { RegisterScreen } from '../screens/auth/RegisterScreen';
@@ -67,8 +75,16 @@ export const AppStack = () => {
             <Stack.Screen name="VitrineEdit" component={VitrineEditScreen} />
             <Stack.Screen name="VitrineModificationMain" component={VitrineModificationMain} />
             <Stack.Screen name="EditVitrineField" component={EditVitrineFieldScreen} />
-            <Stack.Screen name="Settings" component={SettingsScreen} />
             <Stack.Screen name="VitrineDetail" component={ProductsCatalogScreen} />
+
+            {/* Settings Routes */}
+            <Stack.Screen name="Settings" component={SettingsScreen} />
+            <Stack.Screen name="ProfileDetail" component={ProfileDetailScreen} />
+            <Stack.Screen name="CompteModificationMain" component={CompteModificationMain} />
+            <Stack.Screen name="EditCompteField" component={EditCompteFieldScreen} />
+            <Stack.Screen name="TermsOfService" component={TermsOfServiceScreen} />
+            <Stack.Screen name="PrivacyPolicy" component={PrivacyPolicyScreen} />
+            <Stack.Screen name="ContactUs" component={ContactUsScreen} />
 
             {/* Auth Routes */}
             <Stack.Screen name="Login" component={LoginScreen} />

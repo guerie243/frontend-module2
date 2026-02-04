@@ -20,6 +20,7 @@ interface AuthContextType {
     register: (data: { profileName: string; email?: string; phoneNumber?: string; password: string }) => Promise<void>;
     logout: () => Promise<void>;
     updateUser: (data: Partial<User>) => Promise<void>;
+    refreshUser: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -153,6 +154,22 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         console.log('Login required event received');
     };
 
+    const refreshUser = async () => {
+        try {
+            console.log('Refreshing user profile from server');
+            const updatedUser = await userService.getProfile();
+            await storage.setItem('userData', JSON.stringify(updatedUser));
+            setUser(updatedUser);
+            console.log('Profile refreshed successfully');
+        } catch (error: any) {
+            console.error('Refresh profile error:', error.response?.data || error.message);
+            // Si l'erreur est une authentification, déconnecter l'utilisateur
+            if (error.response?.status === 401) {
+                await logout();
+            }
+        }
+    };
+
     const value: AuthContextType = {
         user,
         isAuthenticated,
@@ -162,6 +179,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         register,
         logout,
         updateUser,
+        refreshUser,
     };
 
     return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

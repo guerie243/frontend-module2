@@ -11,6 +11,7 @@ export interface User {
     email?: string;
     name?: string;
     profileName?: string;
+    username?: string;
     phoneNumber?: string;
     phone?: string;
     firebaseToken?: string;
