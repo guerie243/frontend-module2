@@ -62,7 +62,11 @@ export const OrderVitrineDetailScreen = () => {
 
     // Robust owner check (handle string or object ID)
     const vitrineOwnerId = typeof vitrine?.ownerId === 'object' ? (vitrine?.ownerId as any)?._id : vitrine?.ownerId;
-    const isOwner = !!user && !!vitrineOwnerId && (user.id === vitrineOwnerId || user._id === vitrineOwnerId);
+    const currentUserId = user?.id || user?._id || user?.userId;
+    const isOwner = !!user && !!vitrineOwnerId && (
+        currentUserId === vitrineOwnerId ||
+        String(currentUserId) === String(vitrineOwnerId)
+    );
 
     // Third party only if data is loaded and user is neither client nor owner
     const isThirdParty = !!user && !!vitrine && !isClient && !isOwner;
@@ -168,12 +172,12 @@ export const OrderVitrineDetailScreen = () => {
 
         const { latitude, longitude } = coords;
 
-        // URL pour afficher l'itinéraire (le tracé) en mode voiture sans démarrer la navigation guidée
+        // URL pour afficher la destination sans démarrer la navigation automatique
         const url = Platform.select({
-            ios: `http://maps.apple.com/?daddr=${latitude},${longitude}&dirflg=d`,
-            android: `https://www.google.com/maps/dir/?api=1&destination=${latitude},${longitude}&travelmode=driving`,
-            web: `https://www.google.com/maps/dir/?api=1&destination=${latitude},${longitude}&travelmode=driving`
-        }) || `https://www.google.com/maps/dir/?api=1&destination=${latitude},${longitude}&travelmode=driving`;
+            ios: `maps://?q=${latitude},${longitude}`,
+            android: `geo:${latitude},${longitude}?q=${latitude},${longitude}`,
+            web: `https://www.google.com/maps/search/?api=1&query=${latitude},${longitude}`
+        }) || `https://www.google.com/maps/search/?api=1&query=${latitude},${longitude}`;
 
         Linking.openURL(url);
     };
@@ -268,21 +272,10 @@ export const OrderVitrineDetailScreen = () => {
 
 
                     <View style={[styles.contactButtonsContainer, { marginTop: 16 }]}>
-                        {/* Exclure "Contacter le vendeur" pour le vendeur lui-même */}
-                        {((isClient || isThirdParty) && !isOwner) && vitrine?.contact?.phone && (
+                        {/* Contact Client (Primordial pour le vendeur/gestionnaire) */}
+                        {order?.clientPhone && (
                             <TouchableOpacity
-                                style={[styles.whatsappButton, { backgroundColor: '#25D366' }]}
-                                onPress={() => handleWhatsAppRedirect('seller')}
-                            >
-                                <FontAwesome name="whatsapp" size={24} color="#FFFFFF" />
-                                <Text style={styles.whatsappButtonText}>Contacter le vendeur</Text>
-                            </TouchableOpacity>
-                        )}
-
-                        {/* Exclure "Contacter le client" pour le client lui-même */}
-                        {((isOwner || isThirdParty) && !isClient) && order?.clientPhone && (
-                            <TouchableOpacity
-                                style={[styles.whatsappButton, { backgroundColor: '#25D366' }]}
+                                style={[styles.whatsappButton, { backgroundColor: theme.colors.primary }]}
                                 onPress={() => handleWhatsAppRedirect('client')}
                             >
                                 <FontAwesome name="whatsapp" size={24} color="#FFFFFF" />
@@ -319,36 +312,38 @@ export const OrderVitrineDetailScreen = () => {
                 </View>
 
                 {/* Status Management */}
-                <View style={[styles.section, { backgroundColor: theme.colors.surface }]}>
-                    <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>
-                        Gestion du statut
-                    </Text>
-                    <Text style={[styles.sectionTitle, { color: theme.colors.text, marginBottom: 8 }]}>
-                        La commande est :
-                    </Text>
-                    <Text style={[styles.currentStatus, { color: theme.colors.textSecondary }]}>
-                        Statut actuel : <Text style={{ color: getOrderStatus(order.status).color, fontWeight: 'bold' }}>{getOrderStatus(order.status).label}</Text>
+                <View style={[styles.section, { backgroundColor: theme.colors.surface, marginBottom: isOwner && order.status === 'pending' ? 100 : 16 }]}>
+                    <Text style={[styles.sectionTitle, { color: theme.colors.text, marginBottom: 12 }]}>
+                        Statut de la commande
                     </Text>
 
-                    {/* Management buttons restricted to owner */}
-                    {isOwner && order.status === 'pending' && (
-                        <View style={styles.sideBySideButtons}>
-                            <TouchableOpacity
-                                style={[styles.statusButton, { backgroundColor: theme.colors.primary, flex: 1 }]}
-                                onPress={() => handleUpdateStatus('confirmed')}
-                            >
-                                <Text style={styles.statusButtonText}>Accepter</Text>
-                            </TouchableOpacity>
-                            <TouchableOpacity
-                                style={[styles.statusButton, { backgroundColor: '#FF3B30', flex: 1 }]}
-                                onPress={handleRejectClick}
-                            >
-                                <Text style={styles.statusButtonText}>Refuser</Text>
-                            </TouchableOpacity>
-                        </View>
-                    )}
+                    <View style={[styles.statusBadge, { backgroundColor: getOrderStatus(order.status).color + '20' }]}>
+                        <Text style={[styles.statusText, { color: getOrderStatus(order.status).color }]}>
+                            {getOrderStatus(order.status).label}
+                        </Text>
+                    </View>
                 </View>
             </ScrollView>
+
+            {/* Fixed Footer for Management Buttons */}
+            {isOwner && order.status === 'pending' && (
+                <View style={[styles.footer, { backgroundColor: theme.colors.surface, borderTopColor: theme.colors.border }]}>
+                    <View style={styles.sideBySideButtons}>
+                        <TouchableOpacity
+                            style={[styles.statusButton, { backgroundColor: theme.colors.primary, flex: 1 }]}
+                            onPress={() => handleUpdateStatus('confirmed')}
+                        >
+                            <Text style={styles.statusButtonText}>Accepter</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                            style={[styles.statusButton, { backgroundColor: '#FF3B30', flex: 1 }]}
+                            onPress={handleRejectClick}
+                        >
+                            <Text style={styles.statusButtonText}>Refuser</Text>
+                        </TouchableOpacity>
+                    </View>
+                </View>
+            )}
 
             {/* Rejection Reasons Modal */}
             <Modal
@@ -511,9 +506,29 @@ const styles = StyleSheet.create({
         fontSize: 20,
         fontWeight: 'bold',
     },
-    currentStatus: {
+    statusBadge: {
+        paddingHorizontal: 16,
+        paddingVertical: 8,
+        borderRadius: 20,
+        alignSelf: 'flex-start',
+    },
+    statusText: {
         fontSize: 14,
-        marginBottom: 16,
+        fontWeight: '600',
+    },
+    footer: {
+        padding: 16,
+        paddingBottom: Platform.OS === 'ios' ? 34 : 16,
+        borderTopWidth: 1,
+        position: 'absolute',
+        bottom: 0,
+        left: 0,
+        right: 0,
+        elevation: 8,
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: -2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
     },
     statusButtons: {
         gap: 8,

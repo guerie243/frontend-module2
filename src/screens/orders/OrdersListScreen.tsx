@@ -203,11 +203,7 @@ export const OrdersListScreen = () => {
                 showBack={false}
             />
 
-            {activeVitrine && (
-                <Text style={[styles.subtitle, { color: theme.colors.textSecondary, marginTop: 8 }]}>
-                    Vitrine : {activeVitrine.name}
-                </Text>
-            )}
+
 
             {/* Filter Buttons */}
             <View style={styles.filterContainer}>
