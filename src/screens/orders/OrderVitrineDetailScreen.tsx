@@ -271,7 +271,7 @@ export const OrderVitrineDetailScreen = () => {
                         {/* Contact Client (Primordial pour le vendeur/gestionnaire) */}
                         {order?.clientPhone && (
                             <TouchableOpacity
-                                style={[styles.whatsappButton, { backgroundColor: theme.colors.primary }]}
+                                style={[styles.whatsappButton, { backgroundColor: '#25D366' }]}
                                 onPress={() => handleWhatsAppRedirect('client')}
                             >
                                 <FontAwesome name="whatsapp" size={24} color="#FFFFFF" />
