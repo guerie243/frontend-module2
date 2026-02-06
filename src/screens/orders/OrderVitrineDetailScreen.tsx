@@ -168,12 +168,12 @@ export const OrderVitrineDetailScreen = () => {
 
         const { latitude, longitude } = coords;
 
-        // URL pour afficher la destination sans démarrer la navigation automatique
+        // URL pour afficher l'itinéraire (le tracé) sans démarrer la navigation guidée
         const url = Platform.select({
-            ios: `maps://?q=${latitude},${longitude}`,
-            android: `geo:${latitude},${longitude}?q=${latitude},${longitude}`,
-            web: `https://www.google.com/maps/search/?api=1&query=${latitude},${longitude}`
-        }) || `https://www.google.com/maps/search/?api=1&query=${latitude},${longitude}`;
+            ios: `http://maps.apple.com/?daddr=${latitude},${longitude}`,
+            android: `https://www.google.com/maps/dir/?api=1&destination=${latitude},${longitude}`,
+            web: `https://www.google.com/maps/dir/?api=1&destination=${latitude},${longitude}`
+        }) || `https://www.google.com/maps/dir/?api=1&destination=${latitude},${longitude}`;
 
         Linking.openURL(url);
     };
