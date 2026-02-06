@@ -73,13 +73,30 @@ export const OrderVitrineDetailScreen = () => {
         }
     };
 
-    const handleWhatsAppRedirect = (status: 'confirmed' | 'cancelled', reason?: string) => {
-        if (!order?.clientPhone) return;
-        const message = getWhatsAppMessage(status, reason);
-        const phone = order.clientPhone.replace(/\s/g, '');
-        const url = `whatsapp://send?phone=${phone}&text=${encodeURIComponent(message)}`;
+    const handleWhatsAppRedirect = (target: 'seller' | 'client') => {
+        const phone = target === 'seller' ? vitrine?.contact?.phone : order?.clientPhone;
+        if (!phone) return;
+
+        const productsList = order?.products.map(p => `${p.quantity}x ${p.productName}`).join(', ');
+        const orderUrl = getOrderUrl(orderId);
+
+        let message = '';
+        if (isOwner) {
+            // Owner is the seller
+            message = `Bonjour ${order?.clientName}, je suis le vendeur, je vous contacte à propos de votre commande de ${productsList}. Détails : ${orderUrl}`;
+        } else if (isClient) {
+            // User is the client
+            message = `Bonjour ${vitrine?.name}, je vous contacte à propos de ma commande de ${productsList}. Détails : ${orderUrl}`;
+        } else {
+            // Third party
+            const name = target === 'seller' ? vitrine?.name : order?.clientName;
+            message = `Bonjour ${name}, je vous contacte à propos de la commande de ${productsList}. Détails : ${orderUrl}`;
+        }
+
+        const sanitizedPhone = phone.replace(/\s/g, '');
+        const url = `whatsapp://send?phone=${sanitizedPhone}&text=${encodeURIComponent(message)}`;
         Linking.openURL(url).catch(() => {
-            const webUrl = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
+            const webUrl = `https://wa.me/${sanitizedPhone}?text=${encodeURIComponent(message)}`;
             Linking.openURL(webUrl);
         });
     };
@@ -98,7 +115,25 @@ export const OrderVitrineDetailScreen = () => {
 
                     // Redirect to WhatsApp after successful status update
                     if (newStatus === 'confirmed' || newStatus === 'cancelled') {
-                        handleWhatsAppRedirect(newStatus as 'confirmed' | 'cancelled', reason);
+                        const statusReason = newStatus === 'confirmed' ? 'Acceptée' : (reason || 'non spécifié');
+                        const productsList = order?.products.map(p => `${p.quantity}x ${p.productName}`).join(', ');
+                        const orderUrl = getOrderUrl(orderId);
+
+                        let message = '';
+                        if (newStatus === 'confirmed') {
+                            message = `Bonjour ${order?.clientName}, votre commande de ${productsList} a été acceptée. Nous préparons votre livraison. Suivez-la ici : ${orderUrl}`;
+                        } else {
+                            message = `Bonjour ${order?.clientName}, nous sommes désolés mais votre commande n'a pas pu être acceptée en raison de : ${statusReason}. Détails : ${orderUrl}`;
+                        }
+
+                        if (order?.clientPhone) {
+                            const phone = order.clientPhone.replace(/\s/g, '');
+                            const url = `whatsapp://send?phone=${phone}&text=${encodeURIComponent(message)}`;
+                            Linking.openURL(url).catch(() => {
+                                const webUrl = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
+                                Linking.openURL(webUrl);
+                            });
+                        }
                     }
 
                     refetch();
@@ -228,20 +263,22 @@ export const OrderVitrineDetailScreen = () => {
 
 
                     <View style={[styles.contactButtonsContainer, { marginTop: 16 }]}>
+                        {/* Client see Seller contact only, Seller see Client contact only, Third Party see both */}
+
                         {(isClient || isThirdParty) && vitrine?.contact?.phone && (
                             <TouchableOpacity
                                 style={[styles.whatsappButton, { backgroundColor: '#25D366' }]}
-                                onPress={() => handleWhatsAppRedirect('confirmed')} // Default contact message
+                                onPress={() => handleWhatsAppRedirect('seller')}
                             >
                                 <FontAwesome name="whatsapp" size={24} color="#FFFFFF" />
                                 <Text style={styles.whatsappButtonText}>Contacter le vendeur</Text>
                             </TouchableOpacity>
                         )}
 
-                        {isThirdParty && order.clientPhone && (
+                        {(isOwner || isThirdParty) && order?.clientPhone && (
                             <TouchableOpacity
                                 style={[styles.whatsappButton, { backgroundColor: '#25D366' }]}
-                                onPress={() => handleWhatsAppRedirect('confirmed')}
+                                onPress={() => handleWhatsAppRedirect('client')}
                             >
                                 <FontAwesome name="whatsapp" size={24} color="#FFFFFF" />
                                 <Text style={styles.whatsappButtonText}>Contacter le client</Text>

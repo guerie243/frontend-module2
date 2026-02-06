@@ -83,6 +83,13 @@ export const MyPurchasesScreen = () => {
 
     const pendingCount = useMemo(() => guestOrders.filter(o => o.status === 'pending').length, [guestOrders]);
 
+    const statusFilters: { status: Order['status'] | 'all'; label: string }[] = [
+        { status: 'all', label: 'Toutes' },
+        { status: 'pending', label: 'En attente' },
+        { status: 'confirmed', label: 'Confirmée' },
+        { status: 'cancelled', label: 'Annulée' },
+    ];
+
     const renderFilterButton = (status: Order['status'] | 'all', label: string) => (
         <TouchableOpacity
             style={[
@@ -171,14 +178,13 @@ export const MyPurchasesScreen = () => {
             />
 
             <View style={styles.filterContainer}>
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
-                    {renderFilterButton('all', 'Toutes')}
-                    {renderFilterButton('pending', 'En attente')}
-                    {renderFilterButton('confirmed', 'Confirmées')}
-                    {renderFilterButton('preparing', 'Préparation')}
-                    {renderFilterButton('delivering', 'Livraison')}
-                    {renderFilterButton('completed', 'Livrées')}
-                    {renderFilterButton('cancelled', 'Annulées')}
+                <ScrollView
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    style={styles.filtersContainer}
+                    contentContainerStyle={styles.filtersContent}
+                >
+                    {statusFilters.map(filter => renderFilterButton(filter.status, filter.label))}
                 </ScrollView>
             </View>
 
@@ -218,9 +224,15 @@ export const MyPurchasesScreen = () => {
 
 const styles = StyleSheet.create({
     filterContainer: {
-        flexDirection: 'row',
-        padding: 16,
+        paddingVertical: 12,
+    },
+    filtersContainer: {
+        maxHeight: 50,
+    },
+    filtersContent: {
+        paddingHorizontal: 16,
         gap: 8,
+        alignItems: 'center',
     },
     filterButton: {
         paddingHorizontal: 16,

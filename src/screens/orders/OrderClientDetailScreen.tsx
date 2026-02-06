@@ -10,6 +10,7 @@ import { useRoute } from '@react-navigation/native';
 import { useTheme } from '../../context/ThemeContext';
 import { useOrderDetail } from '../../hooks/useCommandes';
 import { Image } from 'expo-image';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { MapWebView } from '../../components/MapWebView';
 import { getOrderUrl } from '../../utils/sharingUtils';
 import { Ionicons, FontAwesome } from '@expo/vector-icons';
@@ -91,10 +92,16 @@ export const OrderClientDetailScreen = () => {
         const productsList = order.products.map(p => `${p.quantity}x ${p.productName}`).join(', ');
 
         let message = '';
-        if (target === 'seller') {
+        if (isOwner) {
+            // Owner is the seller
+            message = `Bonjour ${order.clientName}, je suis le vendeur, je vous contacte à propos de votre commande de ${productsList}. Détails : ${orderUrl}`;
+        } else if (isClient) {
+            // User is the client
             message = `Bonjour ${vitrine?.name}, je vous contacte à propos de ma commande de ${productsList}. Détails : ${orderUrl}`;
         } else {
-            message = `Bonjour ${order.clientName}, je vous contacte à propos de votre commande de ${productsList}. Détails : ${orderUrl}`;
+            // Third party
+            const name = target === 'seller' ? vitrine?.name : order.clientName;
+            message = `Bonjour ${name}, je vous contacte à propos de la commande de ${productsList}. Détails : ${orderUrl}`;
         }
 
         const sanitizedPhone = phone.replace(/\s/g, '');
@@ -227,6 +234,8 @@ export const OrderClientDetailScreen = () => {
                     <Text style={[styles.value, { color: theme.colors.text }]}>{order.clientPhone}</Text>
 
                     <View style={[styles.contactButtonsContainer, { marginTop: 16 }]}>
+                        {/* Client see Seller contact only, Seller see Client contact only, Third Party see both */}
+
                         {(isClient || isThirdParty) && vitrine?.contact?.phone && (
                             <TouchableOpacity
                                 style={[styles.whatsappButton, { backgroundColor: '#25D366' }]}
@@ -237,7 +246,7 @@ export const OrderClientDetailScreen = () => {
                             </TouchableOpacity>
                         )}
 
-                        {isThirdParty && order.clientPhone && (
+                        {(isOwner || isThirdParty) && order.clientPhone && (
                             <TouchableOpacity
                                 style={[styles.whatsappButton, { backgroundColor: '#25D366' }]}
                                 onPress={() => handleWhatsAppRedirect('client')}
