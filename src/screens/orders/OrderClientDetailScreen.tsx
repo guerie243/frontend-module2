@@ -124,11 +124,12 @@ export const OrderClientDetailScreen = () => {
         if (!coords || !coords.latitude || !coords.longitude) return;
 
         const { latitude, longitude } = coords;
+        // URL pour afficher la destination sans démarrer la navigation automatique
         const url = Platform.select({
-            ios: `maps://?daddr=${latitude},${longitude}&dirflg=d&navigate=1`,
-            android: `google.navigation:q=${latitude},${longitude}&mode=d`,
-            web: `https://www.google.com/maps/dir/?api=1&destination=${latitude},${longitude}&travelmode=driving&dir_action=navigate`
-        }) || `https://www.google.com/maps/dir/?api=1&destination=${latitude},${longitude}&travelmode=driving&dir_action=navigate`;
+            ios: `maps://?q=${latitude},${longitude}`,
+            android: `geo:${latitude},${longitude}?q=${latitude},${longitude}`,
+            web: `https://www.google.com/maps/search/?api=1&query=${latitude},${longitude}`
+        }) || `https://www.google.com/maps/search/?api=1&query=${latitude},${longitude}`;
 
         Linking.openURL(url);
     };

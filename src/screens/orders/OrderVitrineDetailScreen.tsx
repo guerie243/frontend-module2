@@ -168,12 +168,12 @@ export const OrderVitrineDetailScreen = () => {
 
         const { latitude, longitude } = coords;
 
-        // URLs pour démarrer la navigation automatiquement en mode conduite
+        // URL pour afficher la destination sans démarrer la navigation automatique
         const url = Platform.select({
-            ios: `maps://?daddr=${latitude},${longitude}&dirflg=d&navigate=1`,
-            android: `google.navigation:q=${latitude},${longitude}&mode=d`,
-            web: `https://www.google.com/maps/dir/?api=1&destination=${latitude},${longitude}&travelmode=driving&dir_action=navigate`
-        }) || `https://www.google.com/maps/dir/?api=1&destination=${latitude},${longitude}&travelmode=driving&dir_action=navigate`;
+            ios: `maps://?q=${latitude},${longitude}`,
+            android: `geo:${latitude},${longitude}?q=${latitude},${longitude}`,
+            web: `https://www.google.com/maps/search/?api=1&query=${latitude},${longitude}`
+        }) || `https://www.google.com/maps/search/?api=1&query=${latitude},${longitude}`;
 
         Linking.openURL(url);
     };
@@ -270,7 +270,8 @@ export const OrderVitrineDetailScreen = () => {
                     <View style={[styles.contactButtonsContainer, { marginTop: 16 }]}>
                         {/* Client see Seller contact only, Seller see Client contact only, Third Party see both */}
 
-                        {(isClient || isThirdParty) && vitrine?.contact?.phone && (
+                        {/* Exclure "Contacter le vendeur" pour le vendeur lui-même */}
+                        {((isClient || isThirdParty) && !isOwner) && vitrine?.contact?.phone && (
                             <TouchableOpacity
                                 style={[styles.whatsappButton, { backgroundColor: '#25D366' }]}
                                 onPress={() => handleWhatsAppRedirect('seller')}
@@ -280,7 +281,8 @@ export const OrderVitrineDetailScreen = () => {
                             </TouchableOpacity>
                         )}
 
-                        {(isOwner || isThirdParty) && order?.clientPhone && (
+                        {/* Exclure "Contacter le client" pour le client lui-même */}
+                        {((isOwner || isThirdParty) && !isClient) && order?.clientPhone && (
                             <TouchableOpacity
                                 style={[styles.whatsappButton, { backgroundColor: '#25D366' }]}
                                 onPress={() => handleWhatsAppRedirect('client')}
@@ -330,7 +332,8 @@ export const OrderVitrineDetailScreen = () => {
                         Statut actuel : <Text style={{ color: getOrderStatus(order.status).color, fontWeight: 'bold' }}>{getOrderStatus(order.status).label}</Text>
                     </Text>
 
-                    {order.status === 'pending' && (
+                    {/* Management buttons restricted to owner */}
+                    {isOwner && order.status === 'pending' && (
                         <View style={styles.sideBySideButtons}>
                             <TouchableOpacity
                                 style={[styles.statusButton, { backgroundColor: theme.colors.primary, flex: 1 }]}
