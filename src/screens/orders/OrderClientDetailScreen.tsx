@@ -81,8 +81,13 @@ export const OrderClientDetailScreen = () => {
     const statusInfo = getOrderStatus(order.status);
 
     const isClient = isClientFromStorage || user?.phoneNumber === order.clientPhone || user?.phone === order.clientPhone;
-    const isOwner = user?.id === vitrine?.ownerId || user?._id === vitrine?.ownerId;
-    const isThirdParty = !isClient && !isOwner;
+
+    // Robust owner check (handle string or object ID)
+    const vitrineOwnerId = typeof vitrine?.ownerId === 'object' ? (vitrine?.ownerId as any)?._id : vitrine?.ownerId;
+    const isOwner = !!user && !!vitrineOwnerId && (user.id === vitrineOwnerId || user._id === vitrineOwnerId);
+
+    // Third party only if data is loaded and user is neither client nor owner
+    const isThirdParty = !!user && !!vitrine && !isClient && !isOwner;
 
     const handleWhatsAppRedirect = (target: 'seller' | 'client') => {
         const phone = target === 'seller' ? vitrine?.contact?.phone : order.clientPhone;
@@ -234,8 +239,9 @@ export const OrderClientDetailScreen = () => {
                     <Text style={[styles.value, { color: theme.colors.text }]}>{order.clientPhone}</Text>
 
                     <View style={[styles.contactButtonsContainer, { marginTop: 16 }]}>
-                        {/* Only show 'Contact Seller' if NOT the owner and (is client or third party) */}
-                        {((isClient || isThirdParty) && !isOwner) && vitrine?.contact?.phone && (
+                        {/* Client see Seller contact only, Seller see Client contact only, Third Party see both */}
+
+                        {(isClient || isThirdParty) && vitrine?.contact?.phone && (
                             <TouchableOpacity
                                 style={[styles.whatsappButton, { backgroundColor: '#25D366' }]}
                                 onPress={() => handleWhatsAppRedirect('seller')}
@@ -245,8 +251,7 @@ export const OrderClientDetailScreen = () => {
                             </TouchableOpacity>
                         )}
 
-                        {/* Only show 'Contact Client' if NOT the client and (is owner or third party) OR if we are the owner explicitly */}
-                        {(isOwner || (isThirdParty && !isClient)) && order.clientPhone && (
+                        {(isOwner || isThirdParty) && order.clientPhone && (
                             <TouchableOpacity
                                 style={[styles.whatsappButton, { backgroundColor: '#25D366' }]}
                                 onPress={() => handleWhatsAppRedirect('client')}
