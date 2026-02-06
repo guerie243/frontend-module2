@@ -124,12 +124,12 @@ export const OrderClientDetailScreen = () => {
         if (!coords || !coords.latitude || !coords.longitude) return;
 
         const { latitude, longitude } = coords;
-        // URL pour afficher l'itinéraire (le tracé) sans démarrer la navigation guidée
+        // URL pour afficher l'itinéraire (le tracé) en mode voiture sans démarrer la navigation guidée
         const url = Platform.select({
-            ios: `http://maps.apple.com/?daddr=${latitude},${longitude}`,
-            android: `https://www.google.com/maps/dir/?api=1&destination=${latitude},${longitude}`,
-            web: `https://www.google.com/maps/dir/?api=1&destination=${latitude},${longitude}`
-        }) || `https://www.google.com/maps/dir/?api=1&destination=${latitude},${longitude}`;
+            ios: `http://maps.apple.com/?daddr=${latitude},${longitude}&dirflg=d`,
+            android: `https://www.google.com/maps/dir/?api=1&destination=${latitude},${longitude}&travelmode=driving`,
+            web: `https://www.google.com/maps/dir/?api=1&destination=${latitude},${longitude}&travelmode=driving`
+        }) || `https://www.google.com/maps/dir/?api=1&destination=${latitude},${longitude}&travelmode=driving`;
 
         Linking.openURL(url);
     };
