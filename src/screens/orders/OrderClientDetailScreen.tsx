@@ -21,7 +21,7 @@ import { ShareMenuModal } from '../../components/ShareMenuModal';
 import { useState } from 'react';
 import { useVitrineDetail } from '../../hooks/useVitrines';
 import { getSafeUri } from '../../utils/imageUtils';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { ProductOrderItem } from '../../components/ProductOrderItem';
 import { getOrderStatus } from '../../constants/orderStatus';
 
@@ -38,6 +38,26 @@ export const OrderClientDetailScreen = () => {
     const { data: vitrine } = useVitrineDetail(order?.vitrineId || '', !!order?.vitrineId);
 
     const [isShareModalVisible, setIsShareModalVisible] = useState(false);
+    const [isClientFromStorage, setIsClientFromStorage] = useState(false);
+
+    useFocusEffect(
+        React.useCallback(() => {
+            const checkIsClient = async () => {
+                try {
+                    const savedOrdersJson = await AsyncStorage.getItem('GUEST_ORDERS');
+                    if (savedOrdersJson) {
+                        const ids = JSON.parse(savedOrdersJson);
+                        if (Array.isArray(ids) && ids.includes(orderId)) {
+                            setIsClientFromStorage(true);
+                        }
+                    }
+                } catch (e) {
+                    console.error('Error checking GUEST_ORDERS:', e);
+                }
+            };
+            checkIsClient();
+        }, [orderId])
+    );
 
     if (isLoading) {
         return (
@@ -59,7 +79,7 @@ export const OrderClientDetailScreen = () => {
 
     const statusInfo = getOrderStatus(order.status);
 
-    const isClient = user?.phoneNumber === order.clientPhone || user?.phone === order.clientPhone;
+    const isClient = isClientFromStorage || user?.phoneNumber === order.clientPhone || user?.phone === order.clientPhone;
     const isOwner = user?.id === vitrine?.ownerId || user?._id === vitrine?.ownerId;
     const isThirdParty = !isClient && !isOwner;
 
@@ -122,48 +142,6 @@ export const OrderClientDetailScreen = () => {
                     </View>
                 </View>
 
-                {/* Contact Actions */}
-                <View style={[styles.section, { backgroundColor: theme.colors.surface }]}>
-                    <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>Actions</Text>
-
-                    <View style={styles.contactButtonsContainer}>
-                        {(isClient || isThirdParty) && vitrine?.contact?.phone && (
-                            <TouchableOpacity
-                                style={[styles.whatsappButton, { backgroundColor: '#25D366' }]}
-                                onPress={() => handleWhatsAppRedirect('seller')}
-                            >
-                                <FontAwesome name="whatsapp" size={24} color="#FFFFFF" />
-                                <Text style={styles.whatsappButtonText}>Contacter le vendeur</Text>
-                            </TouchableOpacity>
-                        )}
-
-                        {isThirdParty && order.clientPhone && (
-                            <TouchableOpacity
-                                style={[styles.whatsappButton, { backgroundColor: '#25D366' }]}
-                                onPress={() => handleWhatsAppRedirect('client')}
-                            >
-                                <FontAwesome name="whatsapp" size={24} color="#FFFFFF" />
-                                <Text style={styles.whatsappButtonText}>Contacter le client</Text>
-                            </TouchableOpacity>
-                        )}
-                    </View>
-
-                    {(order.gpsCoords || order.deliveryLocation) && (
-                        <TouchableOpacity
-                            style={[styles.itineraryButton, {
-                                backgroundColor: theme.colors.primary + '15',
-                                borderColor: theme.colors.primary,
-                                marginTop: 12
-                            }]}
-                            onPress={handleOpenItinerary}
-                        >
-                            <Ionicons name="navigate-outline" size={20} color={theme.colors.primary} />
-                            <Text style={[styles.itineraryButtonText, { color: theme.colors.primary }]}>
-                                Voir l'itinéraire
-                            </Text>
-                        </TouchableOpacity>
-                    )}
-                </View>
 
                 {/* Products */}
                 <View style={[styles.section, { backgroundColor: theme.colors.surface }]}>
@@ -203,15 +181,30 @@ export const OrderClientDetailScreen = () => {
                     </Text>
 
                     {(order.gpsCoords || order.deliveryLocation) && (
-                        <View style={styles.mapContainer}>
-                            <MapWebView
-                                height={250}
-                                lat={Number(order.gpsCoords?.latitude || order.deliveryLocation?.latitude)}
-                                lon={Number(order.gpsCoords?.longitude || order.deliveryLocation?.longitude)}
-                                zoom={15}
-                                label={order.clientName}
-                            />
-                        </View>
+                        <>
+                            <View style={styles.mapContainer}>
+                                <MapWebView
+                                    height={250}
+                                    lat={Number(order.gpsCoords?.latitude || order.deliveryLocation?.latitude)}
+                                    lon={Number(order.gpsCoords?.longitude || order.deliveryLocation?.longitude)}
+                                    zoom={15}
+                                    label={order.clientName}
+                                />
+                            </View>
+                            <TouchableOpacity
+                                style={[styles.itineraryButton, {
+                                    backgroundColor: theme.colors.primary + '15',
+                                    borderColor: theme.colors.primary,
+                                    marginTop: 12
+                                }]}
+                                onPress={handleOpenItinerary}
+                            >
+                                <Ionicons name="navigate-outline" size={20} color={theme.colors.primary} />
+                                <Text style={[styles.itineraryButtonText, { color: theme.colors.primary }]}>
+                                    Voir l'itinéraire
+                                </Text>
+                            </TouchableOpacity>
+                        </>
                     )}
 
                     {order.notes && (
@@ -232,6 +225,28 @@ export const OrderClientDetailScreen = () => {
 
                     <Text style={[styles.label, { color: theme.colors.textSecondary }]}>Téléphone</Text>
                     <Text style={[styles.value, { color: theme.colors.text }]}>{order.clientPhone}</Text>
+
+                    <View style={[styles.contactButtonsContainer, { marginTop: 16 }]}>
+                        {(isClient || isThirdParty) && vitrine?.contact?.phone && (
+                            <TouchableOpacity
+                                style={[styles.whatsappButton, { backgroundColor: '#25D366' }]}
+                                onPress={() => handleWhatsAppRedirect('seller')}
+                            >
+                                <FontAwesome name="whatsapp" size={24} color="#FFFFFF" />
+                                <Text style={styles.whatsappButtonText}>Contacter le vendeur</Text>
+                            </TouchableOpacity>
+                        )}
+
+                        {isThirdParty && order.clientPhone && (
+                            <TouchableOpacity
+                                style={[styles.whatsappButton, { backgroundColor: '#25D366' }]}
+                                onPress={() => handleWhatsAppRedirect('client')}
+                            >
+                                <FontAwesome name="whatsapp" size={24} color="#FFFFFF" />
+                                <Text style={styles.whatsappButtonText}>Contacter le client</Text>
+                            </TouchableOpacity>
+                        )}
+                    </View>
                 </View>
             </ScrollView>
 

@@ -57,7 +57,7 @@ export const AppTabs = () => {
                 component={OrdersListScreen}
                 options={{
                     tabBarLabel: 'Commandes',
-                    tabBarBadge: pendingCount > 0 ? (pendingCount > 9 ? '9+' : pendingCount) : undefined,
+                    tabBarBadge: pendingCount > 0 ? (pendingCount > 99 ? '99+' : pendingCount) : undefined,
                     tabBarBadgeStyle: { backgroundColor: '#FF3B30', fontSize: 10 }
                 }}
             />

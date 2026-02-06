@@ -43,7 +43,7 @@ export const ScreenHeader: React.FC<ScreenHeaderProps> = ({
 
     const sellerPending = usePendingSellerOrdersCount();
     const buyerPending = usePendingBuyerOrdersCount();
-    const totalPending = sellerPending + buyerPending;
+    const totalPending = buyerPending;
 
     return (
         <View style={[

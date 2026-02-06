@@ -1,12 +1,4 @@
-/**
- * Order Vitrine Detail Screen
- * 
- * For vitrine owner to view and manage order details
- */
-
-import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator, Platform } from 'react-native';
-import { useNavigation, useRoute } from '@react-navigation/native';
+import { useNavigation, useRoute, useFocusEffect } from '@react-navigation/native';
 import * as Linking from 'expo-linking';
 import { useTheme } from '../../context/ThemeContext';
 import { useAlertService } from '../../utils/alertService';
@@ -18,13 +10,15 @@ import { MapWebView } from '../../components/MapWebView';
 import { getOrderUrl } from '../../utils/sharingUtils';
 import { ScreenHeader } from '../../components/ScreenHeader';
 import { ShareMenuModal } from '../../components/ShareMenuModal';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useVitrineDetail } from '../../hooks/useVitrines';
 import { getSafeUri } from '../../utils/imageUtils';
 import { ProductOrderItem } from '../../components/ProductOrderItem';
 import { REJECTION_REASONS } from '../../constants/rejectionReasons';
 import { getOrderStatus } from '../../constants/orderStatus';
 import { Modal, FlatList } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useAuth } from '../../context/AuthContext';
 
 export const OrderVitrineDetailScreen = () => {
     const navigation = useNavigation<any>();
@@ -41,6 +35,31 @@ export const OrderVitrineDetailScreen = () => {
     const updateStatusMutation = useUpdateOrderStatus();
     const [isShareModalVisible, setIsShareModalVisible] = useState(false);
     const [isRejectionModalVisible, setIsRejectionModalVisible] = useState(false);
+    const [isClientFromStorage, setIsClientFromStorage] = useState(false);
+    const { user } = useAuth();
+
+    useFocusEffect(
+        React.useCallback(() => {
+            const checkIsClient = async () => {
+                try {
+                    const savedOrdersJson = await AsyncStorage.getItem('GUEST_ORDERS');
+                    if (savedOrdersJson) {
+                        const ids = JSON.parse(savedOrdersJson);
+                        if (Array.isArray(ids) && ids.includes(orderId)) {
+                            setIsClientFromStorage(true);
+                        }
+                    }
+                } catch (e) {
+                    console.error('Error checking GUEST_ORDERS:', e);
+                }
+            };
+            checkIsClient();
+        }, [orderId])
+    );
+
+    const isClient = isClientFromStorage || user?.phoneNumber === order?.clientPhone || user?.phone === order?.clientPhone;
+    const isOwner = user?.id === vitrine?.ownerId || user?._id === vitrine?.ownerId;
+    const isThirdParty = !isClient && !isOwner;
 
     const getWhatsAppMessage = (status: 'confirmed' | 'cancelled', reason?: string) => {
         const productsList = order?.products.map(p => `${p.quantity}x ${p.productName}`).join(', ');
@@ -180,39 +199,54 @@ export const OrderVitrineDetailScreen = () => {
                     </Text>
 
                     {(order.gpsCoords || order.deliveryLocation) && (
-                        <View style={styles.mapContainer}>
-                            <MapWebView
-                                height={250}
-                                lat={Number(order.gpsCoords?.latitude || order.deliveryLocation?.latitude)}
-                                lon={Number(order.gpsCoords?.longitude || order.deliveryLocation?.longitude)}
-                                zoom={15}
-                                label={order.clientName}
-                            />
-                        </View>
+                        <>
+                            <View style={styles.mapContainer}>
+                                <MapWebView
+                                    height={250}
+                                    lat={Number(order.gpsCoords?.latitude || order.deliveryLocation?.latitude)}
+                                    lon={Number(order.gpsCoords?.longitude || order.deliveryLocation?.longitude)}
+                                    zoom={15}
+                                    label={order.clientName}
+                                />
+                            </View>
+                            <TouchableOpacity
+                                style={[styles.itineraryButton, {
+                                    backgroundColor: theme.colors.primary + '15',
+                                    borderColor: theme.colors.primary,
+                                    marginTop: 12
+                                }]}
+                                onPress={handleOpenItinerary}
+                            >
+                                <Ionicons name="navigate-outline" size={20} color={theme.colors.primary} />
+                                <Text style={[styles.itineraryButtonText, { color: theme.colors.primary }]}>
+                                    Voir l'itinéraire
+                                </Text>
+                            </TouchableOpacity>
+                        </>
                     )}
 
-                    {(order.gpsCoords || order.deliveryLocation) && (
-                        <TouchableOpacity
-                            style={[styles.itineraryButton, {
-                                backgroundColor: theme.colors.primary + '15',
-                                borderColor: theme.colors.primary
-                            }]}
-                            onPress={handleOpenItinerary}
-                        >
-                            <Ionicons name="navigate-outline" size={20} color={theme.colors.primary} />
-                            <Text style={[styles.itineraryButtonText, { color: theme.colors.primary }]}>
-                                Voir l'itinéraire
-                            </Text>
-                        </TouchableOpacity>
-                    )}
 
-                    <TouchableOpacity
-                        style={[styles.whatsappButton, { backgroundColor: '#25D366' }]}
-                        onPress={() => handleWhatsAppRedirect('confirmed')} // Default contact message
-                    >
-                        <FontAwesome name="whatsapp" size={24} color="#FFFFFF" />
-                        <Text style={styles.whatsappButtonText}>Contacter le client</Text>
-                    </TouchableOpacity>
+                    <View style={[styles.contactButtonsContainer, { marginTop: 16 }]}>
+                        {(isClient || isThirdParty) && vitrine?.contact?.phone && (
+                            <TouchableOpacity
+                                style={[styles.whatsappButton, { backgroundColor: '#25D366' }]}
+                                onPress={() => handleWhatsAppRedirect('confirmed')} // Default contact message
+                            >
+                                <FontAwesome name="whatsapp" size={24} color="#FFFFFF" />
+                                <Text style={styles.whatsappButtonText}>Contacter le vendeur</Text>
+                            </TouchableOpacity>
+                        )}
+
+                        {isThirdParty && order.clientPhone && (
+                            <TouchableOpacity
+                                style={[styles.whatsappButton, { backgroundColor: '#25D366' }]}
+                                onPress={() => handleWhatsAppRedirect('confirmed')}
+                            >
+                                <FontAwesome name="whatsapp" size={24} color="#FFFFFF" />
+                                <Text style={styles.whatsappButtonText}>Contacter le client</Text>
+                            </TouchableOpacity>
+                        )}
+                    </View>
                 </View>
 
                 {/* Products */}
@@ -503,5 +537,8 @@ const styles = StyleSheet.create({
     cancelButtonText: {
         fontSize: 16,
         fontWeight: '600',
+    },
+    contactButtonsContainer: {
+        gap: 12,
     },
 });
