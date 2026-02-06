@@ -268,8 +268,19 @@ export const OrderVitrineDetailScreen = () => {
 
 
                     <View style={[styles.contactButtonsContainer, { marginTop: 16 }]}>
-                        {/* Contact Client (Primordial pour le vendeur/gestionnaire) */}
-                        {order?.clientPhone && (
+                        {/* Exclure "Contacter le vendeur" pour le vendeur lui-même */}
+                        {((isClient || isThirdParty) && !isOwner) && vitrine?.contact?.phone && (
+                            <TouchableOpacity
+                                style={[styles.whatsappButton, { backgroundColor: '#25D366' }]}
+                                onPress={() => handleWhatsAppRedirect('seller')}
+                            >
+                                <FontAwesome name="whatsapp" size={24} color="#FFFFFF" />
+                                <Text style={styles.whatsappButtonText}>Contacter le vendeur</Text>
+                            </TouchableOpacity>
+                        )}
+
+                        {/* Exclure "Contacter le client" pour le client lui-même */}
+                        {((isOwner || isThirdParty) && !isClient) && order?.clientPhone && (
                             <TouchableOpacity
                                 style={[styles.whatsappButton, { backgroundColor: '#25D366' }]}
                                 onPress={() => handleWhatsAppRedirect('client')}
