@@ -1,44 +1,38 @@
-/**
- * Order Status Constants
- * 
- * Order status values with labels and colors
- */
-
 export const ORDER_STATUS = {
     PENDING: {
         value: 'pending' as const,
         label: 'En attente',
-        color: '#FF9500',
+        color: '#FF9500', // Orange
         icon: 'time-outline' as const,
     },
     CONFIRMED: {
         value: 'confirmed' as const,
         label: 'Confirmée',
-        color: '#007AFF',
+        color: '#007AFF', // Blue
         icon: 'checkmark-circle-outline' as const,
     },
     PREPARING: {
         value: 'preparing' as const,
         label: 'En préparation',
-        color: '#5856D6',
-        icon: 'cube-outline' as const,
+        color: '#5856D6', // Purple
+        icon: 'hammer-outline' as const,
     },
     DELIVERING: {
         value: 'delivering' as const,
         label: 'En livraison',
-        color: '#AF52DE',
+        color: '#34C759', // Green
         icon: 'bicycle-outline' as const,
     },
     COMPLETED: {
         value: 'completed' as const,
         label: 'Livrée',
-        color: '#34C759',
-        icon: 'checkmark-done-outline' as const,
+        color: '#8E8E93', // Gray
+        icon: 'checkmark-done-circle-outline' as const,
     },
     CANCELLED: {
         value: 'cancelled' as const,
         label: 'Annulée',
-        color: '#FF3B30',
+        color: '#FF3B30', // Red
         icon: 'close-circle-outline' as const,
     },
 } as const;

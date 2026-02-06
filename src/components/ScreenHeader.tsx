@@ -12,6 +12,7 @@ import { useNavigation } from '@react-navigation/native';
 import { Image } from 'expo-image';
 import { useTheme } from '../context/ThemeContext';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { usePendingSellerOrdersCount, usePendingBuyerOrdersCount } from '../hooks/useCommandes';
 
 interface ScreenHeaderProps {
     title: string;
@@ -37,8 +38,12 @@ export const ScreenHeader: React.FC<ScreenHeaderProps> = ({
     onBackPress,
 }) => {
     const { theme } = useTheme();
-    const navigation = useNavigation();
+    const navigation = useNavigation<any>();
     const insets = useSafeAreaInsets();
+
+    const sellerPending = usePendingSellerOrdersCount();
+    const buyerPending = usePendingBuyerOrdersCount();
+    const totalPending = sellerPending + buyerPending;
 
     return (
         <View style={[
@@ -101,6 +106,11 @@ export const ScreenHeader: React.FC<ScreenHeaderProps> = ({
                         }}
                     >
                         <Ionicons name="receipt-outline" size={22} color={theme.colors.text} />
+                        {totalPending > 0 && (
+                            <View style={[styles.badge, { backgroundColor: '#FF3B30' }]}>
+                                <Text style={styles.badgeText}>{totalPending > 9 ? '9+' : totalPending}</Text>
+                            </View>
+                        )}
                     </TouchableOpacity>
 
                     {onShare && (
@@ -170,5 +180,24 @@ const styles = StyleSheet.create({
         borderRadius: 16,
         marginRight: 8,
         backgroundColor: '#f0f0f0',
+    },
+    badge: {
+        position: 'absolute',
+        top: 2,
+        right: 2,
+        minWidth: 16,
+        height: 16,
+        borderRadius: 8,
+        justifyContent: 'center',
+        alignItems: 'center',
+        paddingHorizontal: 4,
+        borderWidth: 1.5,
+        borderColor: '#FFFFFF',
+    },
+    badgeText: {
+        color: '#FFFFFF',
+        fontSize: 10,
+        fontWeight: 'bold',
+        textAlign: 'center',
     },
 });

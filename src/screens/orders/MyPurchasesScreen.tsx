@@ -17,6 +17,7 @@ import { Order } from '../../types';
 import { ScreenHeader } from '../../components/ScreenHeader';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect } from '@react-navigation/native';
+import { getOrderStatus } from '../../constants/orderStatus';
 
 export const MyPurchasesScreen = () => {
     const navigation = useNavigation<any>();
@@ -79,29 +80,44 @@ export const MyPurchasesScreen = () => {
         navigation.navigate('OrderClientDetail', { orderId });
     };
 
-    const getStatusColor = (status: Order['status']) => {
-        const colors: Record<Order['status'], string> = {
-            pending: '#FF9500',
-            confirmed: '#007AFF',
-            preparing: '#5856D6',
-            delivering: '#34C759',
-            completed: '#8E8E93',
-            cancelled: '#FF3B30',
-        };
-        return colors[status] || theme.colors.textSecondary;
-    };
 
-    const getStatusLabel = (status: Order['status']) => {
-        const labels: Record<Order['status'], string> = {
-            pending: 'En attente',
-            confirmed: 'Confirmée',
-            preparing: 'En préparation',
-            delivering: 'En livraison',
-            completed: 'Livrée',
-            cancelled: 'Annulée',
-        };
-        return labels[status] || status;
-    };
+    const pendingCount = useMemo(() => guestOrders.filter(o => o.status === 'pending').length, [guestOrders]);
+
+    const renderFilterButton = (status: Order['status'] | 'all', label: string) => (
+        <TouchableOpacity
+            style={[
+                styles.filterButton,
+                { backgroundColor: theme.colors.surface },
+                statusFilter === status && { backgroundColor: theme.colors.primary },
+            ]}
+            onPress={() => setStatusFilter(status)}
+        >
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <Text
+                    style={[
+                        styles.filterButtonText,
+                        { color: theme.colors.text },
+                        statusFilter === status && { color: theme.colors.white },
+                    ]}
+                >
+                    {label}
+                </Text>
+                {status === 'pending' && pendingCount > 0 && (
+                    <View style={[
+                        styles.filterBadge,
+                        { backgroundColor: statusFilter === 'pending' ? theme.colors.white : '#FF3B30' }
+                    ]}>
+                        <Text style={[
+                            styles.filterBadgeText,
+                            { color: statusFilter === 'pending' ? theme.colors.primary : theme.colors.white }
+                        ]}>
+                            {pendingCount}
+                        </Text>
+                    </View>
+                )}
+            </View>
+        </TouchableOpacity>
+    );
 
     const renderOrder = ({ item }: { item: Order }) => (
         <TouchableOpacity
@@ -112,9 +128,9 @@ export const MyPurchasesScreen = () => {
                 <Text style={[styles.orderNumber, { color: theme.colors.text }]}>
                     Commande #{item.id?.slice(-6) || item._id?.slice(-6)}
                 </Text>
-                <View style={[styles.statusBadge, { backgroundColor: getStatusColor(item.status) + '20' }]}>
-                    <Text style={[styles.statusText, { color: getStatusColor(item.status) }]}>
-                        {getStatusLabel(item.status)}
+                <View style={[styles.statusBadge, { backgroundColor: getOrderStatus(item.status).color + '20' }]}>
+                    <Text style={[styles.statusText, { color: getOrderStatus(item.status).color }]}>
+                        {getOrderStatus(item.status).label}
                     </Text>
                 </View>
                 <TouchableOpacity
@@ -140,27 +156,6 @@ export const MyPurchasesScreen = () => {
                     {item.totalPrice.toFixed(2)} {item.products[0]?.currency || 'USD'}
                 </Text>
             </View>
-        </TouchableOpacity>
-    );
-
-    const renderFilterButton = (status: Order['status'] | 'all', label: string) => (
-        <TouchableOpacity
-            style={[
-                styles.filterButton,
-                { backgroundColor: theme.colors.surface },
-                statusFilter === status && { backgroundColor: theme.colors.primary },
-            ]}
-            onPress={() => setStatusFilter(status)}
-        >
-            <Text
-                style={[
-                    styles.filterButtonText,
-                    { color: theme.colors.text },
-                    statusFilter === status && { color: theme.colors.white },
-                ]}
-            >
-                {label}
-            </Text>
         </TouchableOpacity>
     );
 
@@ -294,5 +289,18 @@ const styles = StyleSheet.create({
     },
     emptyText: {
         fontSize: 16,
+    },
+    filterBadge: {
+        marginLeft: 6,
+        minWidth: 18,
+        height: 18,
+        borderRadius: 9,
+        justifyContent: 'center',
+        alignItems: 'center',
+        paddingHorizontal: 4,
+    },
+    filterBadgeText: {
+        fontSize: 10,
+        fontWeight: 'bold',
     },
 });

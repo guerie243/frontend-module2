@@ -11,13 +11,17 @@ import { Ionicons } from '@expo/vector-icons';
 import { ProductsCatalogScreen } from '../screens/products/ProductsCatalogScreen';
 import { OrdersListScreen } from '../screens/orders/OrdersListScreen';
 import { CreateProductScreen } from '../screens/products/CreateProductScreen';
+import { usePendingSellerOrdersCount } from '../hooks/useCommandes';
 
 
 const Tab = createBottomTabNavigator();
 
 export const AppTabs = () => {
+    const pendingCount = usePendingSellerOrdersCount();
+
     return (
         <Tab.Navigator
+            id="main-tabs"
             screenOptions={({ route }) => ({
                 headerShown: false,
                 tabBarIcon: ({ focused, color, size }) => {
@@ -51,7 +55,11 @@ export const AppTabs = () => {
             <Tab.Screen
                 name="OrdersTab"
                 component={OrdersListScreen}
-                options={{ tabBarLabel: 'Commandes' }}
+                options={{
+                    tabBarLabel: 'Commandes',
+                    tabBarBadge: pendingCount > 0 ? (pendingCount > 9 ? '9+' : pendingCount) : undefined,
+                    tabBarBadgeStyle: { backgroundColor: '#FF3B30', fontSize: 10 }
+                }}
             />
 
         </Tab.Navigator>

@@ -5,14 +5,16 @@
  */
 
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, ActivityIndicator, Platform } from 'react-native';
 import { useRoute } from '@react-navigation/native';
 import { useTheme } from '../../context/ThemeContext';
 import { useOrderDetail } from '../../hooks/useCommandes';
 import { Image } from 'expo-image';
 import { MapWebView } from '../../components/MapWebView';
-import { Ionicons } from '@expo/vector-icons';
 import { getOrderUrl } from '../../utils/sharingUtils';
+import { Ionicons, FontAwesome } from '@expo/vector-icons';
+import * as Linking from 'expo-linking';
+import { useAuth } from '../../context/AuthContext';
 import { TouchableOpacity } from 'react-native-gesture-handler';
 import { ScreenHeader } from '../../components/ScreenHeader';
 import { ShareMenuModal } from '../../components/ShareMenuModal';
@@ -21,6 +23,7 @@ import { useVitrineDetail } from '../../hooks/useVitrines';
 import { getSafeUri } from '../../utils/imageUtils';
 import { useNavigation } from '@react-navigation/native';
 import { ProductOrderItem } from '../../components/ProductOrderItem';
+import { getOrderStatus } from '../../constants/orderStatus';
 
 export const OrderClientDetailScreen = () => {
     const route = useRoute<any>();
@@ -28,7 +31,8 @@ export const OrderClientDetailScreen = () => {
     const { theme } = useTheme();
 
     const { orderId } = route.params || {};
-    const { data: order, isLoading } = useOrderDetail(orderId);
+    const { data: order, isLoading, refetch } = useOrderDetail(orderId);
+    const { user } = useAuth();
 
     // Fetch vitrine details if order is available
     const { data: vitrine } = useVitrineDetail(order?.vitrineId || '', !!order?.vitrineId);
@@ -53,28 +57,48 @@ export const OrderClientDetailScreen = () => {
         );
     }
 
-    const getStatusColor = (status: string) => {
-        const colors: any = {
-            pending: '#FF9500',
-            confirmed: '#007AFF',
-            preparing: '#5856D6',
-            delivering: '#34C759',
-            completed: '#8E8E93',
-            cancelled: '#FF3B30',
-        };
-        return colors[status] || theme.colors.textSecondary;
+    const statusInfo = getOrderStatus(order.status);
+
+    const isClient = user?.phoneNumber === order.clientPhone || user?.phone === order.clientPhone;
+    const isOwner = user?.id === vitrine?.ownerId || user?._id === vitrine?.ownerId;
+    const isThirdParty = !isClient && !isOwner;
+
+    const handleWhatsAppRedirect = (target: 'seller' | 'client') => {
+        const phone = target === 'seller' ? vitrine?.contact?.phone : order.clientPhone;
+        if (!phone) return;
+
+        const orderUrl = getOrderUrl(orderId);
+        const productsList = order.products.map(p => `${p.quantity}x ${p.productName}`).join(', ');
+
+        let message = '';
+        if (target === 'seller') {
+            message = `Bonjour ${vitrine?.name}, je vous contacte à propos de ma commande de ${productsList}. Détails : ${orderUrl}`;
+        } else {
+            message = `Bonjour ${order.clientName}, je vous contacte à propos de votre commande de ${productsList}. Détails : ${orderUrl}`;
+        }
+
+        const sanitizedPhone = phone.replace(/\s/g, '');
+        const url = `whatsapp://send?phone=${sanitizedPhone}&text=${encodeURIComponent(message)}`;
+
+        Linking.openURL(url).catch(() => {
+            const webUrl = `https://wa.me/${sanitizedPhone}?text=${encodeURIComponent(message)}`;
+            Linking.openURL(webUrl);
+        });
     };
 
-    const getStatusLabel = (status: string) => {
-        const labels: any = {
-            pending: 'En attente de confirmation',
-            confirmed: 'Confirmée',
-            preparing: 'En préparation',
-            delivering: 'En cours de livraison',
-            completed: 'Livrée',
-            cancelled: 'Annulée',
-        };
-        return labels[status] || status;
+    const handleOpenItinerary = () => {
+        if (!order) return;
+        const coords = order.gpsCoords || order.deliveryLocation;
+        if (!coords || !coords.latitude || !coords.longitude) return;
+
+        const { latitude, longitude } = coords;
+        const url = Platform.select({
+            ios: `maps://?daddr=${latitude},${longitude}&dirflg=d&navigate=1`,
+            android: `google.navigation:q=${latitude},${longitude}&mode=d`,
+            web: `https://www.google.com/maps/dir/?api=1&destination=${latitude},${longitude}&travelmode=driving&dir_action=navigate`
+        }) || `https://www.google.com/maps/dir/?api=1&destination=${latitude},${longitude}&travelmode=driving&dir_action=navigate`;
+
+        Linking.openURL(url);
     };
 
     return (
@@ -91,11 +115,54 @@ export const OrderClientDetailScreen = () => {
                     <Text style={[styles.sectionTitle, { color: theme.colors.text, marginBottom: 12 }]}>
                         La commande est :
                     </Text>
-                    <View style={[styles.statusBadge, { backgroundColor: getStatusColor(order.status) + '20' }]}>
-                        <Text style={[styles.statusText, { color: getStatusColor(order.status) }]}>
-                            {getStatusLabel(order.status)}
+                    <View style={[styles.statusBadge, { backgroundColor: statusInfo.color + '20' }]}>
+                        <Text style={[styles.statusText, { color: statusInfo.color }]}>
+                            {statusInfo.label}
                         </Text>
                     </View>
+                </View>
+
+                {/* Contact Actions */}
+                <View style={[styles.section, { backgroundColor: theme.colors.surface }]}>
+                    <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>Actions</Text>
+
+                    <View style={styles.contactButtonsContainer}>
+                        {(isClient || isThirdParty) && vitrine?.contact?.phone && (
+                            <TouchableOpacity
+                                style={[styles.whatsappButton, { backgroundColor: '#25D366' }]}
+                                onPress={() => handleWhatsAppRedirect('seller')}
+                            >
+                                <FontAwesome name="whatsapp" size={24} color="#FFFFFF" />
+                                <Text style={styles.whatsappButtonText}>Contacter le vendeur</Text>
+                            </TouchableOpacity>
+                        )}
+
+                        {isThirdParty && order.clientPhone && (
+                            <TouchableOpacity
+                                style={[styles.whatsappButton, { backgroundColor: '#25D366' }]}
+                                onPress={() => handleWhatsAppRedirect('client')}
+                            >
+                                <FontAwesome name="whatsapp" size={24} color="#FFFFFF" />
+                                <Text style={styles.whatsappButtonText}>Contacter le client</Text>
+                            </TouchableOpacity>
+                        )}
+                    </View>
+
+                    {(order.gpsCoords || order.deliveryLocation) && (
+                        <TouchableOpacity
+                            style={[styles.itineraryButton, {
+                                backgroundColor: theme.colors.primary + '15',
+                                borderColor: theme.colors.primary,
+                                marginTop: 12
+                            }]}
+                            onPress={handleOpenItinerary}
+                        >
+                            <Ionicons name="navigate-outline" size={20} color={theme.colors.primary} />
+                            <Text style={[styles.itineraryButtonText, { color: theme.colors.primary }]}>
+                                Voir l'itinéraire
+                            </Text>
+                        </TouchableOpacity>
+                    )}
                 </View>
 
                 {/* Products */}
@@ -264,5 +331,39 @@ const styles = StyleSheet.create({
     mapImage: {
         width: '100%',
         height: '100%',
+    },
+    contactButtonsContainer: {
+        gap: 12,
+    },
+    whatsappButton: {
+        height: 54,
+        borderRadius: 12,
+        flexDirection: 'row',
+        justifyContent: 'center',
+        alignItems: 'center',
+        elevation: 2,
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 3,
+        gap: 10,
+    },
+    whatsappButtonText: {
+        color: '#FFFFFF',
+        fontSize: 16,
+        fontWeight: '600',
+    },
+    itineraryButton: {
+        height: 54,
+        borderRadius: 12,
+        flexDirection: 'row',
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderWidth: 1,
+        gap: 8,
+    },
+    itineraryButtonText: {
+        fontSize: 16,
+        fontWeight: '600',
     },
 });

@@ -7,6 +7,9 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { orderService } from '../services/orderService';
 import { Order } from '../types';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useMyVitrines } from './useVitrines';
+import { useAuth } from './useAuth';
 
 /**
  * Get orders by vitrine ID
@@ -97,4 +100,60 @@ export const useGuestOrders = (ids: string[], enabled = true) => {
         queryFn: () => orderService.getGuestOrders(ids),
         enabled: enabled && ids.length > 0,
     });
+};
+
+/**
+ * Hook to count pending orders for seller (all vitrines)
+ */
+export const usePendingSellerOrdersCount = () => {
+    const { isAuthenticated } = useAuth();
+    const { data: vitrines = [] } = useMyVitrines({ enabled: isAuthenticated });
+
+    // For simplicity, we fetch orders for all vitrines or just the first few
+    // In a real app, there might be a specific endpoint for counts
+    // Here we'll combine the results of orders for each vitrine
+    const vitrineIds = vitrines.map(v => v.vitrineId || v.id || v._id).filter(Boolean) as string[];
+
+    const queries = useQuery({
+        queryKey: ['orders', 'pending', 'count', vitrineIds],
+        queryFn: async () => {
+            if (vitrineIds.length === 0) return 0;
+            const allOrders = await Promise.all(
+                vitrineIds.map(id => orderService.getOrdersByVitrine(id))
+            );
+            const flatOrders = allOrders.flat();
+            return flatOrders.filter(o => o.status === 'pending').length;
+        },
+        enabled: isAuthenticated && vitrineIds.length > 0,
+        refetchInterval: 30000, // Refresh every 30s
+    });
+
+    return queries.data || 0;
+};
+
+/**
+ * Hook to count pending orders for buyer (guest orders in storage)
+ */
+export const usePendingBuyerOrdersCount = () => {
+    const { data: pendingCount = 0 } = useQuery({
+        queryKey: ['guestOrders', 'pending', 'count'],
+        queryFn: async () => {
+            try {
+                const savedOrdersJson = await AsyncStorage.getItem('GUEST_ORDERS');
+                if (!savedOrdersJson) return 0;
+
+                const ids = JSON.parse(savedOrdersJson);
+                if (!Array.isArray(ids) || ids.length === 0) return 0;
+
+                const orders = await orderService.getGuestOrders(ids);
+                return orders.filter(o => o.status === 'pending').length;
+            } catch (e) {
+                console.error('Error counting pending buyer orders:', e);
+                return 0;
+            }
+        },
+        refetchInterval: 30000,
+    });
+
+    return pendingCount;
 };

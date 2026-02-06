@@ -36,11 +36,17 @@ export const EditProductScreen = () => {
     const deleteProductMutation = useDeleteProduct();
 
     // Params from ProductManagementScreen
-    const { productId, field, label, currentValue, multiline, keyboardType } = route.params || {};
+    const { productId, field, label, currentValue, multiline, keyboardType, isMultiSelect, arrayValue } = route.params || {};
 
     const { data: product, isLoading } = useProductDetail(productId);
 
-    const [value, setValue] = useState(currentValue || '');
+    // Initialize value based on field type (array for multi-select, string otherwise)
+    const [value, setValue] = useState(() => {
+        if (field === 'locations' && arrayValue) {
+            return arrayValue;
+        }
+        return currentValue || '';
+    });
     const [isDeleting, setIsDeleting] = useState(false);
     const [countdown, setCountdown] = useState(0);
     const deleteTimerRef = React.useRef<any>(null);
@@ -63,7 +69,8 @@ export const EditProductScreen = () => {
             if (field === 'price') {
                 updateData[field] = parseFloat(value);
             } else if (field === 'locations') {
-                updateData[field] = Array.isArray(value) ? value : value.split(',').map((s: string) => s.trim()).filter(Boolean);
+                // Value is already an array from AnimatedSelect with multiple=true
+                updateData[field] = Array.isArray(value) ? value : (value ? [value] : []);
             } else {
                 updateData[field] = value;
             }

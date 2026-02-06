@@ -13,7 +13,7 @@ import { useAlertService } from '../../utils/alertService';
 import { useOrderDetail, useUpdateOrderStatus } from '../../hooks/useCommandes';
 import { Order } from '../../types';
 import { Image } from 'expo-image';
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons, FontAwesome } from '@expo/vector-icons';
 import { MapWebView } from '../../components/MapWebView';
 import { getOrderUrl } from '../../utils/sharingUtils';
 import { ScreenHeader } from '../../components/ScreenHeader';
@@ -22,6 +22,9 @@ import { useState } from 'react';
 import { useVitrineDetail } from '../../hooks/useVitrines';
 import { getSafeUri } from '../../utils/imageUtils';
 import { ProductOrderItem } from '../../components/ProductOrderItem';
+import { REJECTION_REASONS } from '../../constants/rejectionReasons';
+import { getOrderStatus } from '../../constants/orderStatus';
+import { Modal, FlatList } from 'react-native';
 
 export const OrderVitrineDetailScreen = () => {
     const navigation = useNavigation<any>();
@@ -37,20 +40,62 @@ export const OrderVitrineDetailScreen = () => {
 
     const updateStatusMutation = useUpdateOrderStatus();
     const [isShareModalVisible, setIsShareModalVisible] = useState(false);
+    const [isRejectionModalVisible, setIsRejectionModalVisible] = useState(false);
 
-    const handleUpdateStatus = (newStatus: Order['status']) => {
+    const getWhatsAppMessage = (status: 'confirmed' | 'cancelled', reason?: string) => {
+        const productsList = order?.products.map(p => `${p.quantity}x ${p.productName}`).join(', ');
+        const orderUrl = getOrderUrl(orderId);
+
+        if (status === 'confirmed') {
+            return `Bonjour ${order?.clientName}, votre commande de ${productsList} a été acceptée. Nous préparons votre livraison. Suivez-la ici : ${orderUrl}`;
+        } else {
+            return `Bonjour ${order?.clientName}, nous sommes désolés mais votre commande n'a pas pu être acceptée en raison de : ${reason || 'non spécifié'}. Détails : ${orderUrl}`;
+        }
+    };
+
+    const handleWhatsAppRedirect = (status: 'confirmed' | 'cancelled', reason?: string) => {
+        if (!order?.clientPhone) return;
+        const message = getWhatsAppMessage(status, reason);
+        const phone = order.clientPhone.replace(/\s/g, '');
+        const url = `whatsapp://send?phone=${phone}&text=${encodeURIComponent(message)}`;
+        Linking.openURL(url).catch(() => {
+            const webUrl = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
+            Linking.openURL(webUrl);
+        });
+    };
+
+    const handleUpdateStatus = (newStatus: Order['status'], reason?: string) => {
+        const confirmMsg = newStatus === 'confirmed'
+            ? 'Voulez-vous vraiment accepter cette commande ?'
+            : `Voulez-vous vraiment refuser cette commande pour " ${reason} " ?`;
+
         showConfirm(
-            `Voulez-vous vraiment passer cette commande en "${newStatus}" ?`,
+            confirmMsg,
             async () => {
                 try {
                     await updateStatusMutation.mutateAsync({ id: orderId, status: newStatus });
                     showSuccess('Statut mis à jour');
+
+                    // Redirect to WhatsApp after successful status update
+                    if (newStatus === 'confirmed' || newStatus === 'cancelled') {
+                        handleWhatsAppRedirect(newStatus as 'confirmed' | 'cancelled', reason);
+                    }
+
                     refetch();
                 } catch (error: any) {
                     showError(error.message || 'Échec de la mise à jour');
                 }
             }
         );
+    };
+
+    const handleRejectClick = () => {
+        setIsRejectionModalVisible(true);
+    };
+
+    const onSelectRejectionReason = (reason: string) => {
+        setIsRejectionModalVisible(false);
+        handleUpdateStatus('cancelled', reason);
     };
 
     const handleOpenItinerary = () => {
@@ -162,10 +207,11 @@ export const OrderVitrineDetailScreen = () => {
                     )}
 
                     <TouchableOpacity
-                        style={[styles.callButton, { backgroundColor: theme.colors.primary }]}
-                        onPress={handleCallClient}
+                        style={[styles.whatsappButton, { backgroundColor: '#25D366' }]}
+                        onPress={() => handleWhatsAppRedirect('confirmed')} // Default contact message
                     >
-                        <Text style={styles.callButtonText}>📞 Appeler le client</Text>
+                        <FontAwesome name="whatsapp" size={24} color="#FFFFFF" />
+                        <Text style={styles.whatsappButtonText}>Contacter le client</Text>
                     </TouchableOpacity>
                 </View>
 
@@ -204,51 +250,59 @@ export const OrderVitrineDetailScreen = () => {
                         La commande est :
                     </Text>
                     <Text style={[styles.currentStatus, { color: theme.colors.textSecondary }]}>
-                        Statut actuel: <Text style={{ color: theme.colors.primary }}>{order.status}</Text>
+                        Statut actuel : <Text style={{ color: getOrderStatus(order.status).color, fontWeight: 'bold' }}>{getOrderStatus(order.status).label}</Text>
                     </Text>
 
-                    <View style={styles.statusButtons}>
-                        {order.status === 'pending' && (
+                    {order.status === 'pending' && (
+                        <View style={styles.sideBySideButtons}>
                             <TouchableOpacity
-                                style={[styles.statusButton, { backgroundColor: '#007AFF' }]}
+                                style={[styles.statusButton, { backgroundColor: theme.colors.primary, flex: 1 }]}
                                 onPress={() => handleUpdateStatus('confirmed')}
                             >
-                                <Text style={styles.statusButtonText}>Confirmer</Text>
+                                <Text style={styles.statusButtonText}>Accepter</Text>
                             </TouchableOpacity>
-                        )}
-                        {order.status === 'confirmed' && (
                             <TouchableOpacity
-                                style={[styles.statusButton, { backgroundColor: '#5856D6' }]}
-                                onPress={() => handleUpdateStatus('preparing')}
+                                style={[styles.statusButton, { backgroundColor: '#FF3B30', flex: 1 }]}
+                                onPress={handleRejectClick}
                             >
-                                <Text style={styles.statusButtonText}>En préparation</Text>
+                                <Text style={styles.statusButtonText}>Refuser</Text>
                             </TouchableOpacity>
-                        )}
-                        {order.status === 'preparing' && (
-                            <TouchableOpacity
-                                style={[styles.statusButton, { backgroundColor: '#34C759' }]}
-                                onPress={() => handleUpdateStatus('delivering')}
-                            >
-                                <Text style={styles.statusButtonText}>En livraison</Text>
-                            </TouchableOpacity>
-                        )}
-                        {order.status === 'delivering' && (
-                            <TouchableOpacity
-                                style={[styles.statusButton, { backgroundColor: '#8E8E93' }]}
-                                onPress={() => handleUpdateStatus('completed')}
-                            >
-                                <Text style={styles.statusButtonText}>Marquer livrée</Text>
-                            </TouchableOpacity>
-                        )}
+                        </View>
+                    )}
+                </View>
+            </ScrollView>
+
+            {/* Rejection Reasons Modal */}
+            <Modal
+                visible={isRejectionModalVisible}
+                transparent={true}
+                animationType="slide"
+                onRequestClose={() => setIsRejectionModalVisible(false)}
+            >
+                <View style={styles.modalOverlay}>
+                    <View style={[styles.modalContent, { backgroundColor: theme.colors.surface }]}>
+                        <Text style={[styles.modalTitle, { color: theme.colors.text }]}>Motif du refus</Text>
+                        <FlatList
+                            data={REJECTION_REASONS}
+                            keyExtractor={(item) => item.id}
+                            renderItem={({ item }) => (
+                                <TouchableOpacity
+                                    style={[styles.reasonItem, { borderBottomColor: theme.colors.border }]}
+                                    onPress={() => onSelectRejectionReason(item.label)}
+                                >
+                                    <Text style={[styles.reasonText, { color: theme.colors.text }]}>{item.label}</Text>
+                                </TouchableOpacity>
+                            )}
+                        />
                         <TouchableOpacity
-                            style={[styles.statusButton, { backgroundColor: '#FF3B30' }]}
-                            onPress={() => handleUpdateStatus('cancelled')}
+                            style={[styles.cancelButton, { marginTop: 16 }]}
+                            onPress={() => setIsRejectionModalVisible(false)}
                         >
-                            <Text style={styles.statusButtonText}>Annuler</Text>
+                            <Text style={[styles.cancelButtonText, { color: '#FF3B30' }]}>Annuler</Text>
                         </TouchableOpacity>
                     </View>
                 </View>
-            </ScrollView>
+            </Modal>
 
             <ShareMenuModal
                 isVisible={isShareModalVisible}
@@ -298,6 +352,25 @@ const styles = StyleSheet.create({
     },
     value: {
         fontSize: 16,
+    },
+    whatsappButton: {
+        height: 54,
+        borderRadius: 12,
+        flexDirection: 'row',
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginTop: 16,
+        elevation: 2,
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 3,
+        gap: 10,
+    },
+    whatsappButtonText: {
+        color: '#FFFFFF',
+        fontSize: 16,
+        fontWeight: '600',
     },
     callButton: {
         height: 54,
@@ -367,6 +440,10 @@ const styles = StyleSheet.create({
     statusButtons: {
         gap: 8,
     },
+    sideBySideButtons: {
+        flexDirection: 'row',
+        gap: 12,
+    },
     statusButton: {
         height: 54,
         borderRadius: 12,
@@ -393,5 +470,38 @@ const styles = StyleSheet.create({
     mapImage: {
         width: '100%',
         height: '100%',
+    },
+    modalOverlay: {
+        flex: 1,
+        backgroundColor: 'rgba(0,0,0,0.5)',
+        justifyContent: 'flex-end',
+    },
+    modalContent: {
+        borderTopLeftRadius: 24,
+        borderTopRightRadius: 24,
+        padding: 24,
+        paddingBottom: 40,
+        maxHeight: '80%',
+    },
+    modalTitle: {
+        fontSize: 20,
+        fontWeight: 'bold',
+        marginBottom: 20,
+        textAlign: 'center',
+    },
+    reasonItem: {
+        paddingVertical: 16,
+        borderBottomWidth: 1,
+    },
+    reasonText: {
+        fontSize: 16,
+    },
+    cancelButton: {
+        paddingVertical: 12,
+        alignItems: 'center',
+    },
+    cancelButtonText: {
+        fontSize: 16,
+        fontWeight: '600',
     },
 });
