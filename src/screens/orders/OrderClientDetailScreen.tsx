@@ -234,9 +234,8 @@ export const OrderClientDetailScreen = () => {
                     <Text style={[styles.value, { color: theme.colors.text }]}>{order.clientPhone}</Text>
 
                     <View style={[styles.contactButtonsContainer, { marginTop: 16 }]}>
-                        {/* Client see Seller contact only, Seller see Client contact only, Third Party see both */}
-
-                        {(isClient || isThirdParty) && vitrine?.contact?.phone && (
+                        {/* Only show 'Contact Seller' if NOT the owner and (is client or third party) */}
+                        {((isClient || isThirdParty) && !isOwner) && vitrine?.contact?.phone && (
                             <TouchableOpacity
                                 style={[styles.whatsappButton, { backgroundColor: '#25D366' }]}
                                 onPress={() => handleWhatsAppRedirect('seller')}
@@ -246,7 +245,8 @@ export const OrderClientDetailScreen = () => {
                             </TouchableOpacity>
                         )}
 
-                        {(isOwner || isThirdParty) && order.clientPhone && (
+                        {/* Only show 'Contact Client' if NOT the client and (is owner or third party) OR if we are the owner explicitly */}
+                        {(isOwner || (isThirdParty && !isClient)) && order.clientPhone && (
                             <TouchableOpacity
                                 style={[styles.whatsappButton, { backgroundColor: '#25D366' }]}
                                 onPress={() => handleWhatsAppRedirect('client')}
