@@ -76,11 +76,51 @@ export const PermissionService = {
     },
 
     /**
-     * Récupère le token de notification (Expo Push Token)
+     * Récupère le token de notification (Expo Push Token ou Web Push Subscription)
      */
-    async getNotificationToken(): Promise<string | null> {
+    async getNotificationToken(): Promise<string | object | null> {
         try {
             if (Platform.OS === 'web') {
+                // Web Push API
+                if ('serviceWorker' in navigator && 'PushManager' in window) {
+                    try {
+                        const registration = await navigator.serviceWorker.ready;
+
+                        // Clé publique VAPID depuis .env
+                        const vapidPublicKey = process.env.EXPO_PUBLIC_VAPID_PUBLIC_KEY;
+
+                        if (!vapidPublicKey) {
+                            console.error('[PermissionService] Clé VAPID publique manquante dans .env');
+                            return null;
+                        }
+
+                        // Convertir la clé base64url en Uint8Array
+                        const urlBase64ToUint8Array = (base64String: string) => {
+                            const padding = '='.repeat((4 - base64String.length % 4) % 4);
+                            const base64 = (base64String + padding)
+                                .replace(/\-/g, '+')
+                                .replace(/_/g, '/');
+                            const rawData = window.atob(base64);
+                            const outputArray = new Uint8Array(rawData.length);
+                            for (let i = 0; i < rawData.length; ++i) {
+                                outputArray[i] = rawData.charCodeAt(i);
+                            }
+                            return outputArray;
+                        };
+
+                        const subscription = await registration.pushManager.subscribe({
+                            userVisibleOnly: true,
+                            applicationServerKey: urlBase64ToUint8Array(vapidPublicKey)
+                        });
+
+                        console.log('[PermissionService] Web Push subscription créée:', subscription);
+                        return subscription.toJSON(); // Retourne {endpoint, keys: {p256dh, auth}}
+                    } catch (error) {
+                        console.error('[PermissionService] Erreur Web Push:', error);
+                        return null;
+                    }
+                }
+                console.warn('[PermissionService] Web Push non supporté sur ce navigateur');
                 return null;
             }
 
@@ -90,12 +130,15 @@ export const PermissionService = {
             return token.data;
         } catch (error) {
             console.error('[PermissionService] Erreur récupération token:', error);
-            try {
-                const deviceToken = await Notifications.getDevicePushTokenAsync();
-                return deviceToken.data as string;
-            } catch (innerError) {
-                return null;
+            if (Platform.OS !== 'web') {
+                try {
+                    const deviceToken = await Notifications.getDevicePushTokenAsync();
+                    return deviceToken.data as string;
+                } catch (innerError) {
+                    return null;
+                }
             }
+            return null;
         }
     },
 

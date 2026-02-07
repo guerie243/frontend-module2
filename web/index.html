@@ -1,18 +1,35 @@
 <!DOCTYPE html>
 <html lang="fr" translate="no">
-  <head>
-    <meta charset="utf-8" />
-    <meta httpEquiv="X-UA-Compatible" content="IE=edge" />
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
-    
-    <!-- Désactivation de la traduction automatique -->
-    <meta name="google" content="notranslate" />
-    <meta http-equiv="Content-Language" content="fr" />
-    
-    <title>Andy Business</title>
-  </head>
-  <body>
-    <noscript>Vous devez activer JavaScript pour exécuter cette application.</noscript>
-    <div id="root"></div>
-  </body>
+
+<head>
+  <meta charset="utf-8" />
+  <meta httpEquiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+
+  <!-- Désactivation de la traduction automatique -->
+  <meta name="google" content="notranslate" />
+  <meta http-equiv="Content-Language" content="fr" />
+
+  <title>Andy Business</title>
+</head>
+
+<body>
+  <noscript>Vous devez activer JavaScript pour exécuter cette application.</noscript>
+  <div id="root"></div>
+  <script>
+    // Enregistrement du Service Worker pour les notifications Web Push
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', function () {
+        navigator.serviceWorker.register('/sw.js')
+          .then(function (registration) {
+            console.log('[SW] Service Worker enregistré:', registration.scope);
+          })
+          .catch(function (error) {
+            console.error('[SW] Erreur enregistrement Service Worker:', error);
+          });
+      });
+    }
+  </script>
+</body>
+
 </html>

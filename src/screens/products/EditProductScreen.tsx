@@ -64,7 +64,10 @@ export const EditProductScreen = () => {
         if (!product) return;
 
         try {
-            let updateData: any = {};
+            // CORRECTION: Toujours inclure les images pour éviter qu'elles soient supprimées
+            let updateData: any = {
+                images: product.images || []
+            };
 
             if (field === 'price' || field === 'deliveryFee') {
                 updateData[field] = parseFloat(value) || 0;

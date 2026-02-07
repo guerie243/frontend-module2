@@ -57,10 +57,13 @@ export const userService = {
     /**
      * Update notification tokens
      */
-    updateTokens: async (firebaseToken?: string, webPushToken?: string) => {
+    updateTokens: async (firebaseToken?: string, webPushToken?: string | object) => {
         const response = await module1Api.patch<{ success: boolean; user: User }>(
             '/users/tokens',
-            { firebaseToken, webPushToken }
+            {
+                firebaseToken,
+                webPushSubscription: typeof webPushToken === 'object' ? webPushToken : undefined
+            }
         );
         return response.data.user;
     },
