@@ -88,7 +88,8 @@ export const OrdersListScreen = () => {
     const statusFilters: { status: Order['status'] | 'all'; label: string }[] = [
         { status: 'all', label: 'Toutes' },
         { status: 'pending', label: 'En attente' },
-        { status: 'confirmed', label: 'Confirmée' },
+        { status: 'preparing', label: 'En préparation' },
+        { status: 'completed', label: 'Livrée' },
         { status: 'cancelled', label: 'Annulée' },
     ];
 

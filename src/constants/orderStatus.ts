@@ -7,7 +7,7 @@ export const ORDER_STATUS = {
     },
     CONFIRMED: {
         value: 'confirmed' as const,
-        label: 'Confirmée',
+        label: 'Acceptée',
         color: '#007AFF', // Blue
         icon: 'checkmark-circle-outline' as const,
     },
@@ -26,7 +26,7 @@ export const ORDER_STATUS = {
     COMPLETED: {
         value: 'completed' as const,
         label: 'Livrée',
-        color: '#8E8E93', // Gray
+        color: '#34C759', // Changed to Green to match delivery success
         icon: 'checkmark-done-circle-outline' as const,
     },
     CANCELLED: {

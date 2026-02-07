@@ -71,15 +71,18 @@ export const OrderVitrineDetailScreen = () => {
     // Third party only if data is loaded and user is neither client nor owner
     const isThirdParty = !!user && !!vitrine && !isClient && !isOwner;
 
-    const getWhatsAppMessage = (status: 'confirmed' | 'cancelled', reason?: string) => {
+    const getWhatsAppMessage = (status: Order['status'], reason?: string) => {
         const productsList = order?.products.map(p => `${p.quantity}x ${p.productName}`).join(', ');
         const orderUrl = getOrderUrl(orderId);
 
-        if (status === 'confirmed') {
-            return `Bonjour ${order?.clientName}, votre commande de ${productsList} a été acceptée. Nous préparons votre livraison. Suivez-la ici : ${orderUrl}`;
-        } else {
+        if (status === 'preparing') {
+            return `Bonjour ${order?.clientName}, votre commande de ${productsList} a été acceptée et est maintenant en préparation. Suivez-la ici : ${orderUrl}`;
+        } else if (status === 'completed') {
+            return `Bonjour ${order?.clientName}, votre commande de ${productsList} a été livrée. Merci de votre confiance ! Détails : ${orderUrl}`;
+        } else if (status === 'cancelled') {
             return `Bonjour ${order?.clientName}, nous sommes désolés mais votre commande n'a pas pu être acceptée en raison de : ${reason || 'non spécifié'}. Détails : ${orderUrl}`;
         }
+        return `Bonjour ${order?.clientName}, le statut de votre commande de ${productsList} a été mis à jour : ${getOrderStatus(status).label}. Suivez-la ici : ${orderUrl}`;
     };
 
     const handleWhatsAppRedirect = (target: 'seller' | 'client') => {
@@ -111,9 +114,16 @@ export const OrderVitrineDetailScreen = () => {
     };
 
     const handleUpdateStatus = (newStatus: Order['status'], reason?: string) => {
-        const confirmMsg = newStatus === 'confirmed'
-            ? 'Voulez-vous vraiment accepter cette commande ?'
-            : `Voulez-vous vraiment refuser cette commande pour " ${reason} " ?`;
+        let confirmMsg = '';
+        if (newStatus === 'preparing') {
+            confirmMsg = 'Voulez-vous vraiment accepter cette commande et la passer en préparation ?';
+        } else if (newStatus === 'completed') {
+            confirmMsg = 'Voulez-vous vraiment marquer cette commande comme livrée ?';
+        } else if (newStatus === 'cancelled') {
+            confirmMsg = `Voulez-vous vraiment refuser cette commande pour " ${reason} " ?`;
+        } else {
+            confirmMsg = `Voulez-vous vraiment passer cette commande au statut "${getOrderStatus(newStatus).label}" ?`;
+        }
 
         showConfirm(
             confirmMsg,
@@ -123,17 +133,8 @@ export const OrderVitrineDetailScreen = () => {
                     showSuccess('Statut mis à jour');
 
                     // Redirect to WhatsApp after successful status update
-                    if (newStatus === 'confirmed' || newStatus === 'cancelled') {
-                        const statusReason = newStatus === 'confirmed' ? 'Acceptée' : (reason || 'non spécifié');
-                        const productsList = order?.products.map(p => `${p.quantity}x ${p.productName}`).join(', ');
-                        const orderUrl = getOrderUrl(orderId);
-
-                        let message = '';
-                        if (newStatus === 'confirmed') {
-                            message = `Bonjour ${order?.clientName}, votre commande de ${productsList} a été acceptée. Nous préparons votre livraison. Suivez-la ici : ${orderUrl}`;
-                        } else {
-                            message = `Bonjour ${order?.clientName}, nous sommes désolés mais votre commande n'a pas pu être acceptée en raison de : ${statusReason}. Détails : ${orderUrl}`;
-                        }
+                    if (newStatus === 'preparing' || newStatus === 'completed' || newStatus === 'cancelled') {
+                        const message = getWhatsAppMessage(newStatus, reason);
 
                         if (order?.clientPhone) {
                             const phone = order.clientPhone.replace(/\s/g, '');
@@ -335,21 +336,33 @@ export const OrderVitrineDetailScreen = () => {
             </ScrollView>
 
             {/* Fixed Footer for Management Buttons */}
-            {isOwner && order.status === 'pending' && (
+            {isOwner && (order.status === 'pending' || order.status === 'preparing') && (
                 <View style={[styles.footer, { backgroundColor: theme.colors.surface, borderTopColor: theme.colors.border }]}>
                     <View style={styles.sideBySideButtons}>
-                        <TouchableOpacity
-                            style={[styles.statusButton, { backgroundColor: theme.colors.primary, flex: 1 }]}
-                            onPress={() => handleUpdateStatus('confirmed')}
-                        >
-                            <Text style={styles.statusButtonText}>Accepter</Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity
-                            style={[styles.statusButton, { backgroundColor: '#FF3B30', flex: 1 }]}
-                            onPress={handleRejectClick}
-                        >
-                            <Text style={styles.statusButtonText}>Refuser</Text>
-                        </TouchableOpacity>
+                        {order.status === 'pending' ? (
+                            <>
+                                <TouchableOpacity
+                                    style={[styles.statusButton, { backgroundColor: theme.colors.primary, flex: 1 }]}
+                                    onPress={() => handleUpdateStatus('preparing')}
+                                >
+                                    <Text style={styles.statusButtonText}>Accepter</Text>
+                                </TouchableOpacity>
+                                <TouchableOpacity
+                                    style={[styles.statusButton, { backgroundColor: '#FF3B30', flex: 1 }]}
+                                    onPress={handleRejectClick}
+                                >
+                                    <Text style={styles.statusButtonText}>Refuser</Text>
+                                </TouchableOpacity>
+                            </>
+                        ) : order.status === 'preparing' ? (
+                            <TouchableOpacity
+                                style={[styles.statusButton, { backgroundColor: theme.colors.primary, flex: 1 }]}
+                                onPress={() => handleUpdateStatus('completed')}
+                            >
+                                <Ionicons name="checkmark-done-outline" size={20} color="#FFF" style={{ marginRight: 8 }} />
+                                <Text style={styles.statusButtonText}>Marquer comme livrée</Text>
+                            </TouchableOpacity>
+                        ) : null}
                     </View>
                 </View>
             )}
