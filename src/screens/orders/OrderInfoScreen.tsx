@@ -78,6 +78,7 @@ export const OrderInfoScreen = () => {
             price: item.product.price,
             currency: item.product.currency || 'USD',
             locations: item.product.locations,
+            deliveryFee: item.product.deliveryFee,
         }));
 
         // Navigate to delivery location screen
@@ -121,6 +122,7 @@ export const OrderInfoScreen = () => {
                                     price={item.product.price}
                                     currency={item.product.currency}
                                     slug={item.product.slug}
+                                    deliveryFee={item.product.deliveryFee}
                                 />
                             ))}
                             <View style={[styles.divider, { backgroundColor: theme.colors.border }]} />

@@ -50,6 +50,7 @@ export interface OrderProduct {
     price: number;
     currency?: string;
     locations?: string | string[];
+    deliveryFee?: number;
 }
 
 export interface Order {
@@ -74,6 +75,7 @@ export interface Order {
     vitrineName?: string;
     status: 'pending' | 'confirmed' | 'preparing' | 'delivering' | 'completed' | 'cancelled';
     totalPrice: number;
+    deliveryFee?: number;
     notes?: string;
     createdAt?: string;
     updatedAt?: string;

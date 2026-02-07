@@ -13,6 +13,7 @@ interface ProductOrderItemProps {
     currency?: string;
     slug?: string;
     productId?: string;
+    deliveryFee?: number;
 }
 
 export const ProductOrderItem: React.FC<ProductOrderItemProps> = ({
@@ -23,6 +24,7 @@ export const ProductOrderItem: React.FC<ProductOrderItemProps> = ({
     currency = 'USD',
     slug,
     productId,
+    deliveryFee,
 }) => {
     const { theme } = useTheme();
     const navigation = useNavigation<any>();
@@ -54,6 +56,11 @@ export const ProductOrderItem: React.FC<ProductOrderItemProps> = ({
                 <Text style={[styles.details, { color: theme.colors.textSecondary }]}>
                     {quantity} x {price.toFixed(2)} {currency}
                 </Text>
+                {deliveryFee !== undefined && (
+                    <Text style={[styles.deliveryFee, { color: deliveryFee > 0 ? theme.colors.textSecondary : '#34C759' }]}>
+                        {deliveryFee > 0 ? `+ Livraison: ${deliveryFee.toFixed(2)} ${currency}` : 'Livraison gratuite'}
+                    </Text>
+                )}
             </View>
             <Text style={[styles.total, { color: theme.colors.text }]}>
                 {(quantity * price).toFixed(2)} {currency}
@@ -89,5 +96,9 @@ const styles = StyleSheet.create({
     total: {
         fontSize: 14,
         fontWeight: '600',
+    },
+    deliveryFee: {
+        fontSize: 11,
+        marginTop: 2,
     },
 });

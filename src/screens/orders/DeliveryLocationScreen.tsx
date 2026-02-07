@@ -11,7 +11,7 @@ import { useCreateOrder } from '../../hooks/useCommandes';
 import { useAuth } from '../../hooks/useAuth';
 import * as Location from 'expo-location';
 import { Image } from 'expo-image';
-import { ALGERIA_CITIES } from '../../constants/locations';
+import { DRC_CITIES } from '../../constants/locations';
 import { AnimatedSelect } from '../../components/AnimatedSelect';
 import { Ionicons } from '@expo/vector-icons';
 import { MapWebView } from '../../components/MapWebView';
@@ -34,7 +34,7 @@ export const DeliveryLocationScreen = () => {
     // Get available cities based on products in the cart
     const availableCities = React.useMemo(() => {
         if (!orderData?.products || orderData.products.length === 0) {
-            return ALGERIA_CITIES;
+            return DRC_CITIES;
         }
 
         // Get common cities across all products
@@ -57,12 +57,19 @@ export const DeliveryLocationScreen = () => {
 
         // If no product has restrictions, show all cities
         if (commonCities === null) {
-            return ALGERIA_CITIES;
+            return DRC_CITIES;
         }
 
         // Intersection of all product locations
-        return ALGERIA_CITIES.filter(city => commonCities?.includes(city.value));
+        return DRC_CITIES.filter(city => commonCities?.includes(city.value));
     }, [orderData]);
+
+    const totalDeliveryFee = React.useMemo(() => {
+        if (!orderData?.products) return 0;
+        return orderData.products.reduce((sum: number, p: any) => sum + (p.deliveryFee || 0), 0);
+    }, [orderData?.products]);
+
+    const grandTotal = (orderData?.totalPrice || 0) + totalDeliveryFee;
 
     const [city, setCity] = useState('');
     const [commune, setCommune] = useState('');
@@ -161,6 +168,8 @@ export const DeliveryLocationScreen = () => {
                 deliveryAddress,
                 gpsCoords: deliveryLocation.latitude !== 0 ? deliveryLocation : undefined,
                 status: 'pending',
+                deliveryFee: totalDeliveryFee,
+                totalPrice: grandTotal,
             });
 
             if (order && (order.orderId || order._id)) {
@@ -181,7 +190,13 @@ export const DeliveryLocationScreen = () => {
                         message += `- ${p.productName} x ${p.quantity} (${(p.price * p.quantity).toFixed(2)} ${p.currency || 'USD'})\n`;
                     });
 
-                    message += `\n*Total:* ${orderData.totalPrice.toFixed(2)} ${orderData.products?.[0]?.currency || 'USD'}\n\n`;
+                    message += `\n*Sous-total:* ${orderData.totalPrice.toFixed(2)} ${orderData.products?.[0]?.currency || 'USD'}\n`;
+                    if (totalDeliveryFee > 0) {
+                        message += `*Frais de livraison:* ${totalDeliveryFee.toFixed(2)} ${orderData.products?.[0]?.currency || 'USD'}\n`;
+                    } else {
+                        message += `*Livraison:* Gratuite\n`;
+                    }
+                    message += `*Total:* ${grandTotal.toFixed(2)} ${orderData.products?.[0]?.currency || 'USD'}\n\n`;
 
                     message += `*Livraison:*\n`;
                     message += `- Ville: ${city}\n`;
@@ -294,7 +309,7 @@ export const DeliveryLocationScreen = () => {
                                     label="Commune *"
                                     value={commune}
                                     onChange={setCommune}
-                                    options={ALGERIA_CITIES.find(c => c.value === (city || (availableCities.length === 1 ? availableCities[0].value : '')))?.communes.map(com => ({ label: com.label, value: com.value })) || []}
+                                    options={DRC_CITIES.find(c => c.value === (city || (availableCities.length === 1 ? availableCities[0].value : '')))?.communes.map(com => ({ label: com.label, value: com.value })) || []}
                                     placeholder="Sélectionner une commune"
                                 />
                             )}
@@ -407,6 +422,7 @@ export const DeliveryLocationScreen = () => {
                                     currency={product.currency}
                                     slug={product.productSlug}
                                     productId={product.productId}
+                                    deliveryFee={product.deliveryFee}
                                 />
                             ))}
                             <View style={[styles.divider, { backgroundColor: theme.colors.border }]} />

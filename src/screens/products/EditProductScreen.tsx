@@ -20,7 +20,7 @@ import { ScreenWrapper } from '../../components/ScreenWrapper';
 import { AnimatedSelect } from '../../components/AnimatedSelect';
 import { PRODUCT_CATEGORIES } from '../../constants/productCategories';
 import { CURRENCY_OPTIONS } from '../../constants/currencies';
-import { ALGERIA_CITIES, LOCATION_OPTIONS } from '../../constants/locations';
+import { DRC_CITIES, LOCATION_OPTIONS } from '../../constants/locations';
 
 interface ImageItem {
     uri: string;
@@ -66,8 +66,8 @@ export const EditProductScreen = () => {
         try {
             let updateData: any = {};
 
-            if (field === 'price') {
-                updateData[field] = parseFloat(value);
+            if (field === 'price' || field === 'deliveryFee') {
+                updateData[field] = parseFloat(value) || 0;
             } else if (field === 'locations') {
                 // Value is already an array from AnimatedSelect with multiple=true
                 updateData[field] = Array.isArray(value) ? value : (value ? [value] : []);
@@ -204,7 +204,7 @@ export const EditProductScreen = () => {
                                 label={label}
                                 value={value}
                                 onChange={setValue}
-                                options={ALGERIA_CITIES.map(l => ({ label: l.label, value: l.value }))}
+                                options={DRC_CITIES.map(l => ({ label: l.label, value: l.value }))}
                                 placeholder="Sélectionner une ou plusieurs villes"
                                 multiple={true}
                             />

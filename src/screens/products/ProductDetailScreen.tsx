@@ -151,6 +151,22 @@ export const ProductDetailScreen = () => {
                             {product.price.toFixed(2)} {product.currency || 'USD'}
                         </Text>
 
+                        <View style={styles.deliveryContainer}>
+                            <Ionicons
+                                name="car-outline"
+                                size={18}
+                                color={product.deliveryFee ? theme.colors.textSecondary : '#34C759'}
+                            />
+                            <Text style={[
+                                styles.deliveryText,
+                                { color: product.deliveryFee ? theme.colors.textSecondary : '#34C759' }
+                            ]}>
+                                {product.deliveryFee
+                                    ? `Frais de livraison: ${product.deliveryFee.toFixed(2)} ${product.currency || 'USD'}`
+                                    : 'Livraison gratuite'}
+                            </Text>
+                        </View>
+
                         {product.category && (
                             <View style={[styles.categoryBadge, { backgroundColor: theme.colors.primary + '20' }]}>
                                 <Text style={[styles.categoryText, { color: theme.colors.primary }]}>
@@ -342,6 +358,16 @@ const createStyles = (theme: any) => StyleSheet.create({
     categoryText: {
         fontSize: 14,
         fontWeight: '600',
+    },
+    deliveryContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: 16,
+        gap: 6,
+    },
+    deliveryText: {
+        fontSize: 15,
+        fontWeight: '500',
     },
     descriptionContainer: {
         marginTop: 8,

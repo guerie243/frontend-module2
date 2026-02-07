@@ -1,55 +1,99 @@
-export const ALGERIA_CITIES = [
+export const DRC_CITIES = [
     {
-        label: 'Alger',
-        value: 'Alger',
+        label: 'Kinshasa',
+        value: 'Kinshasa',
         communes: [
-            { label: 'Alger Centre', value: 'Alger Centre' },
-            { label: 'Sidi M\'Hamed', value: 'Sidi M\'Hamed' },
-            { label: 'El Biar', value: 'El Biar' },
-            { label: 'Bouzareah', value: 'Bouzareah' },
-            { label: ' Hydra', value: 'Hydra' },
-            { label: 'Bir Mourad Raïs', value: 'Bir Mourad Raïs' },
-            { label: 'Dely Ibrahim', value: 'Dely Ibrahim' },
-            { label: 'Cheraga', value: 'Cheraga' },
-            { label: 'Bab El Oued', value: 'Bab El Oued' },
-            { label: 'Kouba', value: 'Kouba' },
+            { label: 'Bandalungwa', value: 'Bandalungwa' },
+            { label: 'Barumbu', value: 'Barumbu' },
+            { label: 'Bumbu', value: 'Bumbu' },
+            { label: 'Gombe', value: 'Gombe' },
+            { label: 'Kalamu', value: 'Kalamu' },
+            { label: 'Kasa-Vubu', value: 'Kasa-Vubu' },
+            { label: 'Kimbanseke', value: 'Kimbanseke' },
+            { label: 'Kinshasa', value: 'Kinshasa' },
+            { label: 'Kintambo', value: 'Kintambo' },
+            { label: 'Kisenso', value: 'Kisenso' },
+            { label: 'Lemba', value: 'Lemba' },
+            { label: 'Limete', value: 'Limete' },
+            { label: 'Lingwala', value: 'Lingwala' },
+            { label: 'Makala', value: 'Makala' },
+            { label: 'Maluku', value: 'Maluku' },
+            { label: 'Masina', value: 'Masina' },
+            { label: 'Matete', value: 'Matete' },
+            { label: 'Mont-Ngafula', value: 'Mont-Ngafula' },
+            { label: 'Nsele', value: 'Nsele' },
+            { label: 'Ndjili', value: 'Ndjili' },
+            { label: 'Ngaba', value: 'Ngaba' },
+            { label: 'Ngaliema', value: 'Ngaliema' },
+            { label: 'Ngiri-Ngiri', value: 'Ngiri-Ngiri' },
+            { label: 'Selembao', value: 'Selembao' },
         ]
     },
     {
-        label: 'Oran',
-        value: 'Oran',
+        label: 'Lubumbashi',
+        value: 'Lubumbashi',
         communes: [
-            { label: 'Oran Centre', value: 'Oran Centre' },
-            { label: 'Bir El Djir', value: 'Bir El Djir' },
-            { label: 'Es Senia', value: 'Es Senia' },
-            { label: 'Arzew', value: 'Arzew' },
-            { label: 'Sidi Chami', value: 'Sidi Chami' },
+            { label: 'Annexe', value: 'Annexe' },
+            { label: 'Kamalondo', value: 'Kamalondo' },
+            { label: 'Kampemba', value: 'Kampemba' },
+            { label: 'Katuba', value: 'Katuba' },
+            { label: 'Kenya', value: 'Kenya' },
+            { label: 'Lubumbashi', value: 'Lubumbashi' },
+            { label: 'Rwashi', value: 'Rwashi' },
         ]
     },
     {
-        label: 'Constantine',
-        value: 'Constantine',
+        label: 'Kolwezi',
+        value: 'Kolwezi',
         communes: [
-            { label: 'Constantine Centre', value: 'Constantine Centre' },
-            { label: 'El Khroub', value: 'El Khroub' },
-            { label: 'Hamma Bouziane', value: 'Hamma Bouziane' },
-            { label: 'Didouche Mourad', value: 'Didouche Mourad' },
+            { label: 'Dilala', value: 'Dilala' },
+            { label: 'Manika', value: 'Manika' },
         ]
     },
     {
-        label: 'Sétif',
-        value: 'Sétif',
+        label: 'Mbuji-Mayi',
+        value: 'Mbuji-Mayi',
         communes: [
-            { label: 'Sétif Centre', value: 'Sétif Centre' },
-            { label: 'El Eulma', value: 'El Eulma' },
-            { label: 'Ain Arnat', value: 'Ain Arnat' },
+            { label: 'Bipemba', value: 'Bipemba' },
+            { label: 'Dibindi', value: 'Dibindi' },
+            { label: 'Kanshi', value: 'Kanshi' },
+            { label: 'Muya', value: 'Muya' },
+        ]
+    },
+    {
+        label: 'Kisangani',
+        value: 'Kisangani',
+        communes: [
+            { label: 'Makiso', value: 'Makiso' },
+            { label: 'Kabondo', value: 'Kabondo' },
+            { label: 'Mangobo', value: 'Mangobo' },
+            { label: 'Tshopo', value: 'Tshopo' },
+            { label: 'Lubunga', value: 'Lubunga' },
+            { label: 'Kisangani', value: 'Kisangani' },
+        ]
+    },
+    {
+        label: 'Goma',
+        value: 'Goma',
+        communes: [
+            { label: 'Goma', value: 'Goma' },
+            { label: 'Karisimbi', value: 'Karisimbi' },
+        ]
+    },
+    {
+        label: 'Bukavu',
+        value: 'Bukavu',
+        communes: [
+            { label: 'Ibanda', value: 'Ibanda' },
+            { label: 'Kadutu', value: 'Kadutu' },
+            { label: 'Bagira', value: 'Bagira' },
         ]
     }
 ] as const;
 
-export const LOCATION_OPTIONS = ALGERIA_CITIES.map(city => ({
+export const LOCATION_OPTIONS = DRC_CITIES.map(city => ({
     label: city.label,
     value: city.value
 }));
 
-export type CityName = typeof ALGERIA_CITIES[number]['value'];
+export type CityName = typeof DRC_CITIES[number]['value'];

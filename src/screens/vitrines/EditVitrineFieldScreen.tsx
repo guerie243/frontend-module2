@@ -8,20 +8,8 @@ import { useTheme } from '../../context/ThemeContext';
 import { useUpdateVitrine } from '../../hooks/useVitrines';
 import { AnimatedSelect } from '../../components/AnimatedSelect';
 import { useAlertService } from '../../utils/alertService';
-import { ALGERIA_CITIES } from '../../constants/locations';
-
-// Categories for vitrine (matching Module 1)
-const CATEGORIES_VITRINE = [
-    { label: 'Générale', value: 'general' },
-    { label: 'Mode', value: 'fashion' },
-    { label: 'Électronique', value: 'electronics' },
-    { label: 'Maison & Jardin', value: 'home' },
-    { label: 'Sports & Loisirs', value: 'sports' },
-    { label: 'Beauté & Santé', value: 'beauty' },
-    { label: 'Alimentation', value: 'food' },
-    { label: 'Services', value: 'services' },
-    { label: 'Autre', value: 'other' },
-];
+import { DRC_CITIES } from '../../constants/locations';
+import { VITRINE_CATEGORIES } from '../../constants/vitrineCategories';
 
 type VitrineParams = {
     VitrineModificationMain: { refreshed: number };
@@ -156,14 +144,14 @@ export const EditVitrineFieldScreen = () => {
                 {field === 'category' ? (
                     <AnimatedSelect
                         label={displayLabel}
-                        options={CATEGORIES_VITRINE}
+                        options={[...VITRINE_CATEGORIES]}
                         value={value}
                         onChange={setValue}
                     />
                 ) : field === 'city' ? (
                     <AnimatedSelect
                         label={displayLabel}
-                        options={ALGERIA_CITIES.map(c => ({ label: c.label, value: c.value }))}
+                        options={DRC_CITIES.map(c => ({ label: c.label, value: c.value }))}
                         value={value}
                         onChange={setValue}
                         placeholder="Sélectionner une ville"

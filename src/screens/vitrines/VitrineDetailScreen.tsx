@@ -114,9 +114,14 @@ export const VitrineDetailScreen = () => {
                             style={styles.productRow}
                             onPress={() => navigation.navigate('ProductDetail', { slug: product.slug })}
                         >
-                            <Text style={[styles.productName, { color: theme.colors.text }]}>
-                                {product.name}
-                            </Text>
+                            <View style={{ flex: 1 }}>
+                                <Text style={[styles.productName, { color: theme.colors.text }]}>
+                                    {product.name}
+                                </Text>
+                                <Text style={[styles.deliveryFee, { color: product.deliveryFee ? theme.colors.textSecondary : '#34C759' }]}>
+                                    {product.deliveryFee ? `Livraison: ${product.deliveryFee.toFixed(2)} ${product.currency || 'USD'}` : 'Livraison gratuite'}
+                                </Text>
+                            </View>
                             <Text style={[styles.productPrice, { color: theme.colors.primary }]}>
                                 {product.price.toFixed(2)} {product.currency || 'USD'}
                             </Text>
@@ -179,6 +184,10 @@ const styles = StyleSheet.create({
     productPrice: {
         fontSize: 16,
         fontWeight: '600',
+    },
+    deliveryFee: {
+        fontSize: 12,
+        marginTop: 2,
     },
     button: {
         height: 50,

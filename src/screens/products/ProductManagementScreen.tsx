@@ -190,6 +190,7 @@ export const ProductManagementScreen = () => {
                         {renderFieldItem('Nom du produit', product.name, 'name')}
                         {renderFieldItem('Catégorie', product.category, 'category')}
                         {renderFieldItem('Prix', `${product.price}`, 'price', { keyboardType: 'decimal-pad' })}
+                        {renderFieldItem('Frais de livraison', product.deliveryFee !== undefined ? `${product.deliveryFee}` : '0', 'deliveryFee', { keyboardType: 'decimal-pad' })}
                         {renderFieldItem('Devise', product.currency || 'USD', 'currency')}
                         {renderFieldItem('Villes de disponibilité', Array.isArray(product.locations) ? product.locations.join(', ') : (product.locations || ''), 'locations', { isMultiSelect: true, arrayValue: Array.isArray(product.locations) ? product.locations : (product.locations ? [product.locations] : []) })}
                         {renderFieldItem('Description', product.description || '', 'description', { multiline: true })}

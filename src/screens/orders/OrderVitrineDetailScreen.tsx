@@ -300,8 +300,17 @@ export const OrderVitrineDetailScreen = () => {
                             currency={product.currency}
                             slug={product.productSlug}
                             productId={product.productId}
+                            deliveryFee={product.deliveryFee}
                         />
                     ))}
+                    <View style={styles.totalRow}>
+                        <Text style={[styles.label, { color: theme.colors.textSecondary, marginTop: 0 }]}>Frais de livraison</Text>
+                        <Text style={[styles.value, { color: theme.colors.text }]}>
+                            {order.deliveryFee && order.deliveryFee > 0
+                                ? `${order.deliveryFee.toFixed(2)} ${order.products[0]?.currency || 'USD'}`
+                                : 'Gratuit'}
+                        </Text>
+                    </View>
                     <View style={[styles.divider, { backgroundColor: theme.colors.border }]} />
                     <View style={styles.totalRow}>
                         <Text style={[styles.totalLabel, { color: theme.colors.text }]}>Total</Text>
