@@ -7,6 +7,7 @@ import {
     KeyboardAvoidingView,
     Platform,
     ScrollView,
+    Image,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useAuth } from '../../hooks/useAuth';
@@ -16,6 +17,7 @@ import { CustomInput } from '../../components/CustomInput';
 import { CustomButton } from '../../components/CustomButton';
 import { ScreenWrapper } from '../../components/ScreenWrapper';
 import { Ionicons } from '@expo/vector-icons';
+import { DEFAULT_IMAGES } from '../../constants/images';
 
 export const LoginScreen = () => {
     const navigation = useNavigation<any>();
@@ -69,6 +71,13 @@ export const LoginScreen = () => {
             contentContainerStyle={styles.scrollContent}
         >
             <View style={styles.content}>
+                <View style={styles.logoContainer}>
+                    <Image
+                        source={DEFAULT_IMAGES.logo}
+                        style={styles.logo}
+                        resizeMode="contain"
+                    />
+                </View>
                 <Text style={[styles.title, { color: theme.colors.text }]}>Connexion</Text>
                 <Text style={[styles.subtitle, { color: theme.colors.textSecondary }]}>
                     Connectez-vous pour gérer vos commandes
@@ -146,6 +155,29 @@ const createStyles = (theme: any) => StyleSheet.create({
     content: {
         justifyContent: 'center',
         paddingVertical: 20,
+        alignItems: 'center', // Added for centering logo
+    },
+    logoContainer: {
+        width: 100,
+        height: 100,
+        borderRadius: 50,
+        backgroundColor: '#FFFFFF',
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginBottom: 24,
+        // Elevation for Android
+        elevation: 4,
+        // Shadow for iOS
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+        borderWidth: 1,
+        borderColor: theme.colors.border + '40', // Subtle border
+    },
+    logo: {
+        width: 70,
+        height: 70,
     },
     title: {
         fontSize: 28,
