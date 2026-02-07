@@ -55,8 +55,15 @@ export const OrdersListScreen = () => {
 
     console.log('[OrdersListScreen] Seller Mode, Count:', orders?.length);
 
-    const [statusFilter, setStatusFilter] = useState<Order['status'] | 'all'>('all');
-    const [selectedOrderForShare, setSelectedOrderForShare] = useState<Order | null>(null);
+    const statusFilters: { status: Order['status'] | 'all'; label: string }[] = [
+        { status: 'pending', label: 'En attente' },
+        { status: 'preparing', label: 'En préparation' },
+        { status: 'completed', label: 'Livrée' },
+        { status: 'cancelled', label: 'Annulée' },
+        { status: 'all', label: 'Toutes' },
+    ];
+
+    const [statusFilter, setStatusFilter] = useState<Order['status'] | 'all'>('pending');
 
     // Filter and sort orders
     const filteredOrders = useMemo(() => {
@@ -65,13 +72,19 @@ export const OrdersListScreen = () => {
             result = orders.filter(order => order.status === statusFilter);
         }
 
-        // Sort by newest first
+        // Sort logic: 
+        // - For "pending" and "preparing": Oldest first (ASC)
+        // - For "all", "completed", "cancelled": Newest first (DESC)
+        const isHistory = statusFilter === 'all' || statusFilter === 'completed' || statusFilter === 'cancelled';
+
         return [...result].sort((a, b) => {
             const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
             const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
-            return dateB - dateA;
+            return isHistory ? dateB - dateA : dateA - dateB;
         });
     }, [orders, statusFilter]);
+
+    const [selectedOrderForShare, setSelectedOrderForShare] = useState<Order | null>(null);
 
     const onRefresh = async () => {
         console.log('Refreshing orders list');
@@ -82,16 +95,7 @@ export const OrdersListScreen = () => {
         navigation.navigate('OrderVitrineDetail', { orderId: order.id || order._id });
     };
 
-
     const pendingCount = useMemo(() => orders.filter(o => o.status === 'pending').length, [orders]);
-
-    const statusFilters: { status: Order['status'] | 'all'; label: string }[] = [
-        { status: 'all', label: 'Toutes' },
-        { status: 'pending', label: 'En attente' },
-        { status: 'preparing', label: 'En préparation' },
-        { status: 'completed', label: 'Livrée' },
-        { status: 'cancelled', label: 'Annulée' },
-    ];
 
     const renderFilterButton = (status: Order['status'] | 'all', label: string) => (
         <TouchableOpacity

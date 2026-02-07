@@ -322,7 +322,7 @@ export const OrderVitrineDetailScreen = () => {
                 </View>
 
                 {/* Status Management */}
-                <View style={[styles.section, { backgroundColor: theme.colors.surface, marginBottom: isOwner && order.status === 'pending' ? 100 : 16 }]}>
+                <View style={[styles.section, { backgroundColor: theme.colors.surface, marginBottom: isOwner && (order.status === 'pending' || order.status === 'preparing') ? 100 : 16 }]}>
                     <Text style={[styles.sectionTitle, { color: theme.colors.text, marginBottom: 12 }]}>
                         Statut de la commande
                     </Text>
