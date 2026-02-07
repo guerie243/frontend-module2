@@ -164,14 +164,7 @@ const createStyles = (theme: any) => StyleSheet.create({
         backgroundColor: '#FFFFFF',
         justifyContent: 'center',
         alignItems: 'center',
-        marginBottom: 24,
-        // Elevation for Android
-        elevation: 4,
-        // Shadow for iOS
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 4,
+        marginBottom: 20,
         borderWidth: 1,
         borderColor: theme.colors.border + '40', // Subtle border
     },
