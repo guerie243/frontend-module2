@@ -88,6 +88,13 @@ export const OrderClientDetailScreen = () => {
     const vitrineOwnerId = typeof vitrine?.ownerId === 'object' ? (vitrine?.ownerId as any)?._id : vitrine?.ownerId;
     const isOwner = !!user && !!vitrineOwnerId && (user.id === vitrineOwnerId || user._id === vitrineOwnerId);
 
+    // Redirect owner to seller view (OrderVitrineDetail)
+    React.useEffect(() => {
+        if (isOwner && orderId) {
+            navigation.replace('OrderVitrineDetail', { orderId });
+        }
+    }, [isOwner, orderId, navigation]);
+
     // Third party only if data is loaded and user is neither client nor owner
     const isThirdParty = !!user && !!vitrine && !isClient && !isOwner;
 
