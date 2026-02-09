@@ -91,47 +91,50 @@ export const OrdersListScreen = () => {
         await Promise.all([refetchVitrines(), refetchSellerOrders()]);
     };
 
-    const handleOrderPress = (order: Order) => {
-        navigation.navigate('OrderVitrineDetail', { orderId: order.id || order._id });
-    };
-
     const pendingCount = useMemo(() => orders.filter(o => o.status === 'pending').length, [orders]);
+    const preparingCount = useMemo(() => orders.filter(o => o.status === 'preparing').length, [orders]);
 
-    const renderFilterButton = (status: Order['status'] | 'all', label: string) => (
-        <TouchableOpacity
-            style={[
-                styles.filterButton,
-                { backgroundColor: theme.colors.surface },
-                statusFilter === status && { backgroundColor: theme.colors.primary },
-            ]}
-            onPress={() => setStatusFilter(status)}
-        >
-            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                <Text
-                    style={[
-                        styles.filterButtonText,
-                        { color: theme.colors.text },
-                        statusFilter === status && { color: theme.colors.white },
-                    ]}
-                >
-                    {label}
-                </Text>
-                {status === 'pending' && pendingCount > 0 && (
-                    <View style={[
-                        styles.filterBadge,
-                        { backgroundColor: statusFilter === 'pending' ? theme.colors.white : '#FF3B30' }
-                    ]}>
-                        <Text style={[
-                            styles.filterBadgeText,
-                            { color: statusFilter === 'pending' ? theme.colors.primary : theme.colors.white }
+    const renderFilterButton = (status: Order['status'] | 'all', label: string) => {
+        let count = 0;
+        if (status === 'pending') count = pendingCount;
+        if (status === 'preparing') count = preparingCount;
+
+        return (
+            <TouchableOpacity
+                style={[
+                    styles.filterButton,
+                    { backgroundColor: theme.colors.surface },
+                    statusFilter === status && { backgroundColor: theme.colors.primary },
+                ]}
+                onPress={() => setStatusFilter(status)}
+            >
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                    <Text
+                        style={[
+                            styles.filterButtonText,
+                            { color: theme.colors.text },
+                            statusFilter === status && { color: theme.colors.white },
+                        ]}
+                    >
+                        {label}
+                    </Text>
+                    {count > 0 && (
+                        <View style={[
+                            styles.filterBadge,
+                            { backgroundColor: statusFilter === status ? theme.colors.white : (status === 'pending' ? '#FF3B30' : theme.colors.primary) }
                         ]}>
-                            {pendingCount}
-                        </Text>
-                    </View>
-                )}
-            </View>
-        </TouchableOpacity>
-    );
+                            <Text style={[
+                                styles.filterBadgeText,
+                                { color: statusFilter === status ? theme.colors.primary : theme.colors.white }
+                            ]}>
+                                {count}
+                            </Text>
+                        </View>
+                    )}
+                </View>
+            </TouchableOpacity>
+        );
+    };
 
     const renderOrder = ({ item }: { item: Order }) => (
         <TouchableOpacity
