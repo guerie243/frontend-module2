@@ -13,12 +13,18 @@ import { useVitrineDetail, useMyVitrines } from '../../hooks/useVitrines';
 import { useProductsByVitrine } from '../../hooks/useProducts';
 import { useAuth } from '../../hooks/useAuth';
 import { Product } from '../../types';
+import { Ionicons } from '@expo/vector-icons';
+import { activityTracker } from '../../services/activityTracker';
+import { ShareMenuModal } from '../../components/ShareMenuModal';
+import { getVitrineUrl } from '../../utils/sharingUtils';
+import { useState } from 'react';
 
 export const VitrineDetailScreen = () => {
     const navigation = useNavigation<any>();
     const route = useRoute<any>();
     const { theme } = useTheme();
     const { user, isAuthenticated } = useAuth();
+    const [isShareModalVisible, setIsShareModalVisible] = useState(false);
 
     const { slug } = route.params || {};
 
@@ -72,20 +78,45 @@ export const VitrineDetailScreen = () => {
         <ScrollView style={[styles.container, { backgroundColor: theme.colors.background }]}>
             {/* Vitrine Header */}
             <View style={[styles.section, { backgroundColor: theme.colors.surface }]}>
-                <Text style={[styles.title, { color: theme.colors.text }]}>
-                    {displayedVitrine.name}
-                </Text>
-                {displayedVitrine.description && (
-                    <Text style={[styles.description, { color: theme.colors.textSecondary }]}>
-                        {displayedVitrine.description}
-                    </Text>
-                )}
-                {displayedVitrine.contact?.phone && (
-                    <Text style={[styles.contact, { color: theme.colors.textSecondary }]}>
-                        📞 {displayedVitrine.contact.phone}
-                    </Text>
-                )}
+                <View style={styles.headerRow}>
+                    <View style={{ flex: 1 }}>
+                        <Text style={[styles.title, { color: theme.colors.text }]}>
+                            {displayedVitrine.name}
+                        </Text>
+                        {displayedVitrine.description && (
+                            <Text style={[styles.description, { color: theme.colors.textSecondary }]}>
+                                {displayedVitrine.description}
+                            </Text>
+                        )}
+                        {displayedVitrine.contact?.phone && (
+                            <Text style={[styles.contact, { color: theme.colors.textSecondary }]}>
+                                📞 {displayedVitrine.contact.phone}
+                            </Text>
+                        )}
+                    </View>
+                    <TouchableOpacity
+                        onPress={() => {
+                            activityTracker.track('SHARE_VITRINE', {
+                                vitrineId: displayedVitrine.id || displayedVitrine._id,
+                                vitrineName: displayedVitrine.name
+                            });
+                            // Basic share implementation or open modal if available
+                            console.log('Share vitrine tracked');
+                        }}
+                        style={styles.shareButton}
+                    >
+                        <Ionicons name="share-social-outline" size={24} color={theme.colors.primary} />
+                    </TouchableOpacity>
+                </View>
             </View>
+
+            <ShareMenuModal
+                isVisible={isShareModalVisible}
+                onClose={() => setIsShareModalVisible(false)}
+                url={getVitrineUrl(displayedVitrine.slug)}
+                title={`Partager ${displayedVitrine.name}`}
+                message={`Découvrez la vitrine ${displayedVitrine.name} sur Andy Business !`}
+            />
 
             {/* Owner Actions */}
             {isOwner && (
@@ -204,5 +235,13 @@ const styles = StyleSheet.create({
     emptyText: {
         fontSize: 16,
         textAlign: 'center',
+    },
+    headerRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'flex-start',
+    },
+    shareButton: {
+        padding: 8,
     },
 });

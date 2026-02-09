@@ -21,6 +21,7 @@ import { ScreenWrapper } from '../../components/ScreenWrapper';
 import { AnimatedSelect } from '../../components/AnimatedSelect';
 import { GuestPrompt } from '../../components/GuestPrompt';
 import { LoadingComponent } from '../../components/LoadingComponent';
+import { activityTracker } from '../../services/activityTracker';
 import { PRODUCT_CATEGORIES } from '../../constants/productCategories';
 import { CURRENCY_OPTIONS } from '../../constants/currencies';
 import { DRC_CITIES, LOCATION_OPTIONS } from '../../constants/locations';
@@ -127,6 +128,13 @@ export const CreateProductScreen = () => {
             setDescription('');
             setPrice('');
             setImages([]);
+
+            // TRACKING
+            activityTracker.track('PRODUCT_CREATE', {
+                vitrineId,
+                productName: productData.name,
+                category: productData.category
+            });
 
             navigation.goBack();
         } catch (error: any) {

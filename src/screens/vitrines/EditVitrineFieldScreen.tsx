@@ -10,6 +10,7 @@ import { AnimatedSelect } from '../../components/AnimatedSelect';
 import { useAlertService } from '../../utils/alertService';
 import { DRC_CITIES } from '../../constants/locations';
 import { VITRINE_CATEGORIES } from '../../constants/vitrineCategories';
+import { activityTracker } from '../../services/activityTracker';
 
 type VitrineParams = {
     VitrineModificationMain: { refreshed: number };
@@ -123,6 +124,13 @@ export const EditVitrineFieldScreen = () => {
             }
 
             console.log("3. [EditField] ✅ PATCH successful");
+
+            // TRACKING
+            activityTracker.track('VITRINE_UPDATE', {
+                vitrineId: slug,
+                updatedField: field
+            });
+
             showSuccess('Modification enregistrée !');
 
             const refreshTimestamp = Date.now();

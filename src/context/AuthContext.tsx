@@ -10,6 +10,7 @@ import { DeviceEventEmitter, Platform } from 'react-native';
 import { storage } from '../utils/storage';
 import { userService } from '../services/userService';
 import { User } from '../types';
+import { activityTracker } from '../services/activityTracker';
 
 interface AuthContextType {
     user: User | null;
@@ -97,6 +98,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             console.log('[AuthContext] Setting user state...');
             setUser(response.user);
             console.log('[AuthContext] User state set. Authenticated should be true.');
+
+            // TRACKING
+            activityTracker.track('LOGIN_SUCCESS', { userId: response.user.id || response.user._id });
         } catch (error: any) {
             console.error('[AuthContext] Login error:', error);
             throw new Error(error.response?.data?.message || 'Échec de la connexion');
@@ -113,6 +117,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
             setUser(response.user);
             console.log('Registration successful:', response.user.email || response.user.phoneNumber);
+
+            // TRACKING
+            activityTracker.track('REGISTER_SUCCESS', { userId: response.user.id || response.user._id });
         } catch (error: any) {
             console.error('Registration error:', error.response?.data || error.message);
             throw new Error(error.response?.data?.message || 'Échec de l\'inscription');
@@ -122,6 +129,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const logout = async () => {
         try {
             console.log('Logging out user');
+            // TRACKING BEFORE CLEARING DATA
+            activityTracker.track('LOGOUT', { userId: user?.id || user?._id });
+
             await storage.deleteItem('userToken');
             await storage.deleteItem('userData');
             setUser(null);

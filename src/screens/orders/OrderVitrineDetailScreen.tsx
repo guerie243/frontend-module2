@@ -14,12 +14,15 @@ import { ScreenHeader } from '../../components/ScreenHeader';
 import { ShareMenuModal } from '../../components/ShareMenuModal';
 import { useState, useEffect } from 'react';
 import { useVitrineDetail } from '../../hooks/useVitrines';
+import { useVitrineDetail } from '../../hooks/useVitrines';
 import { getSafeUri } from '../../utils/imageUtils';
+import { openGpsItinerary } from '../../utils/mapUtils';
 import { ProductOrderItem } from '../../components/ProductOrderItem';
 import { REJECTION_REASONS } from '../../constants/rejectionReasons';
 import { getOrderStatus } from '../../constants/orderStatus';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuth } from '../../context/AuthContext';
+import { activityTracker } from '../../services/activityTracker';
 
 export const OrderVitrineDetailScreen = () => {
     const navigation = useNavigation<any>();
@@ -105,6 +108,13 @@ export const OrderVitrineDetailScreen = () => {
             message = `Bonjour ${name}, je vous contacte à propos de la commande de ${productsList}. Détails : ${orderUrl}`;
         }
 
+        // TRACKING
+        activityTracker.track(target === 'seller' ? 'CONTACT_SELLER' : 'CONTACT_CLIENT', {
+            orderId,
+            vitrineId: order?.vitrineId,
+            method: 'whatsapp'
+        });
+
         const sanitizedPhone = phone.replace(/\s/g, '');
         const url = `whatsapp://send?phone=${sanitizedPhone}&text=${encodeURIComponent(message)}`;
         Linking.openURL(url).catch(() => {
@@ -130,6 +140,14 @@ export const OrderVitrineDetailScreen = () => {
             async () => {
                 try {
                     await updateStatusMutation.mutateAsync({ id: orderId, status: newStatus });
+
+                    // TRACKING
+                    activityTracker.track('ORDER_UPDATE_STATUS', {
+                        orderId,
+                        newStatus,
+                        vitrineId: order?.vitrineId
+                    });
+
                     showSuccess('Statut mis à jour');
 
                     // Redirect to WhatsApp after successful status update
@@ -172,15 +190,7 @@ export const OrderVitrineDetailScreen = () => {
         }
 
         const { latitude, longitude } = coords;
-
-        // URL pour afficher la destination sans démarrer la navigation automatique
-        const url = Platform.select({
-            ios: `maps://?q=${latitude},${longitude}`,
-            android: `geo:${latitude},${longitude}?q=${latitude},${longitude}`,
-            web: `https://www.google.com/maps/search/?api=1&query=${latitude},${longitude}`
-        }) || `https://www.google.com/maps/search/?api=1&query=${latitude},${longitude}`;
-
-        Linking.openURL(url);
+        openGpsItinerary(latitude, longitude, order.clientName);
     };
 
     const handleCallClient = () => {
@@ -215,7 +225,10 @@ export const OrderVitrineDetailScreen = () => {
         <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
             <ScreenHeader
                 title={`Commande #${order.id?.slice(-6) || order._id?.slice(-6)}`}
-                onShare={() => setIsShareModalVisible(true)}
+                onShare={() => {
+                    activityTracker.track('SHARE_ORDER', { orderId: order.id || order._id });
+                    setIsShareModalVisible(true);
+                }}
                 vitrineName={vitrine?.name}
                 vitrineLogo={getSafeUri(vitrine?.logo || vitrine?.avatar)}
                 onVitrinePress={() => vitrine?.slug && navigation.navigate('VitrineDetail', { slug: vitrine.slug })}
@@ -257,15 +270,14 @@ export const OrderVitrineDetailScreen = () => {
                             </View>
                             <TouchableOpacity
                                 style={[styles.itineraryButton, {
-                                    backgroundColor: theme.colors.primary + '15',
-                                    borderColor: theme.colors.primary,
+                                    backgroundColor: theme.colors.primary, // Solid color
                                     marginTop: 12
                                 }]}
                                 onPress={handleOpenItinerary}
                             >
-                                <Ionicons name="navigate-outline" size={20} color={theme.colors.primary} />
-                                <Text style={[styles.itineraryButtonText, { color: theme.colors.primary }]}>
-                                    Voir l'itinéraire
+                                <Ionicons name="navigate" size={20} color="#FFFFFF" />
+                                <Text style={[styles.itineraryButtonText, { color: '#FFFFFF' }]}>
+                                    Itinéraire
                                 </Text>
                             </TouchableOpacity>
                         </>
@@ -491,7 +503,6 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
         marginTop: 16,
-        borderWidth: 1,
         gap: 8,
     },
     itineraryButtonText: {

@@ -18,6 +18,7 @@ import { getSafeUri } from '../../utils/imageUtils';
 import ImagePictureUploader from '../../components/ImagePictureUploader';
 import { useAlertService } from '../../utils/alertService';
 import { CustomButton } from '../../components/CustomButton';
+import { activityTracker } from '../../services/activityTracker';
 
 interface ImageItem {
     uri: string;
@@ -80,6 +81,14 @@ export const ProductManagementScreen = () => {
                 id: product.id || product._id,
                 data: { images: images.map(img => img.uri) }
             });
+
+            // TRACKING
+            activityTracker.track('PRODUCT_UPDATE', {
+                productId: product.id || product._id,
+                updatedField: 'images',
+                count: images.length
+            });
+
             showSuccess('Images mises à jour');
         } catch (error: any) {
             showError(error.message || 'Échec de la mise à jour des images');

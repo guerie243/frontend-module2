@@ -21,6 +21,7 @@ import { AnimatedSelect } from '../../components/AnimatedSelect';
 import { PRODUCT_CATEGORIES } from '../../constants/productCategories';
 import { CURRENCY_OPTIONS } from '../../constants/currencies';
 import { DRC_CITIES, LOCATION_OPTIONS } from '../../constants/locations';
+import { activityTracker } from '../../services/activityTracker';
 
 interface ImageItem {
     uri: string;
@@ -79,6 +80,14 @@ export const EditProductScreen = () => {
             }
 
             await updateProductMutation.mutateAsync({ id: productId, data: updateData });
+
+            // TRACKING
+            activityTracker.track('PRODUCT_UPDATE', {
+                productId,
+                updatedField: field,
+                newValue: value
+            });
+
             showSuccess(`${label} mis à jour`);
             navigation.goBack();
         } catch (error: any) {
@@ -127,6 +136,10 @@ export const EditProductScreen = () => {
                     setIsDeleting(true);
                     try {
                         await deleteProductMutation.mutateAsync(productId);
+
+                        // TRACKING
+                        activityTracker.track('PRODUCT_DELETE', { productId, productName: product?.name });
+
                         showSuccess('Produit supprimé');
                         navigation.navigate('ProductManagement', { productId: undefined }); // Go back to list
                     } catch (error: any) {

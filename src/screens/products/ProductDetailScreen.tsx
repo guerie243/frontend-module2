@@ -21,6 +21,7 @@ import { getSafeUri } from '../../utils/imageUtils';
 import { useMemo, useRef } from 'react';
 import { ProductCarousel } from '../../components/ProductCarousel';
 import { ShareMenuModal } from '../../components/ShareMenuModal';
+import { activityTracker } from '../../services/activityTracker';
 
 const CAROUSEL_HEIGHT = 350;
 
@@ -117,7 +118,14 @@ export const ProductDetailScreen = () => {
                 vitrineName={vitrine?.name}
                 vitrineLogo={getSafeUri(vitrine?.logo || vitrine?.avatar)}
                 onVitrinePress={() => vitrine?.slug && navigation.navigate('VitrineDetail', { slug: vitrine.slug })}
-                onShare={() => setIsShareModalVisible(true)}
+                onShare={() => {
+                    activityTracker.track('SHARE_PRODUCT', {
+                        productId: product.id || product._id,
+                        productName: product.name,
+                        vitrineId: product.vitrineId
+                    });
+                    setIsShareModalVisible(true);
+                }}
             />
 
             <View style={{ flex: 1 }}>

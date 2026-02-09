@@ -19,6 +19,7 @@ import { ScreenWrapper } from '../../components/ScreenWrapper';
 import { getOrderUrl } from '../../utils/sharingUtils';
 import { Platform } from 'react-native';
 import { ProductOrderItem } from '../../components/ProductOrderItem';
+import { activityTracker } from '../../services/activityTracker';
 
 export const DeliveryLocationScreen = () => {
     const navigation = useNavigation<any>();
@@ -176,6 +177,13 @@ export const DeliveryLocationScreen = () => {
                 // Utiliser l'orderId public (ex: ORD-XXXXXX)
                 const publicOrderId = order.orderId || order._id;
                 console.log('Order created successfully:', publicOrderId);
+
+                // TRACKING
+                activityTracker.track('ORDER_CREATE', {
+                    vitrineId: vitrine?.id || vitrine?._id,
+                    amount: grandTotal,
+                    orderId: publicOrderId
+                });
 
                 // Préparer le message WhatsApp
                 const whatsappNumber = vitrine?.contact?.phone;

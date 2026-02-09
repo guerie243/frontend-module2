@@ -24,7 +24,9 @@ import { useVitrineDetail } from '../../hooks/useVitrines';
 import { getSafeUri } from '../../utils/imageUtils';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { ProductOrderItem } from '../../components/ProductOrderItem';
+import { openGpsItinerary } from '../../utils/mapUtils';
 import { getOrderStatus } from '../../constants/orderStatus';
+import { activityTracker } from '../../services/activityTracker';
 
 export const OrderClientDetailScreen = () => {
     const route = useRoute<any>();
@@ -109,6 +111,13 @@ export const OrderClientDetailScreen = () => {
             message = `Bonjour ${name}, je vous contacte à propos de la commande de ${productsList}. Détails : ${orderUrl}`;
         }
 
+        // TRACKING
+        activityTracker.track(target === 'seller' ? 'CONTACT_SELLER' : 'CONTACT_CLIENT', {
+            orderId,
+            vitrineId: order?.vitrineId,
+            method: 'whatsapp'
+        });
+
         const sanitizedPhone = phone.replace(/\s/g, '');
         const url = `whatsapp://send?phone=${sanitizedPhone}&text=${encodeURIComponent(message)}`;
 
@@ -124,14 +133,7 @@ export const OrderClientDetailScreen = () => {
         if (!coords || !coords.latitude || !coords.longitude) return;
 
         const { latitude, longitude } = coords;
-        // URL pour afficher la destination sans démarrer la navigation automatique
-        const url = Platform.select({
-            ios: `maps://?q=${latitude},${longitude}`,
-            android: `geo:${latitude},${longitude}?q=${latitude},${longitude}`,
-            web: `https://www.google.com/maps/search/?api=1&query=${latitude},${longitude}`
-        }) || `https://www.google.com/maps/search/?api=1&query=${latitude},${longitude}`;
-
-        Linking.openURL(url);
+        openGpsItinerary(latitude, longitude, order.clientName);
     };
 
     return (
@@ -215,15 +217,14 @@ export const OrderClientDetailScreen = () => {
                             </View>
                             <TouchableOpacity
                                 style={[styles.itineraryButton, {
-                                    backgroundColor: theme.colors.primary + '15',
-                                    borderColor: theme.colors.primary,
+                                    backgroundColor: theme.colors.primary,
                                     marginTop: 12
                                 }]}
                                 onPress={handleOpenItinerary}
                             >
-                                <Ionicons name="navigate-outline" size={20} color={theme.colors.primary} />
-                                <Text style={[styles.itineraryButtonText, { color: theme.colors.primary }]}>
-                                    Voir l'itinéraire
+                                <Ionicons name="navigate" size={20} color="#FFFFFF" />
+                                <Text style={[styles.itineraryButtonText, { color: '#FFFFFF' }]}>
+                                    Itinéraire
                                 </Text>
                             </TouchableOpacity>
                         </>
@@ -398,7 +399,6 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'center',
         alignItems: 'center',
-        borderWidth: 1,
         gap: 8,
     },
     itineraryButtonText: {
