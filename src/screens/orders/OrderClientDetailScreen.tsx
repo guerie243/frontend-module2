@@ -45,11 +45,27 @@ export const OrderClientDetailScreen = () => {
 
     // Robust owner check (handle string or object ID)
     const vitrineOwnerId = typeof vitrine?.ownerId === 'object' ? (vitrine?.ownerId as any)?._id : vitrine?.ownerId;
-    const isOwner = !!user && !!vitrineOwnerId && (user.id === vitrineOwnerId || user._id === vitrineOwnerId);
+    const currentUserId = user?.id || user?._id || user?.userId;
+    const isOwner = !!user && !!vitrineOwnerId && (
+        currentUserId === vitrineOwnerId ||
+        String(currentUserId) === String(vitrineOwnerId)
+    );
+
+    console.log('[OrderClientDetailScreen] Diagnostic:', {
+        hasUser: !!user,
+        userId: user?.id,
+        user_id: user?._id,
+        userUserId: user?.userId,
+        currentUserId,
+        vitrineOwnerId,
+        isOwner,
+        orderId
+    });
 
     // Redirect owner to seller view (OrderVitrineDetail)
     React.useEffect(() => {
         if (isOwner && orderId) {
+            console.log('[OrderClientDetailScreen] Redirection vers OrderVitrineDetail déclenchée');
             navigation.replace('OrderVitrineDetail', { orderId });
         }
     }, [isOwner, orderId, navigation]);

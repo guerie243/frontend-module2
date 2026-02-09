@@ -70,6 +70,13 @@ export const OrderVitrineDetailScreen = () => {
         String(currentUserId) === String(vitrineOwnerId)
     );
 
+    console.log('[OrderVitrineDetailScreen] Ownership check:', {
+        currentUserId,
+        vitrineOwnerId,
+        isOwner,
+        userEmail: user?.email
+    });
+
     // Third party only if data is loaded and user is neither client nor owner
     const isThirdParty = !!user && !!vitrine && !isClient && !isOwner;
 
