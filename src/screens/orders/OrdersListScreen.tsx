@@ -91,6 +91,10 @@ export const OrdersListScreen = () => {
         await Promise.all([refetchVitrines(), refetchSellerOrders()]);
     };
 
+    const handleOrderPress = (order: Order) => {
+        navigation.navigate('OrderVitrineDetail', { orderId: order.id || order._id });
+    };
+
     const pendingCount = useMemo(() => orders.filter(o => o.status === 'pending').length, [orders]);
     const preparingCount = useMemo(() => orders.filter(o => o.status === 'preparing').length, [orders]);
 
