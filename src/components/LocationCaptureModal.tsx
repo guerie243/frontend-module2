@@ -39,9 +39,9 @@ export const LocationCaptureModal: React.FC<LocationCaptureModalProps> = ({
 
     const getAccuracyColor = (acc: number | null) => {
         if (!acc) return theme.colors.textSecondary;
-        if (acc <= 20) return '#34C759'; // Excellent
-        if (acc <= 50) return '#FFCC00'; // Good
-        if (acc <= 100) return '#FF9500'; // Acceptable
+        if (acc <= 50) return '#34C759'; // Excellent
+        if (acc <= 150) return '#FFCC00'; // Good
+        if (acc <= 300) return '#FF9500'; // Acceptable
         return '#FF3B30'; // Poor
     };
 
@@ -64,7 +64,7 @@ export const LocationCaptureModal: React.FC<LocationCaptureModalProps> = ({
 
     const getHintMessage = () => {
         if (status === 'timeout' || (status === 'scanning' && elapsedTime > 5)) {
-            if (accuracy && accuracy > 100) {
+            if (accuracy && accuracy > 300) {
                 return "⚠️ Votre position est trop imprécise.\n\nConseils :\n• Déplacez-vous vers une zone dégagée (extérieur).\n• Activez le WiFi pour améliorer la précision.\n• Évitez les sous-sols ou bâtiments fermés.";
             }
             if (!accuracy) {
@@ -112,7 +112,7 @@ export const LocationCaptureModal: React.FC<LocationCaptureModalProps> = ({
                                 {accuracy ? `± ${Math.round(accuracy)} m` : '--'}
                             </Text>
                             <Text style={[styles.targetText, { color: theme.colors.textTertiary }]}>
-                                Objectif : ≤ 100 m
+                                Objectif : ≤ 300 m
                             </Text>
                         </View>
                     )}

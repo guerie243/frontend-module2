@@ -84,7 +84,7 @@ export const DeliveryLocationScreen = () => {
     const locationSubscription = React.useRef<Location.LocationSubscription | null>(null);
     const locationTimeout = React.useRef<NodeJS.Timeout | null>(null);
 
-    const canSubmit = deliveryLocation.latitude !== 0 && (locationAccuracy ? locationAccuracy <= 100 : false);
+    const canSubmit = deliveryLocation.latitude !== 0 && (locationAccuracy ? locationAccuracy <= 300 : false);
 
     useEffect(() => {
         // Automatically set city if only one is available
@@ -153,7 +153,7 @@ export const DeliveryLocationScreen = () => {
                     // Always update accuracy for UI feedback
                     setLocationAccuracy(accuracy);
 
-                    if (accuracy && accuracy <= 100) {
+                    if (accuracy && accuracy <= 300) {
                         // Success!
                         setDeliveryLocation({ latitude, longitude });
                         setLocationStatus('success');
@@ -202,7 +202,7 @@ export const DeliveryLocationScreen = () => {
             return;
         }
 
-        if (locationAccuracy && locationAccuracy > 100) {
+        if (locationAccuracy && locationAccuracy > 300) {
             showError(`Votre position est trop imprécise (${Math.round(locationAccuracy)}m). Veuillez réessayer à l'extérieur.`);
             return;
         }
