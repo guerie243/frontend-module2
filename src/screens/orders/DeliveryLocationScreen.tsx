@@ -20,6 +20,7 @@ import { getOrderUrl } from '../../utils/sharingUtils';
 import { Platform } from 'react-native';
 import { ProductOrderItem } from '../../components/ProductOrderItem';
 import { activityTracker } from '../../services/activityTracker';
+import { LocationCaptureModal } from '../../components/LocationCaptureModal';
 
 export const DeliveryLocationScreen = () => {
     const navigation = useNavigation<any>();
@@ -77,10 +78,13 @@ export const DeliveryLocationScreen = () => {
     const [deliveryAddress, setDeliveryAddress] = useState('');
     const [deliveryLocation, setDeliveryLocation] = useState({ latitude: 0, longitude: 0 });
     const [locationAccuracy, setLocationAccuracy] = useState<number | null>(null);
-    const [isFetchingLocation, setIsFetchingLocation] = useState(false);
-    const locationSubscription = React.useRef<Location.LocationSubscription | null>(null);
+    const [isScanningLocation, setIsScanningLocation] = useState(false);
+    const [locationStatus, setLocationStatus] = useState<'scanning' | 'success' | 'timeout' | 'error' | 'permission_denied'>('scanning');
 
-    const canSubmit = deliveryLocation.latitude !== 0;
+    const locationSubscription = React.useRef<Location.LocationSubscription | null>(null);
+    const locationTimeout = React.useRef<NodeJS.Timeout | null>(null);
+
+    const canSubmit = deliveryLocation.latitude !== 0 && (locationAccuracy ? locationAccuracy <= 100 : false);
 
     useEffect(() => {
         // Automatically set city if only one is available
@@ -101,45 +105,82 @@ export const DeliveryLocationScreen = () => {
         };
     }, []);
 
+    const stopLocationWatch = () => {
+        if (locationSubscription.current) {
+            locationSubscription.current.remove();
+            locationSubscription.current = null;
+        }
+        if (locationTimeout.current) {
+            clearTimeout(locationTimeout.current);
+            locationTimeout.current = null;
+        }
+    };
+
     const handleGetCurrentLocation = async () => {
-        setIsFetchingLocation(true);
+        setIsScanningLocation(true);
+        setLocationStatus('scanning');
+        setLocationAccuracy(null);
+
         try {
             const { status } = await Location.requestForegroundPermissionsAsync();
             if (status !== 'granted') {
+                setLocationStatus('permission_denied');
                 showError('Permission de localisation refusée. Elle est nécessaire pour la livraison.');
-                setIsFetchingLocation(false);
                 return;
             }
 
-            // Si une souscription existe déjà, on la nettoie
-            if (locationSubscription.current) {
-                locationSubscription.current.remove();
-            }
+            stopLocationWatch();
 
-            // Surveillance en temps réel pour obtenir la position
+            // Timeout after 15 seconds if refined location is not found
+            locationTimeout.current = setTimeout(() => {
+                if (isScanningLocation) {
+                    setLocationStatus('timeout');
+                    stopLocationWatch();
+                }
+            }, 15000);
+
+            // Create a promise to wait for the first good location
             locationSubscription.current = await Location.watchPositionAsync(
                 {
                     accuracy: Location.Accuracy.BestForNavigation,
-                    timeInterval: 1000,
-                    distanceInterval: 1,
+                    timeInterval: 500,
+                    distanceInterval: 0,
                 },
                 (location) => {
                     const { latitude, longitude, accuracy } = location.coords;
                     console.log(`[GPS-Update] Accuracy: ${accuracy}m`);
-                    setDeliveryLocation({ latitude, longitude });
+
+                    // Always update accuracy for UI feedback
                     setLocationAccuracy(accuracy);
 
-                    if (accuracy) {
-                        setIsFetchingLocation(false);
+                    if (accuracy && accuracy <= 100) {
+                        // Success!
+                        setDeliveryLocation({ latitude, longitude });
+                        setLocationStatus('success');
+
+                        // Wait a moment to show success state then close
+                        setTimeout(() => {
+                            setIsScanningLocation(false);
+                            stopLocationWatch();
+                        }, 1500);
                     }
                 }
             );
 
         } catch (error) {
             console.error('Error starting location watch:', error);
-            showError('Impossible de démarrer la localisation');
-            setIsFetchingLocation(false);
+            setLocationStatus('error');
+            stopLocationWatch();
         }
+    };
+
+    const handleRetryLocation = () => {
+        handleGetCurrentLocation();
+    };
+
+    const handleCancelLocation = () => {
+        setIsScanningLocation(false);
+        stopLocationWatch();
     };
 
     const handleSubmitOrder = async () => {
@@ -156,8 +197,13 @@ export const DeliveryLocationScreen = () => {
             showError('Veuillez entrer votre adresse de livraison');
             return;
         }
-        if (deliveryLocation.latitude === 0 || !canSubmit) {
-            showError('Votre position n\'est pas encore détectée ou manque de précision. Veuillez patienter.');
+        if (deliveryLocation.latitude === 0) {
+            showError('Veuillez activer votre localisation GPS.');
+            return;
+        }
+
+        if (locationAccuracy && locationAccuracy > 100) {
+            showError(`Votre position est trop imprécise (${Math.round(locationAccuracy)}m). Veuillez réessayer à l'extérieur.`);
             return;
         }
 
@@ -329,7 +375,7 @@ export const DeliveryLocationScreen = () => {
                                     color: theme.colors.text,
                                     marginTop: 10
                                 }]}
-                                placeholder="Adresse complète (Rue, bât, n° porte...) *"
+                                placeholder="Adresse complète (Quartier, Avenue, N°...) *"
                                 placeholderTextColor={theme.colors.textTertiary}
                                 value={deliveryAddress}
                                 onChangeText={setDeliveryAddress}
@@ -341,12 +387,18 @@ export const DeliveryLocationScreen = () => {
                                 <Text style={[styles.gpsLabel, { color: theme.colors.textSecondary }]}>
                                     Votre position GPS *
                                 </Text>
-                                {isFetchingLocation ? (
-                                    <View style={styles.mapLoading}>
-                                        <ActivityIndicator color={theme.colors.primary} />
-                                        <Text style={{ marginTop: 8, color: theme.colors.textSecondary }}>Localisation en cours...</Text>
-                                    </View>
-                                ) : deliveryLocation.latitude !== 0 ? (
+
+                                {/* Modal for capture */}
+                                <LocationCaptureModal
+                                    visible={isScanningLocation}
+                                    accuracy={locationAccuracy}
+                                    status={locationStatus}
+                                    onRetry={handleRetryLocation}
+                                    onCancel={handleCancelLocation}
+                                    onManualSelect={undefined}
+                                />
+
+                                {deliveryLocation.latitude !== 0 ? (
                                     <View style={styles.mapContainer}>
                                         <MapWebView
                                             height={200}
@@ -457,8 +509,10 @@ export const DeliveryLocationScreen = () => {
                                 <ActivityIndicator color={theme.colors.white} />
                             ) : !canSubmit ? (
                                 <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                                    <ActivityIndicator size="small" color={theme.colors.primary} style={{ marginRight: 10 }} />
-                                    <Text style={[styles.buttonText, { color: theme.colors.primary }]}>Récupération position...</Text>
+                                    <Ionicons name="warning-outline" size={20} color={theme.colors.textSecondary} style={{ marginRight: 8 }} />
+                                    <Text style={[styles.buttonText, { color: theme.colors.textSecondary }]}>
+                                        {deliveryLocation.latitude === 0 ? 'Position requise' : 'Précision insuffisante'}
+                                    </Text>
                                 </View>
                             ) : (
                                 <Text style={styles.buttonText}>Confirmer la commande</Text>
@@ -466,8 +520,8 @@ export const DeliveryLocationScreen = () => {
                         </TouchableOpacity>
                     </View>
                 </View>
-            </ScreenWrapper>
-        </View>
+            </ScreenWrapper >
+        </View >
     );
 };
 

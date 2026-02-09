@@ -14,7 +14,6 @@ import { ScreenHeader } from '../../components/ScreenHeader';
 import { ShareMenuModal } from '../../components/ShareMenuModal';
 import { useState, useEffect } from 'react';
 import { useVitrineDetail } from '../../hooks/useVitrines';
-import { useVitrineDetail } from '../../hooks/useVitrines';
 import { getSafeUri } from '../../utils/imageUtils';
 import { openGpsItinerary } from '../../utils/mapUtils';
 import { ProductOrderItem } from '../../components/ProductOrderItem';
