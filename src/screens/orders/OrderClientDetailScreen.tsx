@@ -43,6 +43,17 @@ export const OrderClientDetailScreen = () => {
     const [isShareModalVisible, setIsShareModalVisible] = useState(false);
     const [isClientFromStorage, setIsClientFromStorage] = useState(false);
 
+    // Robust owner check (handle string or object ID)
+    const vitrineOwnerId = typeof vitrine?.ownerId === 'object' ? (vitrine?.ownerId as any)?._id : vitrine?.ownerId;
+    const isOwner = !!user && !!vitrineOwnerId && (user.id === vitrineOwnerId || user._id === vitrineOwnerId);
+
+    // Redirect owner to seller view (OrderVitrineDetail)
+    React.useEffect(() => {
+        if (isOwner && orderId) {
+            navigation.replace('OrderVitrineDetail', { orderId });
+        }
+    }, [isOwner, orderId, navigation]);
+
     useFocusEffect(
         React.useCallback(() => {
             const checkIsClient = async () => {
@@ -83,17 +94,6 @@ export const OrderClientDetailScreen = () => {
     const statusInfo = getOrderStatus(order.status);
 
     const isClient = isClientFromStorage || user?.phoneNumber === order.clientPhone || user?.phone === order.clientPhone;
-
-    // Robust owner check (handle string or object ID)
-    const vitrineOwnerId = typeof vitrine?.ownerId === 'object' ? (vitrine?.ownerId as any)?._id : vitrine?.ownerId;
-    const isOwner = !!user && !!vitrineOwnerId && (user.id === vitrineOwnerId || user._id === vitrineOwnerId);
-
-    // Redirect owner to seller view (OrderVitrineDetail)
-    React.useEffect(() => {
-        if (isOwner && orderId) {
-            navigation.replace('OrderVitrineDetail', { orderId });
-        }
-    }, [isOwner, orderId, navigation]);
 
     // Third party only if data is loaded and user is neither client nor owner
     const isThirdParty = !!user && !!vitrine && !isClient && !isOwner;
