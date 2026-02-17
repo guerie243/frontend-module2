@@ -20,7 +20,6 @@ import { getOrderUrl } from '../../utils/sharingUtils';
 import { Platform } from 'react-native';
 import { ProductOrderItem } from '../../components/ProductOrderItem';
 import { activityTracker } from '../../services/activityTracker';
-import { LocationCaptureModal } from '../../components/LocationCaptureModal';
 
 export const DeliveryLocationScreen = () => {
     const navigation = useNavigation<any>();
@@ -79,12 +78,16 @@ export const DeliveryLocationScreen = () => {
     const [deliveryLocation, setDeliveryLocation] = useState({ latitude: 0, longitude: 0 });
     const [locationAccuracy, setLocationAccuracy] = useState<number | null>(null);
     const [isScanningLocation, setIsScanningLocation] = useState(false);
-    const [locationStatus, setLocationStatus] = useState<'scanning' | 'success' | 'timeout' | 'error' | 'permission_denied'>('scanning');
 
-    const locationSubscription = React.useRef<Location.LocationSubscription | null>(null);
-    const locationTimeout = React.useRef<NodeJS.Timeout | null>(null);
+    const getAccuracyLabel = (accuracy: number | null) => {
+        if (accuracy === null) return '';
+        if (accuracy <= 100) return 'Précision très bonne';
+        if (accuracy <= 300) return 'Précision bonne';
+        if (accuracy <= 500) return 'Précision faible';
+        return 'Précision mauvaise';
+    };
 
-    const canSubmit = deliveryLocation.latitude !== 0 && (locationAccuracy ? locationAccuracy <= 300 : false);
+    const canSubmit = deliveryLocation.latitude !== 0;
 
     useEffect(() => {
         // Automatically set city if only one is available
@@ -96,91 +99,34 @@ export const DeliveryLocationScreen = () => {
     useEffect(() => {
         // Automatically request permission and get location on mount
         handleGetCurrentLocation();
-
-        return () => {
-            if (locationSubscription.current) {
-                locationSubscription.current.remove();
-                locationSubscription.current = null;
-            }
-        };
     }, []);
-
-    const stopLocationWatch = () => {
-        if (locationSubscription.current) {
-            locationSubscription.current.remove();
-            locationSubscription.current = null;
-        }
-        if (locationTimeout.current) {
-            clearTimeout(locationTimeout.current);
-            locationTimeout.current = null;
-        }
-    };
 
     const handleGetCurrentLocation = async () => {
         setIsScanningLocation(true);
-        setLocationStatus('scanning');
-        setLocationAccuracy(null);
 
         try {
             const { status } = await Location.requestForegroundPermissionsAsync();
             if (status !== 'granted') {
-                setLocationStatus('permission_denied');
                 showError('Permission de localisation refusée. Elle est nécessaire pour la livraison.');
+                setIsScanningLocation(false);
                 return;
             }
 
-            stopLocationWatch();
+            // Single capture
+            const location = await Location.getCurrentPositionAsync({
+                accuracy: Location.Accuracy.Balanced,
+            });
 
-            // Timeout after 15 seconds if refined location is not found
-            locationTimeout.current = setTimeout(() => {
-                if (isScanningLocation) {
-                    setLocationStatus('timeout');
-                    stopLocationWatch();
-                }
-            }, 15000);
-
-            // Create a promise to wait for the first good location
-            locationSubscription.current = await Location.watchPositionAsync(
-                {
-                    accuracy: Location.Accuracy.BestForNavigation,
-                    timeInterval: 500,
-                    distanceInterval: 0,
-                },
-                (location) => {
-                    const { latitude, longitude, accuracy } = location.coords;
-                    console.log(`[GPS-Update] Accuracy: ${accuracy}m`);
-
-                    // Always update accuracy for UI feedback
-                    setLocationAccuracy(accuracy);
-
-                    if (accuracy && accuracy <= 300) {
-                        // Success!
-                        setDeliveryLocation({ latitude, longitude });
-                        setLocationStatus('success');
-
-                        // Wait a moment to show success state then close
-                        setTimeout(() => {
-                            setIsScanningLocation(false);
-                            stopLocationWatch();
-                        }, 1500);
-                    }
-                }
-            );
+            const { latitude, longitude, accuracy } = location.coords;
+            setDeliveryLocation({ latitude, longitude });
+            setLocationAccuracy(accuracy);
+            setIsScanningLocation(false);
 
         } catch (error) {
-            console.error('Error starting location watch:', error);
-            setLocationStatus('error');
-            stopLocationWatch();
+            console.error('Error getting location:', error);
+            showError('Impossible de récupérer votre position GPS.');
+            setIsScanningLocation(false);
         }
-    };
-
-    const handleRetryLocation = () => {
-        handleGetCurrentLocation();
-    };
-
-    const handleCancelLocation = () => {
-        setIsScanningLocation(false);
-        stopLocationWatch();
     };
 
     const handleSubmitOrder = async () => {
@@ -202,11 +148,6 @@ export const DeliveryLocationScreen = () => {
             return;
         }
 
-        if (locationAccuracy && locationAccuracy > 300) {
-            showError(`Votre position est trop imprécise (${Math.round(locationAccuracy)}m). Veuillez réessayer à l'extérieur.`);
-            return;
-        }
-
         try {
             const order = await createOrderMutation.mutateAsync({
                 ...orderData,
@@ -214,6 +155,7 @@ export const DeliveryLocationScreen = () => {
                 commune,
                 deliveryAddress,
                 gpsCoords: deliveryLocation.latitude !== 0 ? deliveryLocation : undefined,
+                locationAccuracy: locationAccuracy,
                 status: 'pending',
                 deliveryFee: totalDeliveryFee,
                 totalPrice: grandTotal,
@@ -388,15 +330,9 @@ export const DeliveryLocationScreen = () => {
                                     Votre position GPS *
                                 </Text>
 
-                                {/* Modal for capture */}
-                                <LocationCaptureModal
-                                    visible={isScanningLocation}
-                                    accuracy={locationAccuracy}
-                                    status={locationStatus}
-                                    onRetry={handleRetryLocation}
-                                    onCancel={handleCancelLocation}
-                                    onManualSelect={undefined}
-                                />
+                                {isScanningLocation && (
+                                    <ActivityIndicator size="small" color={theme.colors.primary} />
+                                )}
 
                                 {deliveryLocation.latitude !== 0 ? (
                                     <View style={styles.mapContainer}>
@@ -433,11 +369,13 @@ export const DeliveryLocationScreen = () => {
                                             <Text style={[styles.locationText, { color: theme.colors.textSecondary }]}>
                                                 Lat: {deliveryLocation.latitude.toFixed(6)}, Lon: {deliveryLocation.longitude.toFixed(6)}
                                             </Text>
-                                            {locationAccuracy && (
+                                            {locationAccuracy !== null && (
                                                 <Text style={[styles.accuracyText, {
-                                                    color: locationAccuracy <= 50 ? '#34C759' : '#FF9500'
+                                                    color: locationAccuracy <= 100 ? '#34C759' :
+                                                        locationAccuracy <= 300 ? '#FFCC00' :
+                                                            locationAccuracy <= 500 ? '#FF9500' : '#FF3B30'
                                                 }]}>
-                                                    Précision: {locationAccuracy.toFixed(1)}m
+                                                    Précision estimée : ±{Math.round(locationAccuracy)} m – {getAccuracyLabel(locationAccuracy)}
                                                 </Text>
                                             )}
                                         </View>
@@ -511,7 +449,7 @@ export const DeliveryLocationScreen = () => {
                                 <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                                     <Ionicons name="warning-outline" size={20} color={theme.colors.textSecondary} style={{ marginRight: 8 }} />
                                     <Text style={[styles.buttonText, { color: theme.colors.textSecondary }]}>
-                                        {deliveryLocation.latitude === 0 ? 'Position requise' : 'Précision insuffisante'}
+                                        Position GPS requise
                                     </Text>
                                 </View>
                             ) : (

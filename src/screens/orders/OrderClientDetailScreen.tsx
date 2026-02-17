@@ -238,6 +238,21 @@ export const OrderClientDetailScreen = () => {
                                     label={order.clientName}
                                 />
                             </View>
+                            {order.locationAccuracy !== undefined && order.locationAccuracy !== null && (
+                                <Text style={{
+                                    fontSize: 12,
+                                    marginTop: 4,
+                                    color: Number(order.locationAccuracy) <= 100 ? '#34C759' :
+                                        Number(order.locationAccuracy) <= 300 ? '#FFCC00' :
+                                            Number(order.locationAccuracy) <= 500 ? '#FF9500' : '#FF3B30'
+                                }}>
+                                    Précision estimée : ±{Math.round(Number(order.locationAccuracy))} m – {
+                                        Number(order.locationAccuracy) <= 100 ? 'Précision très bonne' :
+                                            Number(order.locationAccuracy) <= 300 ? 'Précision bonne' :
+                                                Number(order.locationAccuracy) <= 500 ? 'Précision faible' : 'Précision mauvaise'
+                                    }
+                                </Text>
+                            )}
                             <TouchableOpacity
                                 style={[styles.itineraryButton, {
                                     backgroundColor: theme.colors.primary,
