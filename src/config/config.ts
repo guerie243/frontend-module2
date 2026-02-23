@@ -7,7 +7,7 @@
 
 export const ENV = {
     // Module 2 Backend API (Products & Orders)
-    API_URL: process.env.EXPO_PUBLIC_API_URL || 'https://backend-app-3fyc.onrender.com/module2',
+    API_URL: process.env.EXPO_PUBLIC_API_URL || 'https://backend-app-3fyc.onrender.com/api',
 
     // Module 1 Backend API (Auth, Vitrines, Annonces)
     MODULE1_API_URL: process.env.EXPO_PUBLIC_MODULE1_API_URL || 'https://backend-app-3fyc.onrender.com/api',

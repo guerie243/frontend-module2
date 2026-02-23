@@ -160,7 +160,7 @@ export const OrderInfoScreen = () => {
                                 <View style={[styles.phoneSeparator, { backgroundColor: theme.colors.border }]} />
                                 <TextInput
                                     style={[styles.phoneInput, { color: theme.colors.text }]}
-                                    placeholder="9770*******"
+                                    placeholder="WhatsApp"
                                     placeholderTextColor={theme.colors.textTertiary}
                                     value={clientPhone}
                                     onChangeText={setClientPhone}
