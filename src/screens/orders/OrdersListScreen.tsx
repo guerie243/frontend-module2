@@ -92,7 +92,6 @@ export const OrdersListScreen = () => {
     const [isDeleting, setIsDeleting] = useState(false);
     const [countdown, setCountdown] = useState(0);
     const countdownInterval = React.useRef<NodeJS.Timeout | null>(null);
-    const longPressTimeout = React.useRef<NodeJS.Timeout | null>(null);
     const deleteOrderMutation = useDeleteOrder();
 
     const onRefresh = async () => {
@@ -244,19 +243,8 @@ export const OrdersListScreen = () => {
                     isSelected && { borderColor: theme.colors.primary, borderWidth: 2 }
                 ]}
                 onPress={() => handleOrderPress(item)}
-                onPressIn={() => {
-                    if (!selectionMode) {
-                        longPressTimeout.current = setTimeout(() => {
-                            handleOrderLongPress(item);
-                        }, 3000);
-                    }
-                }}
-                onPressOut={() => {
-                    if (longPressTimeout.current) {
-                        clearTimeout(longPressTimeout.current);
-                    }
-                }}
-                delayLongPress={3000} // This is actually for standard long press, but we want 3s
+                onLongPress={() => handleOrderLongPress(item)}
+                delayLongPress={3000}
             >
                 <View style={styles.orderHeader}>
                     <View style={{ flexDirection: 'row', alignItems: 'center' }}>
