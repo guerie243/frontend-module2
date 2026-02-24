@@ -263,7 +263,7 @@ export const OrdersListScreen = () => {
                 ]}
                 onPress={() => handleOrderPress(item)}
                 onLongPress={() => handleOrderLongPress(item)}
-                delayLongPress={2000}
+                delayLongPress={1500}
             >
                 <View style={styles.orderHeader}>
                     <View style={{ flexDirection: 'row', alignItems: 'center' }}>
