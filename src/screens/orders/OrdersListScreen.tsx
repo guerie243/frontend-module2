@@ -135,17 +135,36 @@ export const OrdersListScreen = () => {
     };
 
     const initiateDelete = () => {
-        Alert.alert(
-            "Supprimer les commandes",
-            `Voulez-vous vraiment supprimer ${selectedOrderIds.length} commande(s) ?`,
-            [
-                { text: "Annuler", style: "cancel" },
-                {
-                    text: "Oui",
-                    onPress: startDeletionCountdown
-                }
-            ]
-        );
+        console.log('[OrdersListScreen] initiateDelete called with', selectedOrderIds.length, 'orders');
+
+        if (selectedOrderIds.length === 0) {
+            console.warn('[OrdersListScreen] No orders selected for deletion');
+            return;
+        }
+
+        // Use setTimeout to ensure the touch event has finished and avoid UI thread conflicts
+        setTimeout(() => {
+            try {
+                Alert.alert(
+                    "Supprimer les commandes",
+                    `Voulez-vous vraiment supprimer ${selectedOrderIds.length} commande(s) ?`,
+                    [
+                        { text: "Annuler", style: "cancel", onPress: () => console.log('[OrdersListScreen] Deletion cancelled') },
+                        {
+                            text: "Oui",
+                            style: 'destructive',
+                            onPress: () => {
+                                console.log('[OrdersListScreen] Deletion confirmed, starting countdown');
+                                startDeletionCountdown();
+                            }
+                        }
+                    ],
+                    { cancelable: true }
+                );
+            } catch (error) {
+                console.error('[OrdersListScreen] Error showing Alert:', error);
+            }
+        }, 100);
     };
 
     const startDeletionCountdown = () => {
