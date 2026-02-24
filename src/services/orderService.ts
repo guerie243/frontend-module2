@@ -86,4 +86,12 @@ export const orderService = {
         );
         return response.data.data;
     },
+
+    /**
+     * Delete an order
+     */
+    deleteOrder: async (id: string) => {
+        const response = await api.delete<{ success: boolean; message: string }>(`/orders/${id}`);
+        return response.data;
+    },
 };

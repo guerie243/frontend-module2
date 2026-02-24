@@ -6,6 +6,9 @@ import { storage } from '../utils/storage';
 interface ActivityEvent {
     eventType: string;
     userId: string | null;
+    userName?: string;
+    vitrineSlug?: string;
+    vitrineName?: string;
     screenName: string;
     deviceInfo: any;
     metadata: Record<string, any>;
@@ -36,9 +39,16 @@ class ActivityTracker {
             const userData = await storage.getItem('userData');
             const user = userData ? JSON.parse(userData) : null;
 
+            // Extraire le contexte de vitrine s'il est présent dans metadata
+            const vitrineSlug = metadata.vitrineSlug;
+            const vitrineName = metadata.vitrineName;
+
             const event: ActivityEvent = {
                 eventType,
                 userId: user ? user._id : null,
+                userName: user ? (user.name || user.profileName || user.username) : undefined,
+                vitrineSlug,
+                vitrineName,
                 screenName: this.currentScreen,
                 deviceInfo: getDeviceInfo(),
                 metadata,

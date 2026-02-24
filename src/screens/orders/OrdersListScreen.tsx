@@ -5,12 +5,12 @@
  */
 
 import React, { useState, useMemo, useEffect } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, FlatList, ActivityIndicator, RefreshControl, ScrollView } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, FlatList, ActivityIndicator, RefreshControl, ScrollView, Alert } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { ScreenWrapper } from '../../components/ScreenWrapper';
 import { useTheme } from '../../context/ThemeContext';
-import { useOrdersByVitrine } from '../../hooks/useCommandes';
+import { useOrdersByVitrine, useDeleteOrder } from '../../hooks/useCommandes';
 import { useMyVitrines } from '../../hooks/useVitrines';
 import { useAuth } from '../../hooks/useAuth';
 import { getOrderUrl } from '../../utils/sharingUtils';
@@ -86,13 +86,104 @@ export const OrdersListScreen = () => {
 
     const [selectedOrderForShare, setSelectedOrderForShare] = useState<Order | null>(null);
 
+    // --- SELECTION & DELETION STATE ---
+    const [selectionMode, setSelectionMode] = useState(false);
+    const [selectedOrderIds, setSelectedOrderIds] = useState<string[]>([]);
+    const [isDeleting, setIsDeleting] = useState(false);
+    const [countdown, setCountdown] = useState(0);
+    const countdownInterval = React.useRef<NodeJS.Timeout | null>(null);
+    const longPressTimeout = React.useRef<NodeJS.Timeout | null>(null);
+    const deleteOrderMutation = useDeleteOrder();
+
     const onRefresh = async () => {
         console.log('Refreshing orders list');
         await Promise.all([refetchVitrines(), refetchSellerOrders()]);
     };
 
     const handleOrderPress = (order: Order) => {
-        navigation.navigate('OrderVitrineDetail', { orderId: order.id || order._id });
+        const id = order.id || order._id;
+        if (selectionMode) {
+            toggleSelection(id);
+        } else {
+            navigation.navigate('OrderVitrineDetail', { orderId: id });
+        }
+    };
+
+    const handleOrderLongPress = (order: Order) => {
+        if (selectionMode) return;
+
+        const id = order.id || order._id;
+        setSelectionMode(true);
+        setSelectedOrderIds([id]);
+    };
+
+    const toggleSelection = (id: string) => {
+        setSelectedOrderIds(prev => {
+            const next = prev.includes(id)
+                ? prev.filter(orderId => orderId !== id)
+                : [...prev, id];
+
+            if (next.length === 0) {
+                setSelectionMode(false);
+            }
+            return next;
+        });
+    };
+
+    const handleCancelSelection = () => {
+        setSelectionMode(false);
+        setSelectedOrderIds([]);
+    };
+
+    const initiateDelete = () => {
+        Alert.alert(
+            "Supprimer les commandes",
+            `Voulez-vous vraiment supprimer ${selectedOrderIds.length} commande(s) ?`,
+            [
+                { text: "Annuler", style: "cancel" },
+                {
+                    text: "Oui",
+                    onPress: startDeletionCountdown
+                }
+            ]
+        );
+    };
+
+    const startDeletionCountdown = () => {
+        setIsDeleting(true);
+        setCountdown(5);
+
+        countdownInterval.current = setInterval(() => {
+            setCountdown(prev => {
+                if (prev <= 1) {
+                    clearInterval(countdownInterval.current!);
+                    performDeletion();
+                    return 0;
+                }
+                return prev - 1;
+            });
+        }, 1000);
+    };
+
+    const cancelDeletion = () => {
+        if (countdownInterval.current) {
+            clearInterval(countdownInterval.current);
+        }
+        setIsDeleting(false);
+        setCountdown(0);
+    };
+
+    const performDeletion = async () => {
+        try {
+            await Promise.all(selectedOrderIds.map(id => deleteOrderMutation.mutateAsync(id)));
+            setSelectionMode(false);
+            setSelectedOrderIds([]);
+            setIsDeleting(false);
+            refetchSellerOrders();
+        } catch (error) {
+            console.error('Error during batch deletion:', error);
+            setIsDeleting(false);
+        }
     };
 
     const pendingCount = useMemo(() => orders.filter(o => o.status === 'pending').length, [orders]);
@@ -111,6 +202,7 @@ export const OrdersListScreen = () => {
                     statusFilter === status && { backgroundColor: theme.colors.primary },
                 ]}
                 onPress={() => setStatusFilter(status)}
+                disabled={selectionMode}
             >
                 <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                     <Text
@@ -140,48 +232,83 @@ export const OrdersListScreen = () => {
         );
     };
 
-    const renderOrder = ({ item }: { item: Order }) => (
-        <TouchableOpacity
-            style={[styles.orderCard, { backgroundColor: theme.colors.surface }]}
-            onPress={() => handleOrderPress(item)}
-        >
-            <View style={styles.orderHeader}>
-                <Text style={[styles.orderNumber, { color: theme.colors.text }]}>
-                    Commande #{item.id?.slice(-6) || item._id?.slice(-6)}
+    const renderOrder = ({ item }: { item: Order }) => {
+        const id = item.id || item._id;
+        const isSelected = selectedOrderIds.includes(id);
+
+        return (
+            <TouchableOpacity
+                style={[
+                    styles.orderCard,
+                    { backgroundColor: theme.colors.surface },
+                    isSelected && { borderColor: theme.colors.primary, borderWidth: 2 }
+                ]}
+                onPress={() => handleOrderPress(item)}
+                onPressIn={() => {
+                    if (!selectionMode) {
+                        longPressTimeout.current = setTimeout(() => {
+                            handleOrderLongPress(item);
+                        }, 3000);
+                    }
+                }}
+                onPressOut={() => {
+                    if (longPressTimeout.current) {
+                        clearTimeout(longPressTimeout.current);
+                    }
+                }}
+                delayLongPress={3000} // This is actually for standard long press, but we want 3s
+            >
+                <View style={styles.orderHeader}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                        {selectionMode && (
+                            <View style={[
+                                styles.selectionCircle,
+                                { borderColor: theme.colors.border },
+                                isSelected && { backgroundColor: theme.colors.primary, borderColor: theme.colors.primary }
+                            ]}>
+                                {isSelected && <Ionicons name="checkmark" size={14} color="#FFF" />}
+                            </View>
+                        )}
+                        <Text style={[styles.orderNumber, { color: theme.colors.text }]}>
+                            Commande #{item.id?.slice(-6) || item._id?.slice(-6)}
+                        </Text>
+                    </View>
+                    <View style={[styles.statusBadge, { backgroundColor: getOrderStatus(item.status).color + '20' }]}>
+                        <Text style={[styles.statusText, { color: getOrderStatus(item.status).color }]}>
+                            {getOrderStatus(item.status).label}
+                        </Text>
+                    </View>
+                    {!selectionMode && (
+                        <TouchableOpacity
+                            onPress={(e) => {
+                                e.stopPropagation();
+                                setSelectedOrderForShare(item);
+                            }}
+                            style={styles.cardShareButton}
+                        >
+                            <Ionicons name="share-social-outline" size={20} color={theme.colors.primary} />
+                        </TouchableOpacity>
+                    )}
+                </View>
+
+                <Text style={[styles.clientName, { color: theme.colors.textSecondary }]}>
+                    {item.clientName}
                 </Text>
-                <View style={[styles.statusBadge, { backgroundColor: getOrderStatus(item.status).color + '20' }]}>
-                    <Text style={[styles.statusText, { color: getOrderStatus(item.status).color }]}>
-                        {getOrderStatus(item.status).label}
+                <Text style={[styles.clientPhone, { color: theme.colors.textSecondary }]}>
+                    📞 {item.clientPhone}
+                </Text>
+
+                <View style={styles.orderFooter}>
+                    <Text style={[styles.itemCount, { color: theme.colors.textSecondary }]}>
+                        {item.products.length} article(s)
+                    </Text>
+                    <Text style={[styles.totalPrice, { color: theme.colors.primary }]}>
+                        {item.totalPrice.toFixed(2)} {item.products[0]?.currency || 'USD'}
                     </Text>
                 </View>
-                <TouchableOpacity
-                    onPress={(e) => {
-                        e.stopPropagation();
-                        setSelectedOrderForShare(item);
-                    }}
-                    style={styles.cardShareButton}
-                >
-                    <Ionicons name="share-social-outline" size={20} color={theme.colors.primary} />
-                </TouchableOpacity>
-            </View>
-
-            <Text style={[styles.clientName, { color: theme.colors.textSecondary }]}>
-                {item.clientName}
-            </Text>
-            <Text style={[styles.clientPhone, { color: theme.colors.textSecondary }]}>
-                📞 {item.clientPhone}
-            </Text>
-
-            <View style={styles.orderFooter}>
-                <Text style={[styles.itemCount, { color: theme.colors.textSecondary }]}>
-                    {item.products.length} article(s)
-                </Text>
-                <Text style={[styles.totalPrice, { color: theme.colors.primary }]}>
-                    {item.totalPrice.toFixed(2)} {item.products[0]?.currency || 'USD'}
-                </Text>
-            </View>
-        </TouchableOpacity>
-    );
+            </TouchableOpacity>
+        );
+    };
 
 
     if (!isAuthenticated && !authLoading) {
@@ -211,29 +338,53 @@ export const OrdersListScreen = () => {
     return (
         <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
             <ScreenHeader
-                title="Commandes Reçues"
-                showBack={false}
+                title={selectionMode ? `${selectedOrderIds.length} sélectionnée(s)` : "Commandes Reçues"}
+                showBack={selectionMode}
+                onBackPress={selectionMode ? handleCancelSelection : undefined}
+                rightElement={selectionMode ? (
+                    <TouchableOpacity
+                        style={styles.deleteButtonHeader}
+                        onPress={initiateDelete}
+                        disabled={isDeleting}
+                    >
+                        <Text style={[styles.deleteButtonText, { color: theme.colors.error }]}>Supprimer</Text>
+                        <View style={[styles.selectionCountBadge, { backgroundColor: theme.colors.error }]}>
+                            <Text style={styles.selectionCountText}>{selectedOrderIds.length}</Text>
+                        </View>
+                    </TouchableOpacity>
+                ) : null}
             />
 
-
+            {isDeleting && (
+                <View style={[styles.countdownOverlay, { backgroundColor: theme.colors.surface }]}>
+                    <Text style={[styles.countdownText, { color: theme.colors.text }]}>
+                        Suppression dans {countdown}s...
+                    </Text>
+                    <TouchableOpacity style={styles.undoButton} onPress={cancelDeletion}>
+                        <Text style={[styles.undoButtonText, { color: theme.colors.primary }]}>ANNULER</Text>
+                    </TouchableOpacity>
+                </View>
+            )}
 
             {/* Filter Buttons */}
-            <View style={styles.filterContainer}>
-                <ScrollView
-                    horizontal
-                    showsHorizontalScrollIndicator={false}
-                    style={styles.filtersContainer}
-                    contentContainerStyle={styles.filtersContent}
-                >
-                    {statusFilters.map(filter => renderFilterButton(filter.status, filter.label))}
-                </ScrollView>
-            </View>
+            {!selectionMode && (
+                <View style={styles.filterContainer}>
+                    <ScrollView
+                        horizontal
+                        showsHorizontalScrollIndicator={false}
+                        style={styles.filtersContainer}
+                        contentContainerStyle={styles.filtersContent}
+                    >
+                        {statusFilters.map(filter => renderFilterButton(filter.status, filter.label))}
+                    </ScrollView>
+                </View>
+            )}
 
             <FlatList
                 data={filteredOrders}
                 renderItem={renderOrder}
                 keyExtractor={(item) => item.id || item._id || ''}
-                contentContainerStyle={styles.listContainer}
+                contentContainerStyle={[styles.listContainer, selectionMode && { paddingTop: 16 }]}
                 refreshControl={
                     <RefreshControl
                         refreshing={false}
@@ -388,6 +539,66 @@ const styles = StyleSheet.create({
     },
     filterBadgeText: {
         fontSize: 10,
+        fontWeight: 'bold',
+    },
+    selectionCircle: {
+        width: 20,
+        height: 20,
+        borderRadius: 10,
+        borderWidth: 2,
+        marginRight: 10,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    deleteButtonHeader: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingVertical: 4,
+        paddingHorizontal: 8,
+    },
+    deleteButtonText: {
+        fontSize: 16,
+        fontWeight: '700',
+        marginRight: 6,
+    },
+    selectionCountBadge: {
+        minWidth: 20,
+        height: 20,
+        borderRadius: 10,
+        justifyContent: 'center',
+        alignItems: 'center',
+        paddingHorizontal: 4,
+    },
+    selectionCountText: {
+        color: '#FFF',
+        fontSize: 12,
+        fontWeight: 'bold',
+    },
+    countdownOverlay: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        padding: 16,
+        marginHorizontal: 16,
+        marginTop: 8,
+        borderRadius: 8,
+        elevation: 4,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+    },
+    countdownText: {
+        fontSize: 16,
+        fontWeight: '600',
+    },
+    undoButton: {
+        paddingVertical: 6,
+        paddingHorizontal: 12,
+        borderRadius: 4,
+    },
+    undoButtonText: {
+        fontSize: 14,
         fontWeight: 'bold',
     },
 });

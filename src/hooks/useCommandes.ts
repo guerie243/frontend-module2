@@ -92,6 +92,24 @@ export const useUpdateOrder = () => {
 };
 
 /**
+ * Delete order mutation
+ */
+export const useDeleteOrder = () => {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: (id: string) => orderService.deleteOrder(id),
+        onSuccess: () => {
+            console.log('Order deleted successfully');
+            queryClient.invalidateQueries({ queryKey: ['orders'] });
+        },
+        onError: (error: any) => {
+            console.error('Order deletion error:', error.response?.data || error.message);
+        },
+    });
+};
+
+/**
  * Get guest orders by IDs
  */
 export const useGuestOrders = (ids: string[], enabled = true) => {
