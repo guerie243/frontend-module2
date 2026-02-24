@@ -244,7 +244,7 @@ export const OrdersListScreen = () => {
                 ]}
                 onPress={() => handleOrderPress(item)}
                 onLongPress={() => handleOrderLongPress(item)}
-                delayLongPress={3000}
+                delayLongPress={2000}
             >
                 <View style={styles.orderHeader}>
                     <View style={{ flexDirection: 'row', alignItems: 'center' }}>
@@ -329,11 +329,16 @@ export const OrdersListScreen = () => {
                 title={selectionMode ? `${selectedOrderIds.length} sélectionnée(s)` : "Commandes Reçues"}
                 showBack={selectionMode}
                 onBackPress={selectionMode ? handleCancelSelection : undefined}
+                hideGlobalButtons={selectionMode}
                 rightElement={selectionMode ? (
                     <TouchableOpacity
                         style={styles.deleteButtonHeader}
-                        onPress={initiateDelete}
+                        onPress={() => {
+                            console.log('[OrdersListScreen] Delete button pressed');
+                            initiateDelete();
+                        }}
                         disabled={isDeleting}
+                        hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                     >
                         <Text style={[styles.deleteButtonText, { color: theme.colors.error }]}>Supprimer</Text>
                         <View style={[styles.selectionCountBadge, { backgroundColor: theme.colors.error }]}>

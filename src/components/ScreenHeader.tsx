@@ -24,6 +24,7 @@ interface ScreenHeaderProps {
     vitrineName?: string;
     onVitrinePress?: () => void;
     onBackPress?: () => void;
+    hideGlobalButtons?: boolean;
 }
 
 export const ScreenHeader: React.FC<ScreenHeaderProps> = ({
@@ -36,6 +37,7 @@ export const ScreenHeader: React.FC<ScreenHeaderProps> = ({
     vitrineName,
     onVitrinePress,
     onBackPress,
+    hideGlobalButtons = false,
 }) => {
     const { theme } = useTheme();
     const navigation = useNavigation<any>();
@@ -96,30 +98,34 @@ export const ScreenHeader: React.FC<ScreenHeaderProps> = ({
                     </Text>
                 )}
 
-                <View style={styles.right}>
-                    {/* Bouton Global Commandes */}
-                    <TouchableOpacity
-                        style={styles.iconButton}
-                        onPress={() => {
-                            console.log('[ScreenHeader] Navigating to MyPurchases');
-                            navigation.navigate('MyPurchases');
-                        }}
-                    >
-                        <Ionicons name="receipt-outline" size={22} color={theme.colors.text} />
-                        {totalPending > 0 && (
-                            <View style={[styles.badge, { backgroundColor: '#FF3B30' }]}>
-                                <Text style={styles.badgeText}>{totalPending > 9 ? '9+' : totalPending}</Text>
-                            </View>
-                        )}
-                    </TouchableOpacity>
+                <View style={[styles.right, hideGlobalButtons && { minWidth: 44 }]}>
+                    {!hideGlobalButtons && (
+                        <>
+                            {/* Bouton Global Commandes */}
+                            <TouchableOpacity
+                                style={styles.iconButton}
+                                onPress={() => {
+                                    console.log('[ScreenHeader] Navigating to MyPurchases');
+                                    navigation.navigate('MyPurchases');
+                                }}
+                            >
+                                <Ionicons name="receipt-outline" size={22} color={theme.colors.text} />
+                                {totalPending > 0 && (
+                                    <View style={[styles.badge, { backgroundColor: '#FF3B30' }]}>
+                                        <Text style={styles.badgeText}>{totalPending > 9 ? '9+' : totalPending}</Text>
+                                    </View>
+                                )}
+                            </TouchableOpacity>
 
-                    {onShare && (
-                        <TouchableOpacity
-                            style={styles.iconButton}
-                            onPress={onShare}
-                        >
-                            <Ionicons name="share-social-outline" size={22} color={theme.colors.primary} />
-                        </TouchableOpacity>
+                            {onShare && (
+                                <TouchableOpacity
+                                    style={styles.iconButton}
+                                    onPress={onShare}
+                                >
+                                    <Ionicons name="share-social-outline" size={22} color={theme.colors.primary} />
+                                </TouchableOpacity>
+                            )}
+                        </>
                     )}
                     {rightElement}
                 </View>
