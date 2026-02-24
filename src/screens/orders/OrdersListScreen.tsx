@@ -91,6 +91,7 @@ export const OrdersListScreen = () => {
     const [selectedOrderIds, setSelectedOrderIds] = useState<string[]>([]);
     const [isDeleting, setIsDeleting] = useState(false);
     const [countdown, setCountdown] = useState(0);
+    const [showConfirmDelete, setShowConfirmDelete] = useState(false);
     const countdownInterval = React.useRef<NodeJS.Timeout | null>(null);
     const deleteOrderMutation = useDeleteOrder();
 
@@ -136,35 +137,14 @@ export const OrdersListScreen = () => {
 
     const initiateDelete = () => {
         console.log('[OrdersListScreen] initiateDelete called with', selectedOrderIds.length, 'orders');
-
-        if (selectedOrderIds.length === 0) {
-            console.warn('[OrdersListScreen] No orders selected for deletion');
-            return;
+        if (selectedOrderIds.length > 0) {
+            setShowConfirmDelete(true);
         }
+    };
 
-        // Use setTimeout to ensure the touch event has finished and avoid UI thread conflicts
-        setTimeout(() => {
-            try {
-                Alert.alert(
-                    "Supprimer les commandes",
-                    `Voulez-vous vraiment supprimer ${selectedOrderIds.length} commande(s) ?`,
-                    [
-                        { text: "Annuler", style: "cancel", onPress: () => console.log('[OrdersListScreen] Deletion cancelled') },
-                        {
-                            text: "Oui",
-                            style: 'destructive',
-                            onPress: () => {
-                                console.log('[OrdersListScreen] Deletion confirmed, starting countdown');
-                                startDeletionCountdown();
-                            }
-                        }
-                    ],
-                    { cancelable: true }
-                );
-            } catch (error) {
-                console.error('[OrdersListScreen] Error showing Alert:', error);
-            }
-        }, 100);
+    const handleConfirmDelete = () => {
+        setShowConfirmDelete(false);
+        startDeletionCountdown();
     };
 
     const startDeletionCountdown = () => {
@@ -366,6 +346,32 @@ export const OrdersListScreen = () => {
                     </TouchableOpacity>
                 ) : null}
             />
+
+            {showConfirmDelete && (
+                <View style={[StyleSheet.absoluteFill, styles.overlayContainer]}>
+                    <View style={[styles.confirmCard, { backgroundColor: theme.colors.surface }]}>
+                        <Ionicons name="alert-circle" size={48} color={theme.colors.error} style={{ marginBottom: 16 }} />
+                        <Text style={[styles.confirmTitle, { color: theme.colors.text }]}>Confirmation</Text>
+                        <Text style={[styles.confirmMessage, { color: theme.colors.textSecondary }]}>
+                            Voulez-vous vraiment supprimer {selectedOrderIds.length} commande(s) ?
+                        </Text>
+                        <View style={styles.confirmActions}>
+                            <TouchableOpacity
+                                style={[styles.confirmButton, { backgroundColor: theme.colors.border }]}
+                                onPress={() => setShowConfirmDelete(false)}
+                            >
+                                <Text style={[styles.confirmButtonText, { color: theme.colors.text }]}>Annuler</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                                style={[styles.confirmButton, { backgroundColor: theme.colors.error }]}
+                                onPress={handleConfirmDelete}
+                            >
+                                <Text style={[styles.confirmButtonText, { color: '#FFF' }]}>Supprimer</Text>
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+                </View>
+            )}
 
             {isDeleting && (
                 <View style={[styles.countdownOverlay, { backgroundColor: theme.colors.surface }]}>
@@ -611,6 +617,47 @@ const styles = StyleSheet.create({
     },
     undoButtonText: {
         fontSize: 14,
+        fontWeight: 'bold',
+    },
+    overlayContainer: {
+        backgroundColor: 'rgba(0,0,0,0.5)',
+        justifyContent: 'center',
+        alignItems: 'center',
+        zIndex: 1000,
+    },
+    confirmCard: {
+        width: '80%',
+        padding: 24,
+        borderRadius: 16,
+        alignItems: 'center',
+        elevation: 5,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.25,
+        shadowRadius: 4,
+    },
+    confirmTitle: {
+        fontSize: 20,
+        fontWeight: 'bold',
+        marginBottom: 8,
+    },
+    confirmMessage: {
+        fontSize: 16,
+        textAlign: 'center',
+        marginBottom: 24,
+    },
+    confirmActions: {
+        flexDirection: 'row',
+        gap: 12,
+    },
+    confirmButton: {
+        flex: 1,
+        height: 44,
+        borderRadius: 22,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    confirmButtonText: {
         fontWeight: 'bold',
     },
 });
