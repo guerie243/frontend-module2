@@ -99,6 +99,8 @@ export const RootNavigator = () => {
                         slug: (slug: string) => decodeURIComponent(slug),
                     },
                 },
+                OrderInfo: 'order/info',
+                DeliveryLocation: 'order/delivery',
                 OrderClientDetail: 'order/:orderId',
                 MyPurchases: 'my-purchases',
 

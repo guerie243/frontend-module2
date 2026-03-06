@@ -233,7 +233,8 @@ export const ProductsCatalogScreen = () => {
 
     // Redirection si non authentifié et pas de slug (accès à la Home directe)
     useEffect(() => {
-        if (!isLoading && !isAuthenticated && !slug) {
+        const currentUrl = typeof window !== 'undefined' ? window.location.href : '';
+        if (!isLoading && !isAuthenticated && !slug && !currentUrl.includes('/order/')) {
             console.log('[ProductsCatalogScreen] No slug and not authenticated, redirecting to Login');
             navigation.navigate('Login');
         }
