@@ -130,6 +130,7 @@ export const VitrineModificationMain = () => {
                     <Text style={[styles.sectionTitle, { color: theme.colors.primary }]}>Informations Générales</Text>
 
                     {renderFieldItem('Nom', vitrine.name, 'name')}
+                    {renderFieldItem('Numéro WhatsApp', vitrine.contact?.phone || '', 'phone', { keyboardType: 'phone-pad' })}
                     {renderFieldItem("Nom d'utilisateur", vitrine.slug || '', 'slug')}
                     {renderFieldItem('Catégorie', vitrine.category || vitrine.type || '', 'category')}
                     {renderFieldItem('Bio', vitrine.description || '', 'description', { multiline: true })}
@@ -147,7 +148,6 @@ export const VitrineModificationMain = () => {
                 <View style={styles.section}>
                     <Text style={[styles.sectionTitle, { color: theme.colors.primary }]}>Contact</Text>
 
-                    {renderFieldItem('Téléphone', vitrine.contact?.phone || '', 'phone', { keyboardType: 'phone-pad' })}
                     {renderFieldItem('Email', vitrine.contact?.email || '', 'email', { keyboardType: 'email-address' })}
                 </View>
 

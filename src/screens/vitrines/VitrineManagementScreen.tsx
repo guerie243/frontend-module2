@@ -42,6 +42,11 @@ export const VitrineManagementScreen = () => {
                     <Text style={[styles.vitrineName, { color: theme.colors.text }]}>
                         {vitrine.name}
                     </Text>
+                    {vitrine.contact?.phone && (
+                        <Text style={[styles.vitrinePhone, { color: theme.colors.textSecondary }]}>
+                            WhatsApp : {vitrine.contact.phone}
+                        </Text>
+                    )}
                     {vitrine.description && (
                         <Text style={[styles.vitrineDescription, { color: theme.colors.textSecondary }]}>
                             {vitrine.description}
@@ -126,6 +131,10 @@ const styles = StyleSheet.create({
     vitrineName: {
         fontSize: 20,
         fontWeight: 'bold',
+        marginBottom: 4,
+    },
+    vitrinePhone: {
+        fontSize: 14,
         marginBottom: 8,
     },
     vitrineDescription: {
