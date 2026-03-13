@@ -1,8 +1,8 @@
 /**
  * Product Card Component
- * 
- * Enhanced product card with expo-image, category badge, and actions
- * Inspired by Module 1 AnnonceCard
+ *
+ * Simplified cart UX: pressing + adds immediately to cart,
+ * pressing - removes. Quantity reflects the live cart state.
  */
 
 import React from 'react';
@@ -12,29 +12,44 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../context/ThemeContext';
 import { Product } from '../types';
 import { getSafeUri } from '../utils/imageUtils';
+import { useCart } from '../context/CartContext';
 
 interface ProductCardProps {
     product: Product;
     onPress: () => void;
-    onAddToCart?: (product: Product, quantity: number) => void;
     showActions?: boolean;
-    cartQuantity?: number;
 }
 
 export const ProductCard: React.FC<ProductCardProps> = ({
     product,
     onPress,
-    onAddToCart,
     showActions = false,
-    cartQuantity = 0,
 }) => {
     const { theme } = useTheme();
+    const { addToCart, updateQuantity, removeFromCart, cart } = useCart();
 
     // Get first image or use placeholder
     const rawImageUri = product.images && product.images.length > 0 ? product.images[0] : undefined;
     const imageUri = getSafeUri(rawImageUri);
 
-    const [quantity, setQuantity] = React.useState(0);
+    // Live quantity from cart context — persists across renders
+    const productId = product.id || product._id || '';
+    const cartItem = cart.find((item) => (item.product.id || item.product._id) === productId);
+    const quantity = cartItem?.quantity ?? 0;
+
+    const handleIncrement = (e: any) => {
+        e.stopPropagation();
+        addToCart(product, 1);
+    };
+
+    const handleDecrement = (e: any) => {
+        e.stopPropagation();
+        if (quantity <= 1) {
+            removeFromCart(productId);
+        } else {
+            updateQuantity(productId, quantity - 1);
+        }
+    };
 
     return (
         <TouchableOpacity
@@ -63,6 +78,13 @@ export const ProductCard: React.FC<ProductCardProps> = ({
                         <Text style={[styles.categoryText, { color: theme.colors.white }]}>
                             {product.category}
                         </Text>
+                    </View>
+                )}
+
+                {/* Cart quantity badge overlay */}
+                {quantity > 0 && (
+                    <View style={[styles.cartBadge, { backgroundColor: theme.colors.primary }]}>
+                        <Text style={styles.cartBadgeText}>{quantity}</Text>
                     </View>
                 )}
             </View>
@@ -96,46 +118,36 @@ export const ProductCard: React.FC<ProductCardProps> = ({
                     </View>
                 </View>
 
-                {showActions && onAddToCart && (
+                {/* Simplified quantity controls — no separate "Add" button */}
+                {showActions && (
                     <View style={styles.actionsWrapper}>
                         <View style={[styles.quantitySelector, { borderColor: theme.colors.border }]}>
                             <TouchableOpacity
-                                onPress={(e) => {
-                                    e.stopPropagation();
-                                    setQuantity(Math.max(0, quantity - 1));
-                                }}
+                                onPress={handleDecrement}
                                 style={styles.quantityBtn}
+                                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                             >
-                                <Ionicons name="remove" size={16} color={theme.colors.text} />
+                                <Ionicons
+                                    name="remove"
+                                    size={16}
+                                    color={quantity > 0 ? theme.colors.primary : theme.colors.textTertiary}
+                                />
                             </TouchableOpacity>
-                            <Text style={[styles.quantityText, { color: theme.colors.text }]}>{quantity}</Text>
+
+                            <Text style={[styles.quantityText, {
+                                color: quantity > 0 ? theme.colors.primary : theme.colors.textSecondary
+                            }]}>
+                                {quantity}
+                            </Text>
+
                             <TouchableOpacity
-                                onPress={(e) => {
-                                    e.stopPropagation();
-                                    setQuantity(quantity + 1);
-                                }}
+                                onPress={handleIncrement}
                                 style={styles.quantityBtn}
+                                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                             >
-                                <Ionicons name="add" size={16} color={theme.colors.text} />
+                                <Ionicons name="add" size={16} color={theme.colors.primary} />
                             </TouchableOpacity>
                         </View>
-
-                        <TouchableOpacity
-                            disabled={quantity === 0}
-                            style={[
-                                styles.cartButton,
-                                { backgroundColor: quantity > 0 ? theme.colors.primary : theme.colors.textTertiary }
-                            ]}
-                            onPress={(e) => {
-                                e.stopPropagation();
-                                if (quantity > 0) {
-                                    onAddToCart(product, quantity);
-                                    setQuantity(0);
-                                }
-                            }}
-                        >
-                            <Ionicons name="cart-outline" size={18} color={theme.colors.white} />
-                        </TouchableOpacity>
                     </View>
                 )}
             </View>
@@ -173,6 +185,22 @@ const styles = StyleSheet.create({
         fontSize: 10,
         fontWeight: '600',
     },
+    cartBadge: {
+        position: 'absolute',
+        top: 8,
+        right: 8,
+        minWidth: 22,
+        height: 22,
+        borderRadius: 11,
+        justifyContent: 'center',
+        alignItems: 'center',
+        paddingHorizontal: 5,
+    },
+    cartBadgeText: {
+        color: '#FFF',
+        fontSize: 11,
+        fontWeight: '700',
+    },
     content: {
         padding: 12,
     },
@@ -194,27 +222,8 @@ const styles = StyleSheet.create({
     deliveryRow: {
         flexDirection: 'row',
         alignItems: 'center',
+        marginTop: 2,
         gap: 4,
-        marginTop: 2,
-    },
-    deliveryText: {
-        fontSize: 11,
-        fontWeight: '500',
-    },
-    deliveryRow: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginTop: 2,
-    },
-    deliveryText: {
-        fontSize: 11,
-        fontWeight: '500',
-        marginLeft: 4,
-    },
-    deliveryRow: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginTop: 2,
     },
     deliveryText: {
         fontSize: 11,
@@ -222,14 +231,9 @@ const styles = StyleSheet.create({
         marginLeft: 4,
     },
     actionsWrapper: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        marginTop: 12,
-        gap: 8,
+        marginTop: 10,
     },
     quantitySelector: {
-        flex: 1,
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
@@ -239,21 +243,12 @@ const styles = StyleSheet.create({
         paddingHorizontal: 4,
     },
     quantityBtn: {
-        padding: 4,
+        padding: 6,
     },
     quantityText: {
-        fontSize: 14,
+        fontSize: 15,
         fontWeight: 'bold',
-    },
-    cartButton: {
-        width: 36,
-        height: 36,
-        borderRadius: 8,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    cartButtonText: {
-        fontSize: 16,
-        fontWeight: 'bold',
+        minWidth: 24,
+        textAlign: 'center',
     },
 });

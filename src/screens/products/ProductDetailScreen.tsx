@@ -38,7 +38,7 @@ export const ProductDetailScreen = () => {
     const styles = useMemo(() => createStyles(theme, isDesktop), [theme, isDesktop]);
     const { user, isAuthenticated } = useAuth();
     const { showSuccess, showError, showConfirm } = useAlertService();
-    const { addToCart } = useCart();
+    const { addToCart, updateQuantity, removeFromCart, cart } = useCart();
 
     const { slug } = route.params || {};
     const { data: product, isLoading } = useProductDetail(slug);
@@ -47,10 +47,28 @@ export const ProductDetailScreen = () => {
 
     const [isShareModalVisible, setIsShareModalVisible] = useState(false);
 
-    // Height fixe pour le ProductCarousel dans ce contexte (pas d'animation complexe de parallaxe pour l'instant sauf si demandé)
+    // Height fixe pour le ProductCarousel dans ce contexte
     const carouselHeight = useRef(new Animated.Value(CAROUSEL_HEIGHT)).current;
-    const [quantity, setQuantity] = useState(0);
     const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
+
+    // Quantity is driven by cart context — persists across renders
+    const productId = product?.id || product?._id || '';
+    const cartItem = cart.find((item) => (item.product.id || item.product._id) === productId);
+    const quantity = cartItem?.quantity ?? 0;
+
+    const handleIncrement = () => {
+        if (product) addToCart(product, 1);
+    };
+
+    const handleDecrement = () => {
+        if (!product) return;
+        if (quantity <= 1) {
+            removeFromCart(productId);
+        } else {
+            updateQuantity(productId, quantity - 1);
+        }
+    };
+
 
     const currentUserId = user?.userId || user?.id || user?._id;
     const isOwner = isAuthenticated && !!user && !!vitrine && (
@@ -67,14 +85,6 @@ export const ProductDetailScreen = () => {
         if (!product?.images) return [];
         return Array.isArray(product.images) ? product.images : [product.images as unknown as string];
     }, [product?.images]);
-
-    const handleAddToCart = () => {
-        if (product && quantity > 0) {
-            addToCart(product, quantity);
-            showSuccess('Article ajouté au panier');
-            setQuantity(0); // Reset after adding
-        }
-    };
 
     const handleEdit = () => {
         console.log('Navigating to ProductManagement for editing');
@@ -255,35 +265,36 @@ export const ProductDetailScreen = () => {
                         <View style={[styles.compactCartControls, { backgroundColor: theme.colors.surface }]}>
                             <View style={[styles.compactQuantitySelector, { borderColor: theme.colors.border }]}>
                                 <TouchableOpacity
-                                    onPress={() => setQuantity(Math.max(0, quantity - 1))}
+                                    onPress={handleDecrement}
                                     style={styles.compactQtyBtn}
                                 >
-                                    <Ionicons name="remove" size={18} color={theme.colors.text} />
+                                    <Ionicons
+                                        name="remove"
+                                        size={18}
+                                        color={quantity > 0 ? theme.colors.primary : theme.colors.textTertiary}
+                                    />
                                 </TouchableOpacity>
-                                <Text style={[styles.compactQtyText, { color: theme.colors.text }]}>{quantity}</Text>
+                                <Text style={[styles.compactQtyText, {
+                                    color: quantity > 0 ? theme.colors.primary : theme.colors.text
+                                }]}>
+                                    {quantity}
+                                </Text>
                                 <TouchableOpacity
-                                    onPress={() => setQuantity(quantity + 1)}
+                                    onPress={handleIncrement}
                                     style={styles.compactQtyBtn}
                                 >
-                                    <Ionicons name="add" size={18} color={theme.colors.text} />
+                                    <Ionicons name="add" size={18} color={theme.colors.primary} />
                                 </TouchableOpacity>
                             </View>
 
-                            <TouchableOpacity
-                                disabled={quantity === 0}
-                                style={[
-                                    styles.compactCartBtn,
-                                    { backgroundColor: quantity > 0 ? theme.colors.primary : theme.colors.textTertiary }
-                                ]}
-                                onPress={handleAddToCart}
-                            >
-                                <Ionicons name="cart-outline" size={18} color="#FFF" style={{ marginRight: 6 }} />
-                                <Text style={styles.compactCartBtnText}>
-                                    {quantity > 0
-                                        ? `Ajouter • ${(product.price * quantity).toFixed(2)} ${product.currency || 'USD'}`
-                                        : 'Ajouter au panier'}
-                                </Text>
-                            </TouchableOpacity>
+                            {quantity > 0 && (
+                                <View style={styles.cartSummary}>
+                                    <Ionicons name="cart" size={15} color={theme.colors.primary} />
+                                    <Text style={[styles.cartSummaryText, { color: theme.colors.primary }]}>
+                                        {quantity} × {product.price.toFixed(2)} = {(product.price * quantity).toFixed(2)} {product.currency || 'USD'}
+                                    </Text>
+                                </View>
+                            )}
                         </View>
                     )}
                 </View>
@@ -547,17 +558,19 @@ const createStyles = (theme: any, isDesktop: boolean) => StyleSheet.create({
         minWidth: 24,
         textAlign: 'center',
     },
-    compactCartBtn: {
+    cartSummary: {
         flex: 1,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: theme.colors.primary + '15',
         height: 40,
         borderRadius: 10,
-        flexDirection: 'row',
-        justifyContent: 'center',
-        alignItems: 'center',
+        gap: 6,
+        paddingHorizontal: 8,
     },
-    compactCartBtnText: {
-        color: '#FFF',
-        fontSize: 13,
+    cartSummaryText: {
+        fontSize: 14,
         fontWeight: '700',
     },
     paginationDots: {
