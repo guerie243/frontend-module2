@@ -20,6 +20,7 @@ import { getOrderUrl } from '../../utils/sharingUtils';
 import { Platform } from 'react-native';
 import { ProductOrderItem } from '../../components/ProductOrderItem';
 import { activityTracker } from '../../services/activityTracker';
+import { useCart } from '../../context/CartContext';
 
 export const DeliveryLocationScreen = () => {
     const navigation = useNavigation<any>();
@@ -27,6 +28,7 @@ export const DeliveryLocationScreen = () => {
     const { theme } = useTheme();
     const { isAuthenticated, isGuest } = useAuth();
     const { showError, showSuccess } = useAlertService();
+    const { clearCart } = useCart();
     const createOrderMutation = useCreateOrder();
 
     const { orderData } = route.params || {};
@@ -38,9 +40,8 @@ export const DeliveryLocationScreen = () => {
             return DRC_CITIES;
         }
 
-        // Get common cities across all products
-        // If a product doesn't have locations specified, it's considered available everywhere (legacy/default)
-        let commonCities: string[] | null = null;
+        const allRepresentedCities = new Set<string>();
+        let hasGlobalProduct = false;
 
         orderData.products.forEach((p: any) => {
             const productLocations = p.locations
@@ -48,21 +49,24 @@ export const DeliveryLocationScreen = () => {
                 : [];
 
             if (productLocations.length > 0) {
-                if (commonCities === null) {
-                    commonCities = [...productLocations];
-                } else {
-                    commonCities = commonCities.filter(c => productLocations.includes(c));
-                }
+                productLocations.forEach((loc: string) => allRepresentedCities.add(loc));
+            } else {
+                hasGlobalProduct = true;
             }
         });
 
-        // If no product has restrictions, show all cities
-        if (commonCities === null) {
+        // If any product is global (no specific locations), show all cities
+        if (hasGlobalProduct) {
             return DRC_CITIES;
         }
 
-        // Intersection of all product locations
-        return DRC_CITIES.filter(city => commonCities?.includes(city.value));
+        // If no products have specified locations (and above check didn't catch it)
+        if (allRepresentedCities.size === 0) {
+            return DRC_CITIES;
+        }
+
+        // Union of all product locations
+        return DRC_CITIES.filter(city => allRepresentedCities.has(city.value));
     }, [orderData]);
 
     const totalDeliveryFee = React.useMemo(() => {
@@ -178,7 +182,8 @@ export const DeliveryLocationScreen = () => {
                 if (whatsappNumber) {
                     const cleanNumber = whatsappNumber.replace(/\D/g, '');
 
-                    let message = `*Nouvelle Commande*\n\n`;
+                    let message = `${getOrderUrl(publicOrderId)}\n\n`;
+                    message += `*Nouvelle Commande*\n\n`;
                     message += `*Client:* ${orderData.clientName}\n\n`;
 
                     message += `*Articles:*\n`;
@@ -203,8 +208,6 @@ export const DeliveryLocationScreen = () => {
                         message += `\n*Notes:* ${orderData.notes}\n`;
                     }
 
-                    message += `\n*Lien de suivi de votre commande:* ${getOrderUrl(publicOrderId)}`;
-
                     const whatsappUrl = `whatsapp://send?phone=${cleanNumber}&text=${encodeURIComponent(message)}`;
 
                     try {
@@ -218,6 +221,9 @@ export const DeliveryLocationScreen = () => {
                         console.error('Erreur ouverture WhatsApp:', err);
                     }
                 }
+
+                // Empty cart after successful order
+                clearCart();
             }
 
             showSuccess('Commande créée avec succès !');

@@ -110,7 +110,7 @@ export const ScreenHeader: React.FC<ScreenHeaderProps> = ({
                                 activeOpacity={0.7}
                             >
                                 <View style={[styles.cartPricePill, { backgroundColor: theme.colors.primary }]}>
-                                    <Ionicons name="cart" size={14} color="#FFF" style={{ marginRight: 4 }} />
+                                    <Ionicons name="cart" size={18} color="#FFF" style={{ marginRight: 6 }} />
                                     <Text style={styles.cartPriceTextSmall}>
                                         {totalPrice.toFixed(2)} {cart[0]?.product?.currency || 'USD'}
                                     </Text>
@@ -250,8 +250,8 @@ const styles = StyleSheet.create({
         gap: 12,
     },
     orderText: {
-        fontSize: 16,
-        fontWeight: '700',
+        fontSize: 18,
+        fontWeight: '800',
         textTransform: 'uppercase',
     },
     cartPillContainerSmall: {
@@ -261,34 +261,34 @@ const styles = StyleSheet.create({
     cartPricePill: {
         flexDirection: 'row',
         alignItems: 'center',
-        paddingHorizontal: 8,
-        paddingVertical: 5,
-        borderRadius: 20,
-        elevation: 2,
+        paddingHorizontal: 12,
+        paddingVertical: 8,
+        borderRadius: 25,
+        elevation: 3,
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 2,
+        shadowOpacity: 0.15,
+        shadowRadius: 3,
     },
     cartPriceTextSmall: {
         color: '#FFF',
-        fontSize: 13,
-        fontWeight: '700',
-        marginRight: 6,
+        fontSize: 15,
+        fontWeight: '800',
+        marginRight: 8,
     },
     cartBadgeHeaderSmall: {
         backgroundColor: '#FFF',
-        borderRadius: 10,
-        minWidth: 18,
-        height: 18,
+        borderRadius: 11,
+        minWidth: 22,
+        height: 22,
         justifyContent: 'center',
         alignItems: 'center',
-        paddingHorizontal: 2,
+        paddingHorizontal: 4,
     },
     cartBadgeTextSmall: {
         color: '#000',
-        fontSize: 11,
-        fontWeight: '800',
+        fontSize: 12,
+        fontWeight: '900',
     },
     badge: {
         position: 'absolute',
