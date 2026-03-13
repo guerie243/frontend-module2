@@ -182,8 +182,7 @@ export const DeliveryLocationScreen = () => {
                 if (whatsappNumber) {
                     const cleanNumber = whatsappNumber.replace(/\D/g, '');
 
-                    let message = `${getOrderUrl(publicOrderId)}\n\n`;
-                    message += `*Nouvelle Commande*\n\n`;
+                    let message = `*Nouvelle Commande*\n\n`;
                     message += `*Client:* ${orderData.clientName}\n\n`;
 
                     message += `*Articles:*\n`;
@@ -207,6 +206,8 @@ export const DeliveryLocationScreen = () => {
                     if (orderData.notes) {
                         message += `\n*Notes:* ${orderData.notes}\n`;
                     }
+
+                    message += `\n*Lien de suivi de votre commande:* ${getOrderUrl(publicOrderId)}`;
 
                     const whatsappUrl = `whatsapp://send?phone=${cleanNumber}&text=${encodeURIComponent(message)}`;
 
