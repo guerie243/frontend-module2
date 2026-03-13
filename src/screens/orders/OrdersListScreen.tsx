@@ -6,6 +6,7 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, FlatList, ActivityIndicator, RefreshControl, ScrollView, Alert, TextInput, Platform } from 'react-native';
+import { Calendar, LocaleConfig } from 'react-native-calendars';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { ScreenWrapper } from '../../components/ScreenWrapper';
@@ -22,6 +23,15 @@ import { Order } from '../../types';
 import { ScreenHeader } from '../../components/ScreenHeader';
 import { getOrderStatus } from '../../constants/orderStatus';
 import { useAlert } from '../../components/AlertProvider';
+
+LocaleConfig.locales['fr'] = {
+    monthNames: ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'],
+    monthNamesShort: ['Janv.', 'Févr.', 'Mars', 'Avril', 'Mai', 'Juin', 'Juil.', 'Août', 'Sept.', 'Oct.', 'Nov.', 'Déc.'],
+    dayNames: ['Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'],
+    dayNamesShort: ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'],
+    today: "Aujourd'hui"
+};
+LocaleConfig.defaultLocale = 'fr';
 
 export const OrdersListScreen = () => {
     const navigation = useNavigation<any>();
@@ -491,8 +501,67 @@ interface DateFilterModalProps {
 
 const DateFilterModal = ({ isVisible, onClose, activeFilter, onSelect, theme }: DateFilterModalProps) => {
     const [isCustom, setIsCustom] = useState(activeFilter.key === 'custom');
-    const [tempStart, setTempStart] = useState(activeFilter.startDate ? activeFilter.startDate.toISOString().split('T')[0] : '');
-    const [tempEnd, setTempEnd] = useState(activeFilter.endDate ? activeFilter.endDate.toISOString().split('T')[0] : '');
+    const [markedDates, setMarkedDates] = useState<any>({});
+    const [selection, setSelection] = useState<{ start?: string, end?: string }>({
+        start: activeFilter.startDate ? activeFilter.startDate.toISOString().split('T')[0] : undefined,
+        end: activeFilter.endDate ? activeFilter.endDate.toISOString().split('T')[0] : undefined
+    });
+
+    useEffect(() => {
+        if (isVisible) {
+            updateMarkedDates(selection.start, selection.end);
+        }
+    }, [isVisible, selection]);
+
+    const updateMarkedDates = (start?: string, end?: string) => {
+        const marked: any = {};
+        if (start) {
+            marked[start] = { startingDay: true, color: theme.colors.primary, textColor: 'white' };
+            if (end) {
+                marked[end] = { endingDay: true, color: theme.colors.primary, textColor: 'white' };
+
+                // Fill range
+                let current = new Date(start);
+                const endDate = new Date(end);
+                while (current < endDate) {
+                    current.setDate(current.getDate() + 1);
+                    const dateString = current.toISOString().split('T')[0];
+                    if (dateString !== end) {
+                        marked[dateString] = { color: theme.colors.primary + '30', textColor: theme.colors.text };
+                    }
+                }
+            }
+        }
+        setMarkedDates(marked);
+    };
+
+    const handleDayPress = (day: any) => {
+        const { dateString } = day;
+        if (!selection.start || (selection.start && selection.end)) {
+            setSelection({ start: dateString, end: undefined });
+        } else {
+            if (dateString < selection.start) {
+                setSelection({ start: dateString, end: selection.start });
+            } else if (dateString > selection.start) {
+                setSelection({ start: selection.start, end: dateString });
+            } else {
+                setSelection({ start: undefined, end: undefined });
+            }
+        }
+    };
+
+    const handleApplyCustom = () => {
+        if (!selection.start) {
+            onSelect({ key: 'all' });
+        } else {
+            onSelect({
+                key: 'custom',
+                startDate: new Date(selection.start),
+                endDate: selection.end ? new Date(selection.end) : new Date(selection.start)
+            });
+        }
+        onClose();
+    };
 
     const presets: { key: string; label: string }[] = [
         { key: 'all', label: 'Toutes les dates (Tout)' },
@@ -500,13 +569,6 @@ const DateFilterModal = ({ isVisible, onClose, activeFilter, onSelect, theme }: 
         { key: '7d', label: '7 derniers jours' },
         { key: '30d', label: '30 derniers jours' },
     ];
-
-    const handleApplyCustom = () => {
-        const start = tempStart ? new Date(tempStart) : undefined;
-        const end = tempEnd ? new Date(tempEnd) : undefined;
-        onSelect({ key: 'custom', startDate: start, endDate: end });
-        onClose();
-    };
 
     if (!isVisible) return null;
 
@@ -557,7 +619,7 @@ const DateFilterModal = ({ isVisible, onClose, activeFilter, onSelect, theme }: 
                             onPress={() => setIsCustom(true)}
                         >
                             <Ionicons name="calendar" size={20} color={theme.colors.primary} />
-                            <Text style={[styles.customToggleText, { color: theme.colors.primary }]}>Date personnalisée...</Text>
+                            <Text style={[styles.customToggleText, { color: theme.colors.primary }]}>Calendrier complet...</Text>
                         </TouchableOpacity>
                     </>
                 ) : (
@@ -570,29 +632,37 @@ const DateFilterModal = ({ isVisible, onClose, activeFilter, onSelect, theme }: 
                             <Text style={[styles.backText, { color: theme.colors.primary }]}>Retour aux raccourcis</Text>
                         </TouchableOpacity>
 
-                        <Text style={[styles.inputLabel, { color: theme.colors.textSecondary }]}>Du (AAAA-MM-JJ)</Text>
-                        <TextInput
-                            style={[styles.dateInput, { borderColor: theme.colors.border, color: theme.colors.text, backgroundColor: theme.colors.background }]}
-                            value={tempStart}
-                            onChangeText={setTempStart}
-                            placeholder="Ex: 2024-03-01"
-                            placeholderTextColor={theme.colors.textTertiary}
-                        />
-
-                        <Text style={[styles.inputLabel, { color: theme.colors.textSecondary, marginTop: 12 }]}>Au (AAAA-MM-JJ)</Text>
-                        <TextInput
-                            style={[styles.dateInput, { borderColor: theme.colors.border, color: theme.colors.text, backgroundColor: theme.colors.background }]}
-                            value={tempEnd}
-                            onChangeText={setTempEnd}
-                            placeholder="Ex: 2024-03-31"
-                            placeholderTextColor={theme.colors.textTertiary}
+                        <Calendar
+                            markingType={'period'}
+                            markedDates={markedDates}
+                            onDayPress={handleDayPress}
+                            theme={{
+                                calendarBackground: theme.colors.surface,
+                                textSectionTitleColor: theme.colors.textSecondary,
+                                selectedDayBackgroundColor: theme.colors.primary,
+                                selectedDayTextColor: '#ffffff',
+                                todayTextColor: theme.colors.primary,
+                                dayTextColor: theme.colors.text,
+                                textDisabledColor: theme.colors.textTertiary,
+                                dotColor: theme.colors.primary,
+                                monthTextColor: theme.colors.text,
+                                indicatorColor: theme.colors.primary,
+                                textDayFontWeight: '400',
+                                textMonthFontWeight: 'bold',
+                                textDayHeaderFontWeight: '600',
+                                textDayFontSize: 14,
+                                textMonthFontSize: 16,
+                                textDayHeaderFontSize: 12
+                            }}
                         />
 
                         <TouchableOpacity
-                            style={[styles.applyButton, { backgroundColor: theme.colors.primary }]}
+                            style={[styles.applyButton, { backgroundColor: theme.colors.primary, marginTop: 16 }]}
                             onPress={handleApplyCustom}
                         >
-                            <Text style={styles.applyButtonText}>Appliquer le filtre</Text>
+                            <Text style={styles.applyButtonText}>
+                                {selection.start ? (selection.end ? 'Appliquer la période' : 'Appliquer ce jour') : 'Tout voir'}
+                            </Text>
                         </TouchableOpacity>
                     </View>
                 )}
