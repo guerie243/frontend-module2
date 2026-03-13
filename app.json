@@ -26,8 +26,16 @@
       "edgeToEdgeEnabled": true
     },
     "web": {
+      "name": "Andy Business",
+      "shortName": "Andy",
+      "description": "Votre vitrine digitale de proximité",
       "favicon": "./assets/images/favicon.png",
       "bundler": "metro",
+      "themeColor": "#ffffff",
+      "backgroundColor": "#ffffff",
+      "display": "standalone",
+      "orientation": "portrait",
+      "startUrl": "/",
       "build": {
         "babel": {
           "include": []
