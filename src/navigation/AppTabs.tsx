@@ -8,6 +8,7 @@
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
+import { View, useWindowDimensions, Platform } from 'react-native';
 import { ProductsCatalogScreen } from '../screens/products/ProductsCatalogScreen';
 import { OrdersListScreen } from '../screens/orders/OrdersListScreen';
 import { CreateProductScreen } from '../screens/products/CreateProductScreen';
@@ -18,8 +19,11 @@ const Tab = createBottomTabNavigator();
 
 export const AppTabs = () => {
     const pendingCount = usePendingSellerOrdersCount();
+    const { width } = useWindowDimensions();
+    const isDesktop = width > 768;
+    const MAX_WIDTH = 800;
 
-    return (
+    const Navigator = (
         <Tab.Navigator
             id="main-tabs"
             screenOptions={({ route }) => ({
@@ -40,6 +44,15 @@ export const AppTabs = () => {
                 },
                 tabBarActiveTintColor: '#007AFF',
                 tabBarInactiveTintColor: '#8E8E93',
+                tabBarStyle: isDesktop ? {
+                    maxWidth: MAX_WIDTH,
+                    alignSelf: 'center',
+                    borderRadius: 15,
+                    bottom: 20,
+                    marginHorizontal: 20,
+                    height: 60,
+                    position: 'absolute',
+                } : undefined
             })}
         >
             <Tab.Screen
@@ -64,4 +77,14 @@ export const AppTabs = () => {
 
         </Tab.Navigator>
     );
+
+    if (isDesktop) {
+        return (
+            <View style={{ flex: 1, backgroundColor: '#f8f9fa' }}>
+                {Navigator}
+            </View>
+        );
+    }
+
+    return Navigator;
 };

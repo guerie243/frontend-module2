@@ -6,7 +6,7 @@
  */
 
 import React from 'react';
-import { View, StyleSheet, KeyboardAvoidingView, Platform, ScrollView, ActivityIndicator, StyleProp, ViewStyle } from 'react-native';
+import { View, StyleSheet, KeyboardAvoidingView, Platform, ScrollView, ActivityIndicator, StyleProp, ViewStyle, useWindowDimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme } from '../context/ThemeContext';
 
@@ -23,9 +23,12 @@ export const ScreenWrapper: React.FC<ScreenWrapperProps> = ({
     scrollable = false,
     isLoading = false,
     contentContainerStyle,
-    keyboardVerticalOffset = Platform.OS === 'ios' ? 90 : 20, // Reduced Android offset
+    keyboardVerticalOffset = Platform.OS === 'ios' ? 90 : 20,
 }) => {
     const { theme } = useTheme();
+    const { width } = useWindowDimensions();
+    const isDesktop = width > 768;
+    const MAX_WIDTH = 800;
 
     const content = (
         <KeyboardAvoidingView
@@ -37,20 +40,32 @@ export const ScreenWrapper: React.FC<ScreenWrapperProps> = ({
                 <View style={styles.loadingContainer}>
                     <ActivityIndicator size="large" color={theme.colors.primary} />
                 </View>
-            ) : scrollable ? (
-                <ScrollView
-                    style={styles.scrollView}
-                    contentContainerStyle={[
-                        styles.scrollContent,
-                        contentContainerStyle
-                    ]}
-                    keyboardShouldPersistTaps="handled"
-                    showsVerticalScrollIndicator={false}
-                >
-                    {children}
-                </ScrollView>
             ) : (
-                <View style={[styles.content, contentContainerStyle]}>{children}</View>
+                <View style={[
+                    styles.contentOuter,
+                    { backgroundColor: theme.colors.background }
+                ]}>
+                    <View style={[
+                        styles.contentInner,
+                        isDesktop && { maxWidth: MAX_WIDTH, alignSelf: 'center', width: '100%' }
+                    ]}>
+                        {scrollable ? (
+                            <ScrollView
+                                style={styles.scrollView}
+                                contentContainerStyle={[
+                                    styles.scrollContent,
+                                    contentContainerStyle
+                                ]}
+                                keyboardShouldPersistTaps="handled"
+                                showsVerticalScrollIndicator={false}
+                            >
+                                {children}
+                            </ScrollView>
+                        ) : (
+                            <View style={[styles.content, contentContainerStyle]}>{children}</View>
+                        )}
+                    </View>
+                </View>
             )}
         </KeyboardAvoidingView>
     );
@@ -77,6 +92,13 @@ const styles = StyleSheet.create({
     },
     scrollContent: {
         flexGrow: 1,
+    },
+    contentOuter: {
+        flex: 1,
+        width: '100%',
+    },
+    contentInner: {
+        flex: 1,
     },
     loadingContainer: {
         flex: 1,

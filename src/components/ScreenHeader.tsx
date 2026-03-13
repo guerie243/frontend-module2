@@ -7,6 +7,7 @@ import {
     Platform,
     StatusBar,
     Animated,
+    useWindowDimensions,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
@@ -47,6 +48,10 @@ export const ScreenHeader: React.FC<ScreenHeaderProps> = ({
     const insets = useSafeAreaInsets();
     const { itemCount, totalPrice, cart } = useCart();
 
+    const { width } = useWindowDimensions();
+    const isDesktop = width > 768;
+    const MAX_WIDTH = 800;
+
     // Pulsing animation for cart pill
     const pulseAnim = React.useRef(new Animated.Value(1)).current;
 
@@ -86,7 +91,10 @@ export const ScreenHeader: React.FC<ScreenHeaderProps> = ({
                 borderBottomWidth: 0,
             }
         ]}>
-            <View style={styles.content}>
+            <View style={[
+                styles.content,
+                isDesktop && { maxWidth: MAX_WIDTH, alignSelf: 'center', width: '100%' }
+            ]}>
                 <View style={styles.left}>
                     {showBack && (
                         <TouchableOpacity

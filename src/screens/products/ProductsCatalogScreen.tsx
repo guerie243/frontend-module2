@@ -17,6 +17,7 @@ import {
     Dimensions,
     Image as RNImage,
     Platform,
+    useWindowDimensions,
 } from 'react-native';
 import { Image } from 'expo-image';
 
@@ -159,6 +160,13 @@ export const ProductsCatalogScreen = () => {
     const [scrolled, setScrolled] = useState(false);
     const [isExpanded, setIsExpanded] = useState(false);
 
+    const { width } = useWindowDimensions();
+    const isDesktop = width > 768;
+    const numColumns = isDesktop ? 3 : 2;
+    const MAX_WIDTH = 800;
+    const contentWidth = isDesktop ? MAX_WIDTH : width;
+    const cardWidth = (contentWidth / numColumns) - (isDesktop ? 24 : 24); // Adjust spacing
+
     const handleScroll = (event: any) => {
         const offsetY = event.nativeEvent.contentOffset.y;
         if (offsetY > 150 && !scrolled) {
@@ -168,7 +176,7 @@ export const ProductsCatalogScreen = () => {
         }
     };
 
-    const styles = useMemo(() => createStyles(theme), [theme]);
+    const styles = useMemo(() => createStyles(theme, isDesktop), [theme, isDesktop]);
 
     const currentUserId = user?.userId || user?.id || user?._id || user?.user_id;
     const isOwner = isAuthenticated && !!user && !!displayedVitrine && (
@@ -499,8 +507,9 @@ export const ProductsCatalogScreen = () => {
 
 
                 data={products}
+                key={isDesktop ? 'desktop' : 'mobile'} // Force re-render on grid change
                 renderItem={({ item }) => (
-                    <View style={{ width: (SCREEN_WIDTH / 2) - 24, marginBottom: 16 }}>
+                    <View style={{ width: cardWidth, marginBottom: 16 }}>
                         <ProductCard
                             product={item}
                             onPress={() => handleProductPress(item)}
@@ -513,7 +522,7 @@ export const ProductsCatalogScreen = () => {
                     </View>
                 )}
                 keyExtractor={(item) => item.id || item._id || item.slug}
-                numColumns={2}
+                numColumns={numColumns}
                 columnWrapperStyle={styles.columnWrapper}
                 contentContainerStyle={styles.content}
                 ListHeaderComponent={ListHeader}
@@ -562,7 +571,7 @@ export const ProductsCatalogScreen = () => {
     );
 };
 
-const createStyles = (theme: any) => StyleSheet.create({
+const createStyles = (theme: any, isDesktop: boolean) => StyleSheet.create({
     loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
     content: { paddingBottom: 40, backgroundColor: theme.colors.background },
     coverSection: {
@@ -573,7 +582,7 @@ const createStyles = (theme: any) => StyleSheet.create({
     },
     coverImage: {
         width: '100%',
-        height: 170,
+        height: isDesktop ? 220 : 170,
         backgroundColor: theme.colors.surfaceLight,
         borderRadius: 20,
     },

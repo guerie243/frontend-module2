@@ -5,7 +5,7 @@
  */
 
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator, FlatList, Dimensions, Platform, Animated } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator, FlatList, Dimensions, Platform, Animated, useWindowDimensions } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
@@ -31,7 +31,11 @@ export const ProductDetailScreen = () => {
     const navigation = useNavigation<any>();
     const route = useRoute<any>();
     const { theme } = useTheme();
-    const styles = useMemo(() => createStyles(theme), [theme]);
+    const { width } = useWindowDimensions();
+    const isDesktop = width > 768;
+    const MAX_WIDTH = 800;
+
+    const styles = useMemo(() => createStyles(theme, isDesktop), [theme, isDesktop]);
     const { user, isAuthenticated } = useAuth();
     const { showSuccess, showError, showConfirm } = useAlertService();
     const { addToCart } = useCart();
@@ -132,106 +136,109 @@ export const ProductDetailScreen = () => {
                     style={styles.container}
                     contentContainerStyle={{ paddingBottom: 160 }}
                 >
-                    {/* Product Image Gallery using ProductCarousel */}
-                    <View style={styles.galleryContainer}>
-                        <ProductCarousel
-                            height={carouselHeight}
-                            images={normalizedImages}
-                        // onImagePress={handleImagePress} // Add handleImagePress if we want preview
-                        />
-                    </View>
-
-                    {/* Product Info */}
-                    <View style={[
-                        styles.infoContainer,
-                        {
-                            backgroundColor: theme.colors.surface,
-                            borderRadius: 20,
-                            marginTop: 16,
-                            paddingTop: 24,
-                        }
-                    ]}>
-                        <Text style={[styles.productName, { color: theme.colors.text }]}>
-                            {product.name}
-                        </Text>
-                        <Text style={[styles.productPrice, { color: theme.colors.primary }]}>
-                            {product.price.toFixed(2)} {product.currency || 'USD'}
-                        </Text>
-
-                        <View style={styles.deliveryContainer}>
-                            <Ionicons
-                                name="car-outline"
-                                size={18}
-                                color={product.deliveryFee ? theme.colors.textSecondary : '#34C759'}
+                    {/* Product Content with Responsive Layout */}
+                    <View style={isDesktop ? styles.rowContent : styles.container}>
+                        {/* Product Image Gallery using ProductCarousel */}
+                        <View style={[styles.galleryContainer, isDesktop && styles.galleryDesktop]}>
+                            <ProductCarousel
+                                height={isDesktop ? 450 : carouselHeight}
+                                images={normalizedImages}
                             />
-                            <Text style={[
-                                styles.deliveryText,
-                                { color: product.deliveryFee ? theme.colors.textSecondary : '#34C759' }
-                            ]}>
-                                {product.deliveryFee
-                                    ? `Frais de livraison: ${product.deliveryFee.toFixed(2)} ${product.currency || 'USD'}`
-                                    : 'Livraison gratuite'}
-                            </Text>
                         </View>
 
-                        {product.category && (
-                            <View style={[styles.categoryBadge, { backgroundColor: theme.colors.primary + '20' }]}>
-                                <Text style={[styles.categoryText, { color: theme.colors.primary }]}>
-                                    {product.category}
-                                </Text>
-                            </View>
-                        )}
-
-                        {normalizedLocations.length > 0 && (
-                            <View style={styles.locationsContainer}>
-
-                                <View style={styles.locationBadges}>
-                                    {normalizedLocations.map((loc, idx) => (
-                                        <View key={idx} style={[styles.locationBadge, { backgroundColor: theme.colors.background }]}>
-                                            <Ionicons name="location-sharp" size={14} color={theme.colors.primary} />
-                                            <Text style={[styles.locationText, { color: theme.colors.text }]}>{loc}</Text>
-                                        </View>
-                                    ))}
-                                </View>
-                            </View>
-                        )}
-
-                        {product.description && (
-                            <View style={styles.descriptionContainer}>
-                                <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>
-                                    Description
-                                </Text>
-                                <Text
-                                    style={[styles.description, { color: theme.colors.textSecondary }]}
-                                    numberOfLines={isDescriptionExpanded ? undefined : 5}
-                                >
-                                    {product.description}
-                                </Text>
-                                {product.description.length > 200 && ( // Threshold for toggle
-                                    <TouchableOpacity
-                                        onPress={() => setIsDescriptionExpanded(!isDescriptionExpanded)}
-                                        style={styles.expandLink}
-                                    >
-                                        <Text style={styles.expandLinkText}>
-                                            {isDescriptionExpanded ? 'Voir moins' : 'Voir plus'}
-                                        </Text>
-                                    </TouchableOpacity>
-                                )}
-                            </View>
-                        )}
-
-
-
-                        {product.stock !== undefined && (
-                            <Text style={[styles.stock, { color: theme.colors.textTertiary }]}>
-                                Stock: {product.stock} disponible(s)
+                        {/* Product Info */}
+                        <View style={[
+                            styles.infoContainer,
+                            {
+                                backgroundColor: theme.colors.surface,
+                                borderRadius: 20,
+                                marginTop: isDesktop ? 0 : 16,
+                                paddingTop: 24,
+                            },
+                            isDesktop && styles.infoDesktop
+                        ]}>
+                            <Text style={[styles.productName, { color: theme.colors.text }]}>
+                                {product.name}
                             </Text>
-                        )}
+                            <Text style={[styles.productPrice, { color: theme.colors.primary }]}>
+                                {product.price.toFixed(2)} {product.currency || 'USD'}
+                            </Text>
+
+                            <View style={styles.deliveryContainer}>
+                                <Ionicons
+                                    name="car-outline"
+                                    size={18}
+                                    color={product.deliveryFee ? theme.colors.textSecondary : '#34C759'}
+                                />
+                                <Text style={[
+                                    styles.deliveryText,
+                                    { color: product.deliveryFee ? theme.colors.textSecondary : '#34C759' }
+                                ]}>
+                                    {product.deliveryFee
+                                        ? `Frais de livraison: ${product.deliveryFee.toFixed(2)} ${product.currency || 'USD'}`
+                                        : 'Livraison gratuite'}
+                                </Text>
+                            </View>
+
+                            {product.category && (
+                                <View style={[styles.categoryBadge, { backgroundColor: theme.colors.primary + '20' }]}>
+                                    <Text style={[styles.categoryText, { color: theme.colors.primary }]}>
+                                        {product.category}
+                                    </Text>
+                                </View>
+                            )}
+
+                            {normalizedLocations.length > 0 && (
+                                <View style={styles.locationsContainer}>
+
+                                    <View style={styles.locationBadges}>
+                                        {normalizedLocations.map((loc, idx) => (
+                                            <View key={idx} style={[styles.locationBadge, { backgroundColor: theme.colors.background }]}>
+                                                <Ionicons name="location-sharp" size={14} color={theme.colors.primary} />
+                                                <Text style={[styles.locationText, { color: theme.colors.text }]}>{loc}</Text>
+                                            </View>
+                                        ))}
+                                    </View>
+                                </View>
+                            )}
+
+                            {product.description && (
+                                <View style={styles.descriptionContainer}>
+                                    <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>
+                                        Description
+                                    </Text>
+                                    <Text
+                                        style={[styles.description, { color: theme.colors.textSecondary }]}
+                                        numberOfLines={isDescriptionExpanded ? undefined : 5}
+                                    >
+                                        {product.description}
+                                    </Text>
+                                    {product.description.length > 200 && ( // Threshold for toggle
+                                        <TouchableOpacity
+                                            onPress={() => setIsDescriptionExpanded(!isDescriptionExpanded)}
+                                            style={styles.expandLink}
+                                        >
+                                            <Text style={styles.expandLinkText}>
+                                                {isDescriptionExpanded ? 'Voir moins' : 'Voir plus'}
+                                            </Text>
+                                        </TouchableOpacity>
+                                    )}
+                                </View>
+                            )}
+
+
+
+                            {product.stock !== undefined && (
+                                <Text style={[styles.stock, { color: theme.colors.textTertiary }]}>
+                                    Stock: {product.stock} disponible(s)
+                                </Text>
+                            )}
+                        </View>
                     </View>
                 </ScrollView>
 
                 {/* Floating Action Bar */}
-                <View style={styles.floatingFooter}>
+                <View style={[styles.floatingFooter, isDesktop && { maxWidth: MAX_WIDTH, alignSelf: 'center' }]}>
                     {/* Owner Actions */}
                     {isOwner && (
                         <TouchableOpacity
@@ -280,7 +287,7 @@ export const ProductDetailScreen = () => {
                         </View>
                     )}
                 </View>
-            </View>
+            </View >
 
             <ShareMenuModal
                 isVisible={isShareModalVisible}
@@ -289,11 +296,25 @@ export const ProductDetailScreen = () => {
                 title={`Partager ${product.name}`}
                 message={`Découvrez ${product.name} sur Andy Business !`}
             />
-        </View>
+        </View >
     );
 };
 
-const createStyles = (theme: any) => StyleSheet.create({
+const createStyles = (theme: any, isDesktop: boolean) => StyleSheet.create({
+    rowContent: {
+        flexDirection: 'row',
+        padding: 16,
+        gap: 20,
+    },
+    galleryDesktop: {
+        flex: 1,
+        marginTop: 0,
+    },
+    infoDesktop: {
+        flex: 1,
+        marginHorizontal: 0,
+        height: '100%',
+    },
     floatingFooter: {
         position: 'absolute',
         bottom: 0,
