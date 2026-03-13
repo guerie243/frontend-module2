@@ -248,7 +248,13 @@ export const DeliveryLocationScreen = () => {
             const orderIdForNav = order.orderId || order._id;
 
             setTimeout(() => {
-                navigation.navigate('OrderClientDetail', { orderId: orderIdForNav });
+                navigation.reset({
+                    index: 1,
+                    routes: [
+                        { name: 'MainTabs' },
+                        { name: 'OrderClientDetail', params: { orderId: orderIdForNav } }
+                    ],
+                });
             }, 1000);
         } catch (error: any) {
             console.error('Order creation failed:', error.message);

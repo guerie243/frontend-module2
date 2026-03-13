@@ -504,11 +504,11 @@ export const ProductsCatalogScreen = () => {
                         <ProductCard
                             product={item}
                             onPress={() => handleProductPress(item)}
-                            onAddToCart={(product, quantity) => {
+                            onAddToCart={!isOwner ? (product, quantity) => {
                                 addToCart(product, quantity);
                                 showSuccess('Article ajouté au panier');
-                            }}
-                            showActions={true}
+                            } : undefined}
+                            showActions={!isOwner}
                         />
                     </View>
                 )}
