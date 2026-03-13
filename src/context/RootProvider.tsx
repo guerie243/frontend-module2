@@ -8,6 +8,7 @@
 import React, { ReactNode } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider } from './AuthContext';
+import { CartProvider } from './CartContext';
 import { ThemeProvider } from './ThemeContext';
 import { AlertProvider } from '../components/AlertProvider';
 import { ToastProvider } from '../components/ToastNotification';
@@ -32,9 +33,11 @@ export const RootProvider = ({ children }: { children: ReactNode }) => {
                 <AlertProvider>
                     <ToastProvider>
                         <AuthProvider>
-                            <NotificationHandler />
-                            <AlertModal />
-                            {children}
+                            <CartProvider>
+                                <NotificationHandler />
+                                <AlertModal />
+                                {children}
+                            </CartProvider>
                         </AuthProvider>
                     </ToastProvider>
                 </AlertProvider>

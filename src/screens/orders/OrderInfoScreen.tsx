@@ -17,14 +17,14 @@ import { useVitrineDetail } from '../../hooks/useVitrines';
 import { getSafeUri } from '../../utils/imageUtils';
 import { ProductOrderItem } from '../../components/ProductOrderItem';
 
+import { useCart } from '../../context/CartContext';
+
 export const OrderInfoScreen = () => {
     const navigation = useNavigation<any>();
     const route = useRoute<any>();
     const { theme } = useTheme();
     const { showError } = useAlertService();
-
-    // Cart items passed from ProductsCatalogScreen
-    const { cart = [], vitrineId } = route.params || {};
+    const { cart, vitrineId } = useCart();
 
     const [clientName, setClientName] = useState('');
     const [clientPhone, setClientPhone] = useState('');

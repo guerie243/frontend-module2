@@ -16,7 +16,7 @@ import { getSafeUri } from '../utils/imageUtils';
 interface ProductCardProps {
     product: Product;
     onPress: () => void;
-    onAddToCart?: (product: Product) => void;
+    onAddToCart?: (product: Product, quantity: number) => void;
     showActions?: boolean;
     cartQuantity?: number;
 }
@@ -33,6 +33,8 @@ export const ProductCard: React.FC<ProductCardProps> = ({
     // Get first image or use placeholder
     const rawImageUri = product.images && product.images.length > 0 ? product.images[0] : undefined;
     const imageUri = getSafeUri(rawImageUri);
+
+    const [quantity, setQuantity] = React.useState(0);
 
     return (
         <TouchableOpacity
@@ -72,42 +74,55 @@ export const ProductCard: React.FC<ProductCardProps> = ({
                 </Text>
 
                 <View style={styles.bottomRow}>
-                    <View>
+                    <View style={{ flex: 1 }}>
                         <Text style={[styles.price, { color: theme.colors.primary }]}>
                             {product.price.toFixed(2)} {product.currency || 'USD'}
                         </Text>
-                        <View style={styles.deliveryRow}>
-                            <Ionicons
-                                name="car-outline"
-                                size={12}
-                                color={product.deliveryFee ? theme.colors.textSecondary : '#34C759'}
-                            />
-                            <Text style={[
-                                styles.deliveryText,
-                                { color: product.deliveryFee ? theme.colors.textSecondary : '#34C759' }
-                            ]}>
-                                {product.deliveryFee
-                                    ? `${product.deliveryFee.toFixed(2)} ${product.currency || 'USD'}`
-                                    : 'Gratuit'}
-                            </Text>
-                        </View>
                     </View>
+                </View>
 
-                    {/* Add to Cart Button */}
-                    {showActions && onAddToCart && (
+                {showActions && onAddToCart && (
+                    <View style={styles.actionsWrapper}>
+                        <View style={[styles.quantitySelector, { borderColor: theme.colors.border }]}>
+                            <TouchableOpacity
+                                onPress={(e) => {
+                                    e.stopPropagation();
+                                    setQuantity(Math.max(0, quantity - 1));
+                                }}
+                                style={styles.quantityBtn}
+                            >
+                                <Ionicons name="remove" size={16} color={theme.colors.text} />
+                            </TouchableOpacity>
+                            <Text style={[styles.quantityText, { color: theme.colors.text }]}>{quantity}</Text>
+                            <TouchableOpacity
+                                onPress={(e) => {
+                                    e.stopPropagation();
+                                    setQuantity(quantity + 1);
+                                }}
+                                style={styles.quantityBtn}
+                            >
+                                <Ionicons name="add" size={16} color={theme.colors.text} />
+                            </TouchableOpacity>
+                        </View>
+
                         <TouchableOpacity
-                            style={[styles.cartButton, { backgroundColor: theme.colors.primary }]}
+                            disabled={quantity === 0}
+                            style={[
+                                styles.cartButton,
+                                { backgroundColor: quantity > 0 ? theme.colors.primary : theme.colors.textTertiary }
+                            ]}
                             onPress={(e) => {
                                 e.stopPropagation();
-                                onAddToCart(product);
+                                if (quantity > 0) {
+                                    onAddToCart(product, quantity);
+                                    setQuantity(0);
+                                }
                             }}
                         >
-                            <Text style={[styles.cartButtonText, { color: theme.colors.white }]}>
-                                {cartQuantity > 0 ? `+${cartQuantity}` : '+'}
-                            </Text>
+                            <Ionicons name="cart-outline" size={18} color={theme.colors.white} />
                         </TouchableOpacity>
-                    )}
-                </View>
+                    </View>
+                )}
             </View>
         </TouchableOpacity>
     );
@@ -171,10 +186,34 @@ const styles = StyleSheet.create({
         fontSize: 11,
         fontWeight: '500',
     },
+    actionsWrapper: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        marginTop: 12,
+        gap: 8,
+    },
+    quantitySelector: {
+        flex: 1,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        borderWidth: 1,
+        borderRadius: 8,
+        height: 36,
+        paddingHorizontal: 4,
+    },
+    quantityBtn: {
+        padding: 4,
+    },
+    quantityText: {
+        fontSize: 14,
+        fontWeight: 'bold',
+    },
     cartButton: {
-        width: 32,
-        height: 32,
-        borderRadius: 16,
+        width: 36,
+        height: 36,
+        borderRadius: 8,
         justifyContent: 'center',
         alignItems: 'center',
     },

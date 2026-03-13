@@ -25,6 +25,8 @@ import { activityTracker } from '../../services/activityTracker';
 
 const CAROUSEL_HEIGHT = 350;
 
+import { useCart } from '../../context/CartContext';
+
 export const ProductDetailScreen = () => {
     const navigation = useNavigation<any>();
     const route = useRoute<any>();
@@ -32,6 +34,7 @@ export const ProductDetailScreen = () => {
     const styles = useMemo(() => createStyles(theme), [theme]);
     const { user, isAuthenticated } = useAuth();
     const { showSuccess, showError, showConfirm } = useAlertService();
+    const { addToCart } = useCart();
 
     const { slug } = route.params || {};
     const { data: product, isLoading } = useProductDetail(slug);
@@ -42,8 +45,7 @@ export const ProductDetailScreen = () => {
 
     // Height fixe pour le ProductCarousel dans ce contexte (pas d'animation complexe de parallaxe pour l'instant sauf si demandé)
     const carouselHeight = useRef(new Animated.Value(CAROUSEL_HEIGHT)).current;
-    const [quantity, setQuantity] = useState(1);
-    const [showCartControls, setShowCartControls] = useState(false);
+    const [quantity, setQuantity] = useState(0);
     const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
 
     const currentUserId = user?.userId || user?.id || user?._id;
@@ -63,13 +65,10 @@ export const ProductDetailScreen = () => {
     }, [product?.images]);
 
     const handleAddToCart = () => {
-        if (product) {
-            const cartItem: CartItem = { product, quantity };
-            console.log('Adding to cart:', product.name, 'x', quantity);
-            navigation.navigate('OrderInfo', {
-                cart: [cartItem],
-                vitrineId: product.vitrineId
-            });
+        if (product && quantity > 0) {
+            addToCart(product, quantity);
+            showSuccess('Article ajouté au panier');
+            setQuantity(0); // Reset after adding
         }
     };
 
@@ -131,7 +130,7 @@ export const ProductDetailScreen = () => {
             <View style={{ flex: 1 }}>
                 <ScrollView
                     style={styles.container}
-                    contentContainerStyle={{ paddingBottom: 100 }}
+                    contentContainerStyle={{ paddingBottom: 120 }}
                 >
                     {/* Product Image Gallery using ProductCarousel */}
                     <View style={styles.galleryContainer}>
@@ -246,45 +245,42 @@ export const ProductDetailScreen = () => {
 
                     {/* Visitor Actions */}
                     {!isOwner && (
-                        <View>
-                            {!showCartControls ? (
-                                <TouchableOpacity
-                                    style={[styles.button, { backgroundColor: theme.colors.primary }]}
-                                    onPress={() => setShowCartControls(true)}
-                                >
-                                    <Text style={styles.buttonText}>Commander</Text>
-                                </TouchableOpacity>
-                            ) : (
-                                <View style={[styles.cartControlsContainer, { backgroundColor: theme.colors.surface }]}>
-                                    <View style={styles.quantitySection}>
-                                        <Text style={[styles.quantityLabel, { color: theme.colors.text }]}>Quantité</Text>
-                                        <View style={styles.quantitySelector}>
-                                            <TouchableOpacity
-                                                onPress={() => setQuantity(Math.max(1, quantity - 1))}
-                                                style={[styles.quantityBtn, { borderColor: theme.colors.border }]}
-                                            >
-                                                <Ionicons name="remove" size={20} color={theme.colors.text} />
-                                            </TouchableOpacity>
-                                            <Text style={[styles.quantityText, { color: theme.colors.text }]}>{quantity}</Text>
-                                            <TouchableOpacity
-                                                onPress={() => setQuantity(quantity + 1)}
-                                                style={[styles.quantityBtn, { borderColor: theme.colors.border }]}
-                                            >
-                                                <Ionicons name="add" size={20} color={theme.colors.text} />
-                                            </TouchableOpacity>
-                                        </View>
-                                    </View>
-
+                        <View style={[styles.cartControlsContainer, { backgroundColor: theme.colors.surface }]}>
+                            <View style={styles.quantitySection}>
+                                <Text style={[styles.quantityLabel, { color: theme.colors.text }]}>Quantité</Text>
+                                <View style={styles.quantitySelector}>
                                     <TouchableOpacity
-                                        style={[styles.button, { backgroundColor: theme.colors.primary, marginTop: 12 }]}
-                                        onPress={handleAddToCart}
+                                        onPress={() => setQuantity(Math.max(0, quantity - 1))}
+                                        style={[styles.quantityBtn, { borderColor: theme.colors.border }]}
                                     >
-                                        <Text style={styles.buttonText}>
-                                            Ajouter au panier • {(product.price * quantity).toFixed(2)} {product.currency || 'USD'}
-                                        </Text>
+                                        <Ionicons name="remove" size={20} color={theme.colors.text} />
+                                    </TouchableOpacity>
+                                    <Text style={[styles.quantityText, { color: theme.colors.text }]}>{quantity}</Text>
+                                    <TouchableOpacity
+                                        onPress={() => setQuantity(quantity + 1)}
+                                        style={[styles.quantityBtn, { borderColor: theme.colors.border }]}
+                                    >
+                                        <Ionicons name="add" size={20} color={theme.colors.text} />
                                     </TouchableOpacity>
                                 </View>
-                            )}
+                            </View>
+
+                            <TouchableOpacity
+                                disabled={quantity === 0}
+                                style={[
+                                    styles.button,
+                                    {
+                                        backgroundColor: quantity > 0 ? theme.colors.primary : theme.colors.textTertiary,
+                                        marginTop: 12
+                                    }
+                                ]}
+                                onPress={handleAddToCart}
+                            >
+                                <Ionicons name="cart-outline" size={20} color="#FFF" style={{ marginRight: 8 }} />
+                                <Text style={styles.buttonText}>
+                                    Ajouter au panier {quantity > 0 ? `• ${(product.price * quantity).toFixed(2)} ${product.currency || 'USD'}` : ''}
+                                </Text>
+                            </TouchableOpacity>
                         </View>
                     )}
                 </View>

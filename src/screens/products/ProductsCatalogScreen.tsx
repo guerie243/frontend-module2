@@ -50,9 +50,12 @@ import { getSafeUri } from '../../utils/imageUtils';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 
+import { useCart } from '../../context/CartContext';
+
 export const ProductsCatalogScreen = () => {
     const navigation = useNavigation<any>();
     const route = useRoute<any>();
+    const { addToCart } = useCart();
     const { slug: routeSlug } = route.params || {};
 
     // Fallback manual slug extraction for Web
@@ -501,6 +504,10 @@ export const ProductsCatalogScreen = () => {
                         <ProductCard
                             product={item}
                             onPress={() => handleProductPress(item)}
+                            onAddToCart={(product, quantity) => {
+                                addToCart(product, quantity);
+                                showSuccess('Article ajouté au panier');
+                            }}
                             showActions={true}
                         />
                     </View>

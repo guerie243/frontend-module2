@@ -27,6 +27,8 @@ interface ScreenHeaderProps {
     hideGlobalButtons?: boolean;
 }
 
+import { useCart } from '../context/CartContext';
+
 export const ScreenHeader: React.FC<ScreenHeaderProps> = ({
     title,
     onShare,
@@ -42,10 +44,13 @@ export const ScreenHeader: React.FC<ScreenHeaderProps> = ({
     const { theme } = useTheme();
     const navigation = useNavigation<any>();
     const insets = useSafeAreaInsets();
+    const { itemCount, totalPrice, cart } = useCart();
 
     const sellerPending = usePendingSellerOrdersCount();
     const buyerPending = usePendingBuyerOrdersCount();
     const totalPending = buyerPending;
+
+    const hasCartItems = itemCount > 0;
 
     return (
         <View style={[
@@ -68,38 +73,56 @@ export const ScreenHeader: React.FC<ScreenHeaderProps> = ({
                     )}
                 </View>
 
-                {vitrineName ? (
+                {hasCartItems ? (
                     <TouchableOpacity
-                        style={styles.vitrineContainer}
-                        onPress={onVitrinePress}
+                        style={styles.cartPillContainer}
+                        onPress={() => navigation.navigate('Cart')}
                         activeOpacity={0.7}
                     >
-                        {vitrineLogo && (
-                            <Image
-                                source={{ uri: vitrineLogo }}
-                                style={styles.vitrineLogo}
-                                contentFit="cover"
-                            />
-                        )}
-                        <Text
-                            style={[styles.vitrineName, { color: theme.colors.text }]}
-                            numberOfLines={1}
-                        >
-                            {vitrineName}
-                        </Text>
-                        <Ionicons name="chevron-forward" size={16} color={theme.colors.textTertiary} style={{ marginLeft: 4 }} />
+                        <View style={[styles.cartPricePill, { backgroundColor: theme.colors.primary }]}>
+                            <Ionicons name="cart" size={16} color="#FFF" style={{ marginRight: 6 }} />
+                            <Text style={styles.cartPriceText}>
+                                {totalPrice.toFixed(2)} {cart[0]?.product?.currency || 'USD'}
+                            </Text>
+                            <View style={styles.cartBadgeHeader}>
+                                <Text style={styles.cartBadgeText}>{itemCount}</Text>
+                            </View>
+                        </View>
                     </TouchableOpacity>
                 ) : (
-                    <Text
-                        style={[styles.title, { color: theme.colors.text }]}
-                        numberOfLines={1}
-                    >
-                        {title}
-                    </Text>
+                    vitrineName ? (
+                        <TouchableOpacity
+                            style={styles.vitrineContainer}
+                            onPress={onVitrinePress}
+                            activeOpacity={0.7}
+                        >
+                            {vitrineLogo && (
+                                <Image
+                                    source={{ uri: vitrineLogo }}
+                                    style={styles.vitrineLogo}
+                                    contentFit="cover"
+                                />
+                            )}
+                            <Text
+                                style={[styles.vitrineName, { color: theme.colors.text }]}
+                                numberOfLines={1}
+                            >
+                                {vitrineName}
+                            </Text>
+                            <Ionicons name="chevron-forward" size={16} color={theme.colors.textTertiary} style={{ marginLeft: 4 }} />
+                        </TouchableOpacity>
+                    ) : (
+                        <Text
+                            style={[styles.title, { color: theme.colors.text }]}
+                            numberOfLines={1}
+                        >
+                            {title}
+                        </Text>
+                    )
                 )}
 
                 <View style={[styles.right, hideGlobalButtons && { minWidth: 44 }]}>
-                    {!hideGlobalButtons && (
+                    {!hasCartItems && !hideGlobalButtons && (
                         <>
                             {/* Bouton Global Commandes */}
                             <TouchableOpacity
@@ -187,23 +210,41 @@ const styles = StyleSheet.create({
         marginRight: 8,
         backgroundColor: '#f0f0f0',
     },
-    badge: {
-        position: 'absolute',
-        top: 2,
-        right: 2,
-        minWidth: 16,
-        height: 16,
-        borderRadius: 8,
+    cartPillContainer: {
+        flex: 1,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    cartPricePill: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingHorizontal: 12,
+        paddingVertical: 6,
+        borderRadius: 20,
+        elevation: 2,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 2,
+    },
+    cartPriceText: {
+        color: '#FFF',
+        fontSize: 14,
+        fontWeight: '700',
+        marginRight: 8,
+    },
+    cartBadgeHeader: {
+        backgroundColor: '#FFF',
+        borderRadius: 10,
+        minWidth: 20,
+        height: 20,
         justifyContent: 'center',
         alignItems: 'center',
         paddingHorizontal: 4,
-        borderWidth: 1.5,
-        borderColor: '#FFFFFF',
     },
-    badgeText: {
-        color: '#FFFFFF',
-        fontSize: 10,
-        fontWeight: 'bold',
-        textAlign: 'center',
+    cartBadgeText: {
+        color: '#000',
+        fontSize: 12,
+        fontWeight: '800',
     },
 });
