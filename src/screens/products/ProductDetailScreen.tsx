@@ -130,7 +130,7 @@ export const ProductDetailScreen = () => {
             <View style={{ flex: 1 }}>
                 <ScrollView
                     style={styles.container}
-                    contentContainerStyle={{ paddingBottom: 120 }}
+                    contentContainerStyle={{ paddingBottom: 160 }}
                 >
                     {/* Product Image Gallery using ProductCarousel */}
                     <View style={styles.galleryContainer}>
@@ -245,40 +245,36 @@ export const ProductDetailScreen = () => {
 
                     {/* Visitor Actions */}
                     {!isOwner && (
-                        <View style={[styles.cartControlsContainer, { backgroundColor: theme.colors.surface }]}>
-                            <View style={styles.quantitySection}>
-                                <Text style={[styles.quantityLabel, { color: theme.colors.text }]}>Quantité</Text>
-                                <View style={styles.quantitySelector}>
-                                    <TouchableOpacity
-                                        onPress={() => setQuantity(Math.max(0, quantity - 1))}
-                                        style={[styles.quantityBtn, { borderColor: theme.colors.border }]}
-                                    >
-                                        <Ionicons name="remove" size={20} color={theme.colors.text} />
-                                    </TouchableOpacity>
-                                    <Text style={[styles.quantityText, { color: theme.colors.text }]}>{quantity}</Text>
-                                    <TouchableOpacity
-                                        onPress={() => setQuantity(quantity + 1)}
-                                        style={[styles.quantityBtn, { borderColor: theme.colors.border }]}
-                                    >
-                                        <Ionicons name="add" size={20} color={theme.colors.text} />
-                                    </TouchableOpacity>
-                                </View>
+                        <View style={[styles.compactCartControls, { backgroundColor: theme.colors.surface }]}>
+                            <View style={[styles.compactQuantitySelector, { borderColor: theme.colors.border }]}>
+                                <TouchableOpacity
+                                    onPress={() => setQuantity(Math.max(0, quantity - 1))}
+                                    style={styles.compactQtyBtn}
+                                >
+                                    <Ionicons name="remove" size={18} color={theme.colors.text} />
+                                </TouchableOpacity>
+                                <Text style={[styles.compactQtyText, { color: theme.colors.text }]}>{quantity}</Text>
+                                <TouchableOpacity
+                                    onPress={() => setQuantity(quantity + 1)}
+                                    style={styles.compactQtyBtn}
+                                >
+                                    <Ionicons name="add" size={18} color={theme.colors.text} />
+                                </TouchableOpacity>
                             </View>
 
                             <TouchableOpacity
                                 disabled={quantity === 0}
                                 style={[
-                                    styles.button,
-                                    {
-                                        backgroundColor: quantity > 0 ? theme.colors.primary : theme.colors.textTertiary,
-                                        marginTop: 12
-                                    }
+                                    styles.compactCartBtn,
+                                    { backgroundColor: quantity > 0 ? theme.colors.primary : theme.colors.textTertiary }
                                 ]}
                                 onPress={handleAddToCart}
                             >
-                                <Ionicons name="cart-outline" size={20} color="#FFF" style={{ marginRight: 8 }} />
-                                <Text style={styles.buttonText}>
-                                    Ajouter au panier {quantity > 0 ? `• ${(product.price * quantity).toFixed(2)} ${product.currency || 'USD'}` : ''}
+                                <Ionicons name="cart-outline" size={18} color="#FFF" style={{ marginRight: 6 }} />
+                                <Text style={styles.compactCartBtnText}>
+                                    {quantity > 0
+                                        ? `Ajouter • ${(product.price * quantity).toFixed(2)} ${product.currency || 'USD'}`
+                                        : 'Ajouter au panier'}
                                 </Text>
                             </TouchableOpacity>
                         </View>
@@ -499,27 +495,49 @@ const createStyles = (theme: any) => StyleSheet.create({
         shadowOpacity: 0.15,
         shadowRadius: 10,
     },
-    quantitySection: {
+    compactCartControls: {
         flexDirection: 'row',
+        alignItems: 'center',
+        borderRadius: 16,
+        padding: 12,
+        gap: 10,
+        elevation: 8,
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.15,
+        shadowRadius: 10,
+    },
+    compactQuantitySelector: {
+        flexDirection: 'row',
+        alignItems: 'center',
         justifyContent: 'space-between',
-        alignItems: 'center',
-        marginBottom: 16,
-    },
-    quantityLabel: {
-        fontSize: 18,
-        fontWeight: '600',
-    },
-    quantitySelector: {
-        flexDirection: 'row',
-        alignItems: 'center',
-    },
-    quantityBtn: {
-        width: 40,
-        height: 40,
-        borderRadius: 20,
         borderWidth: 1,
+        borderRadius: 10,
+        height: 40,
+        paddingHorizontal: 4,
+        width: 110,
+    },
+    compactQtyBtn: {
+        padding: 6,
+    },
+    compactQtyText: {
+        fontSize: 15,
+        fontWeight: 'bold',
+        minWidth: 24,
+        textAlign: 'center',
+    },
+    compactCartBtn: {
+        flex: 1,
+        height: 40,
+        borderRadius: 10,
+        flexDirection: 'row',
         justifyContent: 'center',
         alignItems: 'center',
+    },
+    compactCartBtnText: {
+        color: '#FFF',
+        fontSize: 13,
+        fontWeight: '700',
     },
     paginationDots: {
         position: 'absolute',

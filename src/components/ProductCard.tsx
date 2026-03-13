@@ -78,6 +78,21 @@ export const ProductCard: React.FC<ProductCardProps> = ({
                         <Text style={[styles.price, { color: theme.colors.primary }]}>
                             {product.price.toFixed(2)} {product.currency || 'USD'}
                         </Text>
+                        <View style={styles.deliveryRow}>
+                            <Ionicons
+                                name="car-outline"
+                                size={12}
+                                color={product.deliveryFee ? theme.colors.textSecondary : '#34C759'}
+                            />
+                            <Text style={[
+                                styles.deliveryText,
+                                { color: product.deliveryFee ? theme.colors.textSecondary : '#34C759' }
+                            ]}>
+                                {product.deliveryFee
+                                    ? `${product.deliveryFee.toFixed(2)} ${product.currency || 'USD'}`
+                                    : 'Gratuit'}
+                            </Text>
+                        </View>
                     </View>
                 </View>
 
@@ -185,6 +200,26 @@ const styles = StyleSheet.create({
     deliveryText: {
         fontSize: 11,
         fontWeight: '500',
+    },
+    deliveryRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginTop: 2,
+    },
+    deliveryText: {
+        fontSize: 11,
+        fontWeight: '500',
+        marginLeft: 4,
+    },
+    deliveryRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginTop: 2,
+    },
+    deliveryText: {
+        fontSize: 11,
+        fontWeight: '500',
+        marginLeft: 4,
     },
     actionsWrapper: {
         flexDirection: 'row',

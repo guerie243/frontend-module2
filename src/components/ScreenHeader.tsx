@@ -6,6 +6,7 @@ import {
     TouchableOpacity,
     Platform,
     StatusBar,
+    Animated,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
@@ -46,6 +47,30 @@ export const ScreenHeader: React.FC<ScreenHeaderProps> = ({
     const insets = useSafeAreaInsets();
     const { itemCount, totalPrice, cart } = useCart();
 
+    // Pulsing animation for cart pill
+    const pulseAnim = React.useRef(new Animated.Value(1)).current;
+
+    React.useEffect(() => {
+        if (itemCount > 0) {
+            Animated.loop(
+                Animated.sequence([
+                    Animated.timing(pulseAnim, {
+                        toValue: 1.05,
+                        duration: 1000,
+                        useNativeDriver: true,
+                    }),
+                    Animated.timing(pulseAnim, {
+                        toValue: 1,
+                        duration: 1000,
+                        useNativeDriver: true,
+                    }),
+                ])
+            ).start();
+        } else {
+            pulseAnim.setValue(1);
+        }
+    }, [itemCount]);
+
     const sellerPending = usePendingSellerOrdersCount();
     const buyerPending = usePendingBuyerOrdersCount();
     const totalPending = buyerPending;
@@ -74,21 +99,28 @@ export const ScreenHeader: React.FC<ScreenHeaderProps> = ({
                 </View>
 
                 {hasCartItems ? (
-                    <TouchableOpacity
-                        style={styles.cartPillContainer}
-                        onPress={() => navigation.navigate('Cart')}
-                        activeOpacity={0.7}
-                    >
-                        <View style={[styles.cartPricePill, { backgroundColor: theme.colors.primary }]}>
-                            <Ionicons name="cart" size={16} color="#FFF" style={{ marginRight: 6 }} />
-                            <Text style={styles.cartPriceText}>
-                                {totalPrice.toFixed(2)} {cart[0]?.product?.currency || 'USD'}
-                            </Text>
-                            <View style={styles.cartBadgeHeader}>
-                                <Text style={styles.cartBadgeText}>{itemCount}</Text>
-                            </View>
-                        </View>
-                    </TouchableOpacity>
+                    <View style={styles.cartHeaderContainer}>
+                        <Text style={[styles.orderText, { color: theme.colors.text }]}>
+                            Commander
+                        </Text>
+                        <Animated.View style={{ transform: [{ scale: pulseAnim }] }}>
+                            <TouchableOpacity
+                                style={styles.cartPillContainerSmall}
+                                onPress={() => navigation.navigate('Cart')}
+                                activeOpacity={0.7}
+                            >
+                                <View style={[styles.cartPricePill, { backgroundColor: theme.colors.primary }]}>
+                                    <Ionicons name="cart" size={14} color="#FFF" style={{ marginRight: 4 }} />
+                                    <Text style={styles.cartPriceTextSmall}>
+                                        {totalPrice.toFixed(2)} {cart[0]?.product?.currency || 'USD'}
+                                    </Text>
+                                    <View style={styles.cartBadgeHeaderSmall}>
+                                        <Text style={styles.cartBadgeTextSmall}>{itemCount}</Text>
+                                    </View>
+                                </View>
+                            </TouchableOpacity>
+                        </Animated.View>
+                    </View>
                 ) : (
                     vitrineName ? (
                         <TouchableOpacity
@@ -210,16 +242,27 @@ const styles = StyleSheet.create({
         marginRight: 8,
         backgroundColor: '#f0f0f0',
     },
-    cartPillContainer: {
+    cartHeaderContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
         flex: 1,
+        gap: 12,
+    },
+    orderText: {
+        fontSize: 16,
+        fontWeight: '700',
+        textTransform: 'uppercase',
+    },
+    cartPillContainerSmall: {
         alignItems: 'center',
         justifyContent: 'center',
     },
     cartPricePill: {
         flexDirection: 'row',
         alignItems: 'center',
-        paddingHorizontal: 12,
-        paddingVertical: 6,
+        paddingHorizontal: 8,
+        paddingVertical: 5,
         borderRadius: 20,
         elevation: 2,
         shadowColor: '#000',
@@ -227,24 +270,24 @@ const styles = StyleSheet.create({
         shadowOpacity: 0.1,
         shadowRadius: 2,
     },
-    cartPriceText: {
+    cartPriceTextSmall: {
         color: '#FFF',
-        fontSize: 14,
+        fontSize: 13,
         fontWeight: '700',
-        marginRight: 8,
+        marginRight: 6,
     },
-    cartBadgeHeader: {
+    cartBadgeHeaderSmall: {
         backgroundColor: '#FFF',
         borderRadius: 10,
-        minWidth: 20,
-        height: 20,
+        minWidth: 18,
+        height: 18,
         justifyContent: 'center',
         alignItems: 'center',
-        paddingHorizontal: 4,
+        paddingHorizontal: 2,
     },
-    cartBadgeText: {
+    cartBadgeTextSmall: {
         color: '#000',
-        fontSize: 12,
+        fontSize: 11,
         fontWeight: '800',
     },
     badge: {
