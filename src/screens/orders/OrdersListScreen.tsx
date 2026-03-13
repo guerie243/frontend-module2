@@ -65,12 +65,34 @@ export const OrdersListScreen = () => {
     ];
 
     const [statusFilter, setStatusFilter] = useState<Order['status'] | 'all'>('pending');
+    const [dateFilter, setDateFilter] = useState<'today' | '7d' | '30d' | 'all'>('all');
+
+    const dateFilters: { key: 'today' | '7d' | '30d' | 'all'; label: string }[] = [
+        { key: 'all', label: 'Tout' },
+        { key: 'today', label: "Aujourd'hui" },
+        { key: '7d', label: '7 jours' },
+        { key: '30d', label: '30 jours' },
+    ];
 
     // Filter and sort orders
     const filteredOrders = useMemo(() => {
         let result = orders;
         if (statusFilter !== 'all') {
             result = orders.filter(order => order.status === statusFilter);
+        }
+
+        // Date filter
+        if (dateFilter !== 'all') {
+            const now = new Date();
+            let cutoff: Date;
+            if (dateFilter === 'today') {
+                cutoff = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+            } else if (dateFilter === '7d') {
+                cutoff = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+            } else {
+                cutoff = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+            }
+            result = result.filter(order => order.createdAt && new Date(order.createdAt) >= cutoff);
         }
 
         // Sort logic: 
@@ -83,7 +105,7 @@ export const OrdersListScreen = () => {
             const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
             return isHistory ? dateB - dateA : dateA - dateB;
         });
-    }, [orders, statusFilter]);
+    }, [orders, statusFilter, dateFilter]);
 
     const [selectedOrderForShare, setSelectedOrderForShare] = useState<Order | null>(null);
 
@@ -371,7 +393,7 @@ export const OrdersListScreen = () => {
 
             {/* Filter Buttons */}
             {!selectionMode && (
-                <View style={styles.filterContainer}>
+                <View>
                     <ScrollView
                         horizontal
                         showsHorizontalScrollIndicator={false}
@@ -379,6 +401,30 @@ export const OrdersListScreen = () => {
                         contentContainerStyle={styles.filtersContent}
                     >
                         {statusFilters.map(filter => renderFilterButton(filter.status, filter.label))}
+                    </ScrollView>
+                    <ScrollView
+                        horizontal
+                        showsHorizontalScrollIndicator={false}
+                        style={styles.filtersContainer}
+                        contentContainerStyle={styles.filtersContent}
+                    >
+                        {dateFilters.map(f => (
+                            <TouchableOpacity
+                                key={f.key}
+                                style={[
+                                    styles.filterButton,
+                                    { backgroundColor: theme.colors.surface },
+                                    dateFilter === f.key && { backgroundColor: theme.colors.secondary || '#555' },
+                                ]}
+                                onPress={() => setDateFilter(f.key)}
+                            >
+                                <Text style={[
+                                    styles.filterButtonText,
+                                    { color: theme.colors.text },
+                                    dateFilter === f.key && { color: theme.colors.white },
+                                ]}>{f.label}</Text>
+                            </TouchableOpacity>
+                        ))}
                     </ScrollView>
                 </View>
             )}
