@@ -5,7 +5,7 @@
  */
 
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, ActivityIndicator, Platform } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, ActivityIndicator, Platform, BackHandler } from 'react-native';
 import { useRoute } from '@react-navigation/native';
 import { useTheme } from '../../context/ThemeContext';
 import { useOrderDetail } from '../../hooks/useCommandes';
@@ -42,6 +42,24 @@ export const OrderClientDetailScreen = () => {
 
     const [isShareModalVisible, setIsShareModalVisible] = useState(false);
     const [isClientFromStorage, setIsClientFromStorage] = useState(false);
+
+    // Smart back navigation: redirect to vitrine if available, otherwise goBack
+    const handleBackPress = React.useCallback(() => {
+        if (vitrine?.slug) {
+            navigation.navigate('VitrineDetail', { slug: vitrine.slug });
+        } else {
+            navigation.goBack();
+        }
+        return true; // Prevent default back behavior
+    }, [vitrine?.slug, navigation]);
+
+    // Intercept hardware back button (Android)
+    useFocusEffect(
+        React.useCallback(() => {
+            const subscription = BackHandler.addEventListener('hardwareBackPress', handleBackPress);
+            return () => subscription.remove();
+        }, [handleBackPress])
+    );
 
     // Robust owner check (handle string or object ID)
     const vitrineOwnerId = typeof vitrine?.ownerId === 'object' ? (vitrine?.ownerId as any)?._id : vitrine?.ownerId;
@@ -163,6 +181,8 @@ export const OrderClientDetailScreen = () => {
         <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
             <ScreenHeader
                 title={`Commande #${order.id?.slice(-6) || order._id?.slice(-6)}`}
+                showBack={true}
+                onBackPress={handleBackPress}
                 onShare={() => setIsShareModalVisible(true)}
                 vitrineName={vitrine?.name}
                 vitrineLogo={getSafeUri(vitrine?.logo || vitrine?.avatar)}
