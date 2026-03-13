@@ -162,10 +162,13 @@ export const ProductsCatalogScreen = () => {
 
     const { width } = useWindowDimensions();
     const isDesktop = width > 768;
-    const numColumns = isDesktop ? 3 : 2;
-    const MAX_WIDTH = 800;
-    const contentWidth = isDesktop ? MAX_WIDTH : width;
-    const cardWidth = (contentWidth / numColumns) - (isDesktop ? 24 : 24); // Adjust spacing
+    const numColumns = isDesktop ? 4 : 2; // Increased from 3 to 4 for desktop
+    const MAX_WIDTH = isDesktop ? 1000 : 800; // Increased max width for 4 columns
+    const GAP = 16;
+    const PADDING = 16;
+    const contentWidth = isDesktop ? (width > MAX_WIDTH ? MAX_WIDTH : width) : width;
+    const availableWidth = contentWidth - (PADDING * 2);
+    const cardWidth = (availableWidth - (numColumns - 1) * GAP) / numColumns;
 
     const handleScroll = (event: any) => {
         const offsetY = event.nativeEvent.contentOffset.y;
@@ -765,8 +768,9 @@ const createStyles = (theme: any, isDesktop: boolean) => StyleSheet.create({
         color: theme.colors.text,
     },
     columnWrapper: {
-        justifyContent: 'space-between',
+        justifyContent: 'flex-start',
         paddingHorizontal: 16,
+        gap: 16,
     },
     placeholderText: {
         fontSize: 16,

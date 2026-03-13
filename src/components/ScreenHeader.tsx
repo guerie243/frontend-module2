@@ -50,7 +50,7 @@ export const ScreenHeader: React.FC<ScreenHeaderProps> = ({
 
     const { width } = useWindowDimensions();
     const isDesktop = width > 768;
-    const MAX_WIDTH = 800;
+    const MAX_WIDTH = 1000;
 
     // Pulsing animation for cart pill
     const pulseAnim = React.useRef(new Animated.Value(1)).current;

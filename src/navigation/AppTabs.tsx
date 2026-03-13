@@ -21,7 +21,7 @@ export const AppTabs = () => {
     const pendingCount = usePendingSellerOrdersCount();
     const { width } = useWindowDimensions();
     const isDesktop = width > 768;
-    const MAX_WIDTH = 800;
+    const MAX_WIDTH = 1000;
 
     const Navigator = (
         <Tab.Navigator

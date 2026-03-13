@@ -28,7 +28,7 @@ export const ScreenWrapper: React.FC<ScreenWrapperProps> = ({
     const { theme } = useTheme();
     const { width } = useWindowDimensions();
     const isDesktop = width > 768;
-    const MAX_WIDTH = 800;
+    const MAX_WIDTH = 1000;
 
     const content = (
         <KeyboardAvoidingView
